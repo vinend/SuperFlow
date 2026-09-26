@@ -4,7 +4,7 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Pekerjaan yang diotorisasi saat ini adalah **rekonsiliasi Fase 0/1 dan penyempurnaan frontend**. Implementasi berhenti pada fondasi platform dan Knowledge Core. Fase 2 tidak dimulai. [PRD](SuperFlow_PRD_v1.md) dan [AGENTS.md](AGENTS.md) tetap berbahasa Inggris; panduan proyek lainnya menggunakan Bahasa Indonesia.
+Pekerjaan yang diotorisasi adalah **Fase 3 — Workflow Core**. Reuse QuestionRun, Guard/evidence, permission, dan AuditEvent Fase 0–2. Implementasi berhenti pada Reliable Knowledge → Case → Persistent Workflow → Task → Human Decision → Audit. Fase 4 tidak dimulai.
 
 ## Tahapan PRD
 
@@ -12,8 +12,8 @@ Pekerjaan yang diotorisasi saat ini adalah **rekonsiliasi Fase 0/1 dan penyempur
 | --------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
 | 0 — Skeleton                | Fondasi aplikasi yang dapat dijalankan     | Monorepo Next.js/FastAPI, PostgreSQL, Alembic, seed sintetis, shell dan identitas demo             | Node.js, Python, PostgreSQL          | Selesai; PostgreSQL lokal terverifikasi, Compose menunggu lingkungan Docker        |
 | 1 — Knowledge Core          | Pertanyaan yang dapat ditelusuri ke sumber | Upload/parsing/chunking, metadata/versi/relasi, retrieval abstraction, Ask, citation, Source Panel | Fase 0, dokumen seed                 | Selesai untuk scope prototype Fase 0/1; rekonsiliasi dan verifikasi lulus          |
-| 2 — Reliability Core        | Pemeriksaan reliability yang persisten     | SuperFlow Guard, citation coverage, evidence/conflict, audit                                       | Knowledge Core, kontrak reliability  | Belum dimulai; memerlukan instruksi berikutnya                                     |
-| 3 — Workflow Core           | Aksi dan keputusan manusia                 | Cases, state machine, tasks, retry/escalation, Decision Center, approval                           | Guard dan audit                      | Belum dimulai                                                                      |
+| 2 — Reliability Core        | Pemeriksaan reliability yang persisten     | SuperFlow Guard, citation coverage, evidence/conflict, audit                                       | Knowledge Core, kontrak reliability  | Selesai untuk scope prototype; seluruh quality gate dan lima demo status lulus     |
+| 3 — Workflow Core           | Aksi dan keputusan manusia                 | Cases, state machine, tasks, retry/escalation, Decision Center, approval                           | Guard dan audit                      | Selesai untuk scope prototype; quality gate final lulus                            |
 | 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Belum dimulai; hanya sumber sintetis tersedia                                      |
 | 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Belum dimulai; hanya proposal/quotation/cash-flow seed tersedia                    |
 | 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization                                              | Data eksekusi dan definisi metrik    | Belum dimulai                                                                      |
@@ -41,6 +41,18 @@ Pekerjaan yang diotorisasi saat ini adalah **rekonsiliasi Fase 0/1 dan penyempur
 - AnswerCard dan SourcePanel bertipe; hanya keduanya fungsional. Komponen fase berikutnya dan slot reliability dicadangkan tanpa output palsu.
 - Refresh membuka kembali saved answer/filter dan detail versi melalui referensi URL; API memeriksa izin lagi. Sumber yang tidak tersedia menghasilkan error, bukan konten cache browser.
 
+## Deliverable Fase 2
+
+1. Reuse permission/version/citation existing; dedicated SuperFlowGuard dengan GuardInput, GuardCheckResult, GuardResult, dan EvidenceItem.
+2. Canonical statuses backend dan TypeScript yang dihasilkan; sembilan check eksplisit, calculation tidak applicable.
+3. GuardResult terkait QuestionRun, snapshot/fingerprint/re-evaluation persisten; saved run Fase 1 mendapatkan Guard saat dibaca.
+4. AuditEvent append-only: event pipeline, proteksi ORM/PostgreSQL, API baca identitas sendiri, reset demo atomik.
+5. Seed konflik access review tambahan; missing receipt exception requirement; lima skenario repeatable.
+6. AnswerCard/SourcePanel diperluas dan EvidenceChecklist fungsional, tanpa perubahan layout besar atau fase aksi.
+7. Tests state, coverage, evidence, permission non-leakage, versi, saved answer, audit, migrasi/reset, dan E2E lima status; regresi Fase 0/1 tetap dijalankan.
+
+Dependency: Knowledge Core, PostgreSQL/Alembic, provider extractive, dan aturan knowledge yang eksplisit. Detail arsitektur/kontrak ada di [SUPERFLOW_GUARD.md](docs/SUPERFLOW_GUARD.md).
+
 ## Penyempurnaan UI
 
 1. Baca konteks proyek dan audit implementasi sebelum perubahan.
@@ -64,4 +76,17 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-Guard, reliability decisions, conflict/evidence logic, audit append-only, workflow engine, Cases, Decision Center, regulation comparison/remediation, investasi/rumus keuangan, analytics, AML/FIU, autentikasi produksi, OCR, dan vector retrieval tidak diimplementasikan dalam pass ini.
+Regulation comparison/remediation, investasi/rumus keuangan, analytics, AML/FIU, autentikasi produksi, OCR, dan vector retrieval tidak diimplementasikan dalam pass ini.
+
+## Deliverable Fase 3
+
+1. Case domain-neutral manual/dari Ask, context QuestionRun existing, source/evidence re-authorization dan explicit evidence recovery.
+2. Migration 0004; case_evidence memakai EvidenceItem yang sama; WorkflowDefinition versioned, snapshot WorkflowRun, persisted steps/attempts/tasks/approvals.
+3. TASK/GUARD/CONDITION/APPROVAL/TERMINAL; Guard waiting/review/current enforcement tanpa reliability engine baru.
+4. Retry terkendali maksimum dua, manual fallback, escalation Governance, request evidence dan resumable workflow.
+5. Decision Center: approve/reject/request evidence/escalate/override dengan independent authority, mandatory reason, dan backend controls.
+6. Case lock/source metadata locks/revision, unique task/run, optional idempotency receipts, audit append-only existing.
+7. Typed CaseWorkspace/ApprovalPanel/WorkflowTimeline, activated navigation, real evidence/source context, compact tokens existing.
+8. Demo A/B/C opsional dan reset Fase 0–3; tests backend, contracts, browser/concurrency, regression, production/responsive inspection.
+
+Dependency: seluruh Fase 0–2, PostgreSQL/Alembic, mock identities, Guard extractive rules. Arsitektur dan batasan di [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md). Tidak ada Regulation-to-Action, analytics, investment analysis, atau AML workflow.

@@ -1,6 +1,9 @@
 export const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+import type { GuardResult } from "./reliability-contracts";
+import { isGuardResult } from "./reliability-view";
+
 export type User = {
   id: string;
   name: string;
@@ -58,6 +61,7 @@ export type Answer = {
   sources: Source[];
   provider: string;
   notice: string;
+  reliability: GuardResult;
   filters: {
     domain: string | null;
     document_ids: string[];
@@ -115,7 +119,21 @@ export async function api<T>(
         : `Request failed (${response.status}). Check the form fields and retry.`,
     );
   }
-  return response.json() as Promise<T>;
+  const body = await response.json();
+  if (
+    path.startsWith("/api/ask") &&
+    body &&
+    typeof body === "object" &&
+    "answer" in body &&
+    (!isGuardResult(body.reliability) ||
+      (body.reliability.status === "ACCESS_RESTRICTED" &&
+        body.sources?.length > 0))
+  ) {
+    throw new Error(
+      "Reliability result is unavailable or invalid. Ask again after checking the API version.",
+    );
+  }
+  return body as T;
 }
 
 export function dateLabel(date: string) {

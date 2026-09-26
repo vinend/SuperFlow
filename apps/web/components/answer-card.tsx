@@ -5,6 +5,7 @@ import { dateLabel } from "@/lib/api";
 import { citedParagraphs } from "@/lib/knowledge-view";
 import type { AnswerCardProps } from "@/lib/workspace-contracts";
 import { StatusBadge } from "./ui/primitives";
+import { EvidenceChecklist } from "./evidence-checklist";
 
 export function AnswerCard({
   answer,
@@ -25,6 +26,12 @@ export function AnswerCard({
         </span>
       </div>
       <h2>{answer.question}</h2>
+      <EvidenceChecklist
+        result={answer.reliability}
+        sources={answer.sources}
+        onSource={onSource}
+        onDocument={onDocument}
+      />
       <div className="answer-body">
         {citedParagraphs(answer.answer, answer.sources).map(
           ({ text, source }, index) => (
@@ -93,12 +100,20 @@ export function AnswerCard({
       <div className="answer-next">
         <div>
           <span className="context-label">Next action</span>
-          <p>
-            {answer.sources.length
-              ? "Read the full source before applying this guidance."
-              : "Broaden your filters or consult a knowledge owner."}
-          </p>
+          <p>{answer.reliability.next_step}</p>
         </div>
+        {["VERIFIED", "REVIEW_REQUIRED", "OUTDATED", "BLOCKED"].includes(
+          answer.reliability.status,
+        ) && (
+          <a
+            className="button primary"
+            href={`/cases?from=${encodeURIComponent(answer.id)}`}
+          >
+            {answer.reliability.status === "BLOCKED"
+              ? "Create evidence recovery case"
+              : "Create case"}
+          </a>
+        )}
         {answer.sources[0] ? (
           <button
             className="button secondary"

@@ -14,7 +14,7 @@ def test_reset_failure_rolls_back_existing_data(db, monkeypatch):
     monkeypatch.setattr(seed_module, "seed", fail_seed)
     with pytest.raises(RuntimeError):
         reset_synthetic(db)
-    assert db.scalar(select(func.count()).select_from(Document)) == 12
+    assert db.scalar(select(func.count()).select_from(Document)) == 13
     assert db.get(Document, "leave-policy").title == "Annual Leave Policy"
 
 
@@ -23,10 +23,10 @@ def test_reset_restores_seed_and_removes_question_runs(client, employee, db):
     document = db.get(Document, "leave-policy")
     document.title = "User-edited synthetic title"
     db.commit()
-    assert reset_synthetic(db) == 12
+    assert reset_synthetic(db) == 13
     db.expire_all()
     assert db.get(Document, "leave-policy").title == "Annual Leave Policy"
-    assert db.scalar(select(func.count()).select_from(DocumentVersion)) == 14
+    assert db.scalar(select(func.count()).select_from(DocumentVersion)) == 15
     assert db.scalar(select(func.count()).select_from(QuestionRun)) == 0
 
 

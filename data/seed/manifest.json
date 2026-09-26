@@ -1,14 +1,263 @@
 [
-  {"id":"leave-policy","title":"Annual Leave Policy","domain":"People","owner_id":"sme","authority_level":5,"access_roles":["employee","manager","sme","compliance","finance","governance"],"related_document_ids":[],"versions":[{"version":"1.0","status":"outdated","effective_date":"2024-01-01","file":"leave-v1.md"},{"version":"2.0","status":"active","effective_date":"2026-01-01","file":"leave-v2.md"}]},
-  {"id":"expense-sop","title":"Expense Reimbursement SOP","domain":"Operations","owner_id":"manager","authority_level":4,"access_roles":["employee","manager","sme","finance","governance"],"related_document_ids":["approval-policy"],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"expense-sop.md"}]},
-  {"id":"regulation","title":"Synthetic Digital Operations Regulation","domain":"Compliance","owner_id":"compliance","authority_level":5,"access_roles":["compliance","manager","sme","governance"],"related_document_ids":["access-sop","incident-sop","retention-sop"],"versions":[{"version":"1.0","status":"outdated","effective_date":"2024-01-01","file":"regulation-v1.md"},{"version":"2.0","status":"active","effective_date":"2026-01-01","file":"regulation-v2.md"}]},
-  {"id":"access-sop","title":"Access Review SOP","domain":"Governance","owner_id":"governance","authority_level":4,"access_roles":["employee","manager","sme","compliance","finance","governance"],"related_document_ids":["regulation"],"versions":[{"version":"1.0","status":"active","effective_date":"2025-01-01","file":"access-sop.md"}]},
-  {"id":"incident-sop","title":"Incident Reporting SOP","domain":"Compliance","owner_id":"compliance","authority_level":4,"access_roles":["employee","manager","sme","compliance","finance","governance"],"related_document_ids":["regulation"],"versions":[{"version":"1.0","status":"active","effective_date":"2025-01-01","file":"incident-sop.md"}]},
-  {"id":"retention-sop","title":"Record Retention SOP","domain":"Compliance","owner_id":"compliance","authority_level":4,"access_roles":["manager","sme","compliance","governance"],"related_document_ids":["regulation"],"versions":[{"version":"1.0","status":"active","effective_date":"2025-01-01","file":"retention-sop.md"}]},
-  {"id":"approval-policy","title":"Investment Approval Authority","domain":"Finance","owner_id":"finance","authority_level":5,"access_roles":["manager","sme","finance","governance"],"related_document_ids":[],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"approval-policy.md"}]},
-  {"id":"proposal-a","title":"Workflow Modernization Proposal A","domain":"Finance","owner_id":"finance","authority_level":2,"access_roles":["manager","finance","governance"],"related_document_ids":["quote-a","cashflows","approval-policy"],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"proposal-a.md"}]},
-  {"id":"proposal-b","title":"Workflow Modernization Proposal B","domain":"Finance","owner_id":"finance","authority_level":2,"access_roles":["manager","finance","governance"],"related_document_ids":["quote-b","approval-policy"],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"proposal-b.md"}]},
-  {"id":"quote-a","title":"Vendor A Quotation","domain":"Finance","owner_id":"finance","authority_level":2,"access_roles":["finance","manager","governance"],"related_document_ids":["proposal-a"],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"quote-a.md"}]},
-  {"id":"quote-b","title":"Vendor B Quotation","domain":"Finance","owner_id":"finance","authority_level":2,"access_roles":["finance","manager","governance"],"related_document_ids":["proposal-b"],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"quote-b.md"}]},
-  {"id":"cashflows","title":"Synthetic Cash Flow Projection","domain":"Finance","owner_id":"finance","authority_level":2,"access_roles":["finance","manager","governance"],"related_document_ids":["proposal-a"],"versions":[{"version":"1.0","status":"active","effective_date":"2026-01-01","file":"cashflows.md"}]}
+  {
+    "id": "leave-policy",
+    "title": "Annual Leave Policy",
+    "domain": "People",
+    "owner_id": "sme",
+    "authority_level": 5,
+    "access_roles": [
+      "employee",
+      "manager",
+      "sme",
+      "compliance",
+      "finance",
+      "governance"
+    ],
+    "related_document_ids": [],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "outdated",
+        "effective_date": "2024-01-01",
+        "file": "leave-v1.md"
+      },
+      {
+        "version": "2.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "leave-v2.md"
+      }
+    ]
+  },
+  {
+    "id": "expense-sop",
+    "title": "Expense Reimbursement SOP",
+    "domain": "Operations",
+    "owner_id": "manager",
+    "authority_level": 4,
+    "access_roles": ["employee", "manager", "sme", "finance", "governance"],
+    "related_document_ids": ["approval-policy"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "expense-sop.md"
+      }
+    ]
+  },
+  {
+    "id": "regulation",
+    "title": "Synthetic Digital Operations Regulation",
+    "domain": "Compliance",
+    "owner_id": "compliance",
+    "authority_level": 5,
+    "access_roles": ["compliance", "manager", "sme", "governance"],
+    "related_document_ids": ["access-sop", "incident-sop", "retention-sop"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "outdated",
+        "effective_date": "2024-01-01",
+        "file": "regulation-v1.md"
+      },
+      {
+        "version": "2.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "regulation-v2.md"
+      }
+    ]
+  },
+  {
+    "id": "access-sop",
+    "title": "Access Review SOP",
+    "domain": "Governance",
+    "owner_id": "governance",
+    "authority_level": 4,
+    "access_roles": [
+      "employee",
+      "manager",
+      "sme",
+      "compliance",
+      "finance",
+      "governance"
+    ],
+    "related_document_ids": ["regulation"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2025-01-01",
+        "file": "access-sop.md"
+      }
+    ]
+  },
+  {
+    "id": "incident-sop",
+    "title": "Incident Reporting SOP",
+    "domain": "Compliance",
+    "owner_id": "compliance",
+    "authority_level": 4,
+    "access_roles": [
+      "employee",
+      "manager",
+      "sme",
+      "compliance",
+      "finance",
+      "governance"
+    ],
+    "related_document_ids": ["regulation"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2025-01-01",
+        "file": "incident-sop.md"
+      }
+    ]
+  },
+  {
+    "id": "retention-sop",
+    "title": "Record Retention SOP",
+    "domain": "Compliance",
+    "owner_id": "compliance",
+    "authority_level": 4,
+    "access_roles": ["manager", "sme", "compliance", "governance"],
+    "related_document_ids": ["regulation"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2025-01-01",
+        "file": "retention-sop.md"
+      }
+    ]
+  },
+  {
+    "id": "approval-policy",
+    "title": "Investment Approval Authority",
+    "domain": "Finance",
+    "owner_id": "finance",
+    "authority_level": 5,
+    "access_roles": ["manager", "sme", "finance", "governance"],
+    "related_document_ids": [],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "approval-policy.md"
+      }
+    ]
+  },
+  {
+    "id": "proposal-a",
+    "title": "Workflow Modernization Proposal A",
+    "domain": "Finance",
+    "owner_id": "finance",
+    "authority_level": 2,
+    "access_roles": ["manager", "finance", "governance"],
+    "related_document_ids": ["quote-a", "cashflows", "approval-policy"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "proposal-a.md"
+      }
+    ]
+  },
+  {
+    "id": "proposal-b",
+    "title": "Workflow Modernization Proposal B",
+    "domain": "Finance",
+    "owner_id": "finance",
+    "authority_level": 2,
+    "access_roles": ["manager", "finance", "governance"],
+    "related_document_ids": ["quote-b", "approval-policy"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "proposal-b.md"
+      }
+    ]
+  },
+  {
+    "id": "quote-a",
+    "title": "Vendor A Quotation",
+    "domain": "Finance",
+    "owner_id": "finance",
+    "authority_level": 2,
+    "access_roles": ["finance", "manager", "governance"],
+    "related_document_ids": ["proposal-a"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "quote-a.md"
+      }
+    ]
+  },
+  {
+    "id": "quote-b",
+    "title": "Vendor B Quotation",
+    "domain": "Finance",
+    "owner_id": "finance",
+    "authority_level": 2,
+    "access_roles": ["finance", "manager", "governance"],
+    "related_document_ids": ["proposal-b"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "quote-b.md"
+      }
+    ]
+  },
+  {
+    "id": "cashflows",
+    "title": "Synthetic Cash Flow Projection",
+    "domain": "Finance",
+    "owner_id": "finance",
+    "authority_level": 2,
+    "access_roles": ["finance", "manager", "governance"],
+    "related_document_ids": ["proposal-a"],
+    "versions": [
+      {
+        "version": "1.0",
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "file": "cashflows.md"
+      }
+    ]
+  },
+  {
+    "id": "access-review-policy",
+    "title": "Access Review Control Policy",
+    "domain": "Governance",
+    "owner_id": "governance",
+    "authority_level": 5,
+    "access_roles": [
+      "employee",
+      "manager",
+      "sme",
+      "compliance",
+      "finance",
+      "governance"
+    ],
+    "related_document_ids": ["access-sop"],
+    "versions": [
+      {
+        "status": "active",
+        "effective_date": "2026-01-01",
+        "version": "1.0",
+        "file": "access-review-policy.md"
+      }
+    ]
+  }
 ]

@@ -7,7 +7,11 @@ import { ArrowRight, BookOpen, Plus, Search, X } from "lucide-react";
 import { DOMAINS } from "@/lib/api";
 import { displayVersion } from "@/lib/knowledge-view";
 import { useSession } from "./session";
-import { ApplicationShell, TITLES, View } from "./application-shell";
+import {
+  ApplicationShell,
+  TITLES,
+  KnowledgeView as View,
+} from "./application-shell";
 import { useKnowledgeWorkspace } from "./use-knowledge-workspace";
 import { AnswerCard } from "./answer-card";
 import { QuestionComposer } from "./question-composer";
@@ -448,6 +452,7 @@ function Workspace({ view }: { view: View }) {
       {w.source && (
         <SourcePanel
           source={w.source}
+          reliability={w.answer?.reliability}
           close={() => w.setSource(null)}
           openDocument={w.openDocument}
         />

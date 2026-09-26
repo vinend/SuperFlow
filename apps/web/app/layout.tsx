@@ -5,7 +5,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SuperFlow · Knowledge Workspace",
   description:
-    "From trusted knowledge to measurable action. Phase 0/1 synthetic prototype.",
+    "From trusted knowledge to measurable action. Phase 0–3 synthetic prototype.",
 };
 
 export default function RootLayout({

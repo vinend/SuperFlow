@@ -9,6 +9,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
+from superflow.audit import demo_reset_mode
 from superflow.config import ROOT
 from superflow.db import Base, get_db
 from superflow.main import app
@@ -50,8 +51,10 @@ def db(test_engine):
         bind=connection, join_transaction_mode="create_savepoint", expire_on_commit=False
     )
     # Reset only inside an outer, rolled-back transaction. Existing E2E test data survives.
+    demo_reset_mode(session, True)
     for table in reversed(Base.metadata.sorted_tables):
         session.execute(delete(table))
+    demo_reset_mode(session, False)
     seed(session)
     yield session
     session.close()

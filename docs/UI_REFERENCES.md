@@ -39,3 +39,22 @@ Client API terpusat, SessionProvider, upload/editor, detail dokumen, Source Pane
 ## Batasan
 
 Pengujian keyboard/browser tidak menggantikan audit screen reader menyeluruh. Tidak ada autentikasi produksi, OCR, vector retrieval, reliability engine, atau fitur aksi fase berikutnya. Bahasa Inggris pada berkas sumber sintetis `data/seed/*.md` dipertahankan untuk konsistensi fixture retrieval; berkas tersebut adalah input dokumen demo, bukan panduan proyek.
+
+## Fase 2 — reliability dan evidence
+
+MCP `search` dipakai untuk status/alert/checklist/accordion. Kandidat ditinjau melalui metadata/preview: [Notice Alert — corr](https://21st.dev/@corr/components/notice-alert), [Alert — serafimcloud](https://21st.dev/@serafimcloud/components/alert), Alert with Icon and Actions (cnippet-dev), Accordion Active Background (uiable), dan Basic Accordion (felipemenezes098). Dialog konfirmasi/destructive, warna banner besar, animasi dan dependency baru tidak cocok untuk reliability ringkas.
+
+Permintaan `get_component` Notice Alert (19366) mengembalikan `retrieval_limit_reached` dengan reset 27 September UTC. Source/dependencies kandidat Fase 2 belum dapat diperiksa; tidak ada vendor code atau package yang diadopsi. EvidenceChecklist memakai primitive/token SuperFlow dan disclosure `<details>/<summary>` native yang sudah menjadi pola proyek. SourcePanel/Dialog existing tetap dipakai; tidak ada desain kedua atau logic Guard dari 21st.dev.
+
+## Fase 3 — Workflow Core (26 September 2026)
+
+MCP 21st.dev aktif: search activity timeline dan approval/task list. Kandidat yang ditinjau dari metadata:
+
+- Activity Timeline — 7ovr, ID 28340: actor/action/time dalam rail vertikal; cocok untuk histori, metadata tidak menjadi implementation source.
+- Timeline — Cubby UI, ID 28295: composable dated events/controlled step progression, kandidat paling sesuai timeline padat.
+- Experience Timeline — shadcnui-blocks, ID 28329/28334: layout vertikal tetapi konten career/technology kurang sesuai Case.
+- Agent Todo List — starc007, ID 28423; AI Task List — educalvolpz, ID 23793; Sprint Task Checklist — Cnippet ID 24947: metadata state/task berguna, animasi/count/reset demo tidak dibutuhkan.
+
+`get_component(28295)` dicoba: source terkunci `retrieval_limit_reached`, dua retrieval per hari, reset 27 September 2026 00:00 UTC. Karena source/dependency tidak dapat diperiksa, tidak ada vendor baru diadopsi/diinstall. Tidak melewati kuota.
+
+UI menggunakan primitive existing: tabel Origin UI yang sebelumnya sudah diperiksa, Dialog/SourcePanel, metadata, status badge, native details/summary dan tokens. WorkflowTimeline dibuat dengan semantic ordered list/current step/attempt disclosure; ApprovalPanel menggunakan EvidenceChecklist/source references sebelum form keputusan. Tidak ada design system kedua atau dependency baru.

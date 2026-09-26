@@ -12,6 +12,7 @@
     "db:local": "node scripts/postgres.mjs",
     "db:migrate": "node scripts/python.mjs -m alembic -c apps/api/alembic.ini upgrade head",
     "db:seed": "node scripts/python.mjs -m superflow.seed",
+    "demo:workflow": "node scripts/python.mjs -m superflow.workflow_demo",
     "db:reset": "node scripts/python.mjs -m superflow.seed --reset",
     "build": "npm run build --workspace @superflow/web",
     "start": "npm run start --workspace @superflow/web",

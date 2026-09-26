@@ -12,11 +12,14 @@ from sqlalchemy import (
     String,
     Text,
     UniqueConstraint,
+    event,
     text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
+from .reliability_contracts import ReliabilityStatus
+from .workflow_contracts import ApprovalStatus, CaseStatus, StepStatus, TaskStatus, WorkflowStatus
 
 
 def identifier() -> str:
@@ -113,4 +116,179 @@ class QuestionRun(Base):
     filters: Mapped[dict] = mapped_column(JSON)
     source_refs: Mapped[list[dict]] = mapped_column(JSON)
     provider: Mapped[str] = mapped_column(String(80))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class GuardEvaluation(Base):
+    __tablename__ = "guard_results"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN (" + ",".join(repr(item.value) for item in ReliabilityStatus) + ")",
+            name="ck_guard_status",
+        ),
+    )
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    run_id: Mapped[str] = mapped_column(
+        ForeignKey("question_runs.id", ondelete="CASCADE"), index=True
+    )
+    status: Mapped[str] = mapped_column(String(30))
+    result: Mapped[dict] = mapped_column(JSON)
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class AuditEvent(Base):
+    __tablename__ = "audit_events"
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    actor_id: Mapped[str] = mapped_column(String(40), index=True)
+    actor_type: Mapped[str] = mapped_column(String(30), default="user")
+    event_type: Mapped[str] = mapped_column(String(60))
+    entity_type: Mapped[str] = mapped_column(String(40), default="question_run")
+    entity_id: Mapped[str] = mapped_column(String(40), index=True)
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+@event.listens_for(AuditEvent, "before_update")
+@event.listens_for(AuditEvent, "before_delete")
+def prevent_audit_mutation(*_):
+    raise ValueError("Audit events are append-only.")
+
+
+def status_constraint(vocabulary, name):
+    return CheckConstraint(
+        "status IN (" + ",".join(repr(item.value) for item in vocabulary) + ")", name=name
+    )
+
+
+class Case(Base):
+    __tablename__ = "cases"
+    __table_args__ = (status_constraint(CaseStatus, "ck_case_status"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    type: Mapped[str] = mapped_column(String(40))
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30), default=CaseStatus.OPEN)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    question_run_id: Mapped[str | None] = mapped_column(ForeignKey("question_runs.id"))
+    context_run_id: Mapped[str] = mapped_column(ForeignKey("question_runs.id"))
+    reliability_status: Mapped[str] = mapped_column(String(30))
+    guard_id: Mapped[str | None] = mapped_column(ForeignKey("guard_results.id"))
+    revision: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class CaseEvidence(Base):
+    """Persist the existing EvidenceItem contract, not a second evidence vocabulary."""
+
+    __tablename__ = "case_evidence"
+    __table_args__ = (UniqueConstraint("case_id", "key"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id", ondelete="CASCADE"))
+    key: Mapped[str] = mapped_column(String(100))
+    item: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class WorkflowDefinition(Base):
+    __tablename__ = "workflow_definitions"
+    __table_args__ = (UniqueConstraint("name", "version"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True)
+    name: Mapped[str] = mapped_column(String(100))
+    version: Mapped[str] = mapped_column(String(30))
+    domain: Mapped[str] = mapped_column(String(50))
+    config: Mapped[dict] = mapped_column(JSON)
+
+
+class WorkflowRun(Base):
+    __tablename__ = "workflow_runs"
+    __table_args__ = (status_constraint(WorkflowStatus, "ck_workflow_status"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"), unique=True)
+    definition_id: Mapped[str] = mapped_column(ForeignKey("workflow_definitions.id"))
+    config: Mapped[dict] = mapped_column(JSON)
+    current_step: Mapped[str] = mapped_column(String(60))
+    status: Mapped[str] = mapped_column(String(30), default=WorkflowStatus.RUNNING)
+    escalation_reason: Mapped[str | None] = mapped_column(Text)
+    escalated_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class WorkflowStep(Base):
+    __tablename__ = "workflow_steps"
+    __table_args__ = (
+        UniqueConstraint("workflow_run_id", "key"),
+        status_constraint(StepStatus, "ck_step_status"),
+    )
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    workflow_run_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id"))
+    key: Mapped[str] = mapped_column(String(60))
+    title: Mapped[str] = mapped_column(String(200))
+    type: Mapped[str] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(30), default=StepStatus.PENDING)
+    owner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    retry_count: Mapped[int] = mapped_column(default=0)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class StepAttempt(Base):
+    __tablename__ = "step_attempts"
+    __table_args__ = (UniqueConstraint("step_id", "number"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    step_id: Mapped[str] = mapped_column(ForeignKey("workflow_steps.id"))
+    number: Mapped[int]
+    outcome: Mapped[str] = mapped_column(String(30))
+    reason: Mapped[str] = mapped_column(Text)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    guard_id: Mapped[str | None] = mapped_column(ForeignKey("guard_results.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class Task(Base):
+    __tablename__ = "tasks"
+    __table_args__ = (status_constraint(TaskStatus, "ck_task_status"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    workflow_run_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id"))
+    step_id: Mapped[str] = mapped_column(ForeignKey("workflow_steps.id"), unique=True)
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text)
+    owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    status: Mapped[str] = mapped_column(String(30), default=TaskStatus.TODO)
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Approval(Base):
+    __tablename__ = "approvals"
+    __table_args__ = (status_constraint(ApprovalStatus, "ck_approval_status"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"))
+    workflow_run_id: Mapped[str] = mapped_column(ForeignKey("workflow_runs.id"))
+    step_id: Mapped[str] = mapped_column(ForeignKey("workflow_steps.id"))
+    requested_from: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    requested_by: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    requested_role: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(30), default=ApprovalStatus.PENDING)
+    reason_required: Mapped[str] = mapped_column(Text)
+    decision_reason: Mapped[str | None] = mapped_column(Text)
+    override_reason: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ActionReceipt(Base):
+    __tablename__ = "action_receipts"
+    __table_args__ = (UniqueConstraint("case_id", "actor_id", "key"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"))
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    key: Mapped[str] = mapped_column(String(80))
+    fingerprint: Mapped[str] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

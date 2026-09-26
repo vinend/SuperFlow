@@ -36,6 +36,9 @@ CONCEPTS = {
     "vendors": "vendor",
     "quotations": "quotation",
     "proposals": "proposal",
+    "reviewed": "review",
+    "reviews": "review",
+    "receipts": "receipt",
 }
 
 

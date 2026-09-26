@@ -1,7 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
+
+from .reliability_contracts import GuardResult
 
 Domain = Literal["People", "Compliance", "Finance", "Operations", "Governance"]
 VersionStatus = Literal["active", "outdated", "draft"]
@@ -51,3 +53,33 @@ class AskInput(BaseModel):
         if len(value) < 3:
             raise ValueError("Enter a question with at least three characters.")
         return value
+
+
+class Citation(BaseModel):
+    citation_id: int = Field(ge=1)
+    document_id: str
+    version_id: str
+    chunk_id: str
+    title: str
+    domain: Domain
+    version: str
+    status: VersionStatus
+    effective_date: date
+    owner: str
+    authority_level: int = Field(ge=1, le=5)
+    section_path: str
+    excerpt: str
+    score: float
+
+
+class AskOutput(BaseModel):
+    id: str
+    question: str
+    answer: str
+    outcome: Literal["source_grounded", "no_sources"]
+    sources: list[Citation]
+    filters: dict
+    provider: str
+    created_at: datetime
+    notice: str
+    reliability: GuardResult

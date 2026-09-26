@@ -18,6 +18,8 @@ def test_migration_upgrade_downgrade_and_schema_match(tmp_path):
         "document_versions",
         "document_chunks",
         "question_runs",
+        "guard_results",
+        "audit_events",
     } <= set(inspect(engine).get_table_names())
     command.check(config)
     command.downgrade(config, "base")

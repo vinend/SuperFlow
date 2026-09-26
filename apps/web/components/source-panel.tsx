@@ -5,8 +5,14 @@ import { dateLabel } from "@/lib/api";
 import type { SourcePanelProps } from "@/lib/workspace-contracts";
 import { Dialog } from "./ui/dialog";
 import { Metadata, StatusBadge } from "./ui/primitives";
+import { RELIABILITY_PRESENTATION } from "@/lib/reliability-view";
 
-export function SourcePanel({ source, close, openDocument }: SourcePanelProps) {
+export function SourcePanel({
+  source,
+  close,
+  openDocument,
+  reliability,
+}: SourcePanelProps) {
   return (
     <Dialog
       label="Source Panel"
@@ -33,6 +39,13 @@ export function SourcePanel({ source, close, openDocument }: SourcePanelProps) {
           <span className="domain-label">{source.domain}</span>
           <StatusBadge status={source.status} />
         </div>
+        {reliability && (
+          <p className="source-guard-context">
+            Answer reliability:{" "}
+            {RELIABILITY_PRESENTATION[reliability.status].label}. This state
+            applies to the complete answer evidence set.
+          </p>
+        )}
         {source.status !== "active" && (
           <div className="notice">
             This is a {source.status} version. Consult an active source before
@@ -59,6 +72,21 @@ export function SourcePanel({ source, close, openDocument }: SourcePanelProps) {
         >
           Open document <ExternalLink size={15} />
         </button>
+        {reliability?.active_replacements
+          .filter(
+            (item) =>
+              item.document_id === source.document_id &&
+              item.version_id !== source.version_id,
+          )
+          .map((item) => (
+            <button
+              className="text-button active-replacement"
+              key={item.version_id}
+              onClick={() => openDocument(item.document_id, item.version_id)}
+            >
+              Open active replacement · v{item.version}
+            </button>
+          ))}
         <p className="muted small">
           This excerpt refers to the exact stored version shown above.
         </p>

@@ -68,8 +68,8 @@ test("role-aware knowledge inventory and application navigation", async ({
     page.getByRole("heading", { name: "Knowledge workspace" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("button", { name: "Cases Later" }),
-  ).toBeDisabled();
+    page.getByRole("link", { name: "Cases", exact: true }),
+  ).toBeVisible();
   await page.getByRole("link", { name: "Knowledge Hub", exact: true }).click();
   await expect(
     page.getByRole("button", { name: /^Annual Leave Policy/ }).first(),

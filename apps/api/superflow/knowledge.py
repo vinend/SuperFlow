@@ -141,11 +141,16 @@ def citation_payload(
     citation_id: int,
     score: float = 0,
 ) -> dict:
-    chunk = db.get(DocumentChunk, chunk_id)
-    if chunk is None:
+    identity = db.execute(
+        select(DocumentChunk.version_id, DocumentVersion.document_id)
+        .join(DocumentVersion, DocumentVersion.id == DocumentChunk.version_id)
+        .where(DocumentChunk.id == chunk_id)
+    ).first()
+    if identity is None:
         raise HTTPException(409, "A cited chunk is unavailable. Ask the question again.")
-    version = db.get(DocumentVersion, chunk.version_id)
-    document = accessible_document(db, user, version.document_id)
+    document = accessible_document(db, user, identity.document_id)
+    chunk = db.get(DocumentChunk, chunk_id)
+    version = db.get(DocumentVersion, identity.version_id)
     return {
         "citation_id": citation_id,
         "document_id": document.id,

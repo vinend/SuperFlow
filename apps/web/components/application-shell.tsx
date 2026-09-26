@@ -21,11 +21,15 @@ import type { ReactNode } from "react";
 import { useSession } from "./session";
 import { Dialog } from "./ui/dialog";
 
-export type View = "home" | "ask" | "knowledge";
+export type KnowledgeView = "home" | "ask" | "knowledge";
+export type View = KnowledgeView | "cases" | "workflows" | "decisions";
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
   knowledge: "Knowledge Hub",
+  cases: "Cases",
+  workflows: "Workflows",
+  decisions: "Decision Center",
 };
 const NAV = [
   { title: "Home", href: "/", view: "home", icon: Home },
@@ -38,12 +42,24 @@ const NAV = [
   },
 ];
 const LATER = [
-  { title: "Cases", icon: FolderKanban },
-  { title: "Workflows", icon: GitBranch },
-  { title: "Decision Center", icon: Check },
   { title: "Analytics", icon: ChartNoAxesCombined },
   { title: "Governance", icon: ShieldCheck },
 ];
+NAV.push(
+  { title: "Cases", href: "/cases", view: "cases", icon: FolderKanban },
+  {
+    title: "Workflows",
+    href: "/workflows",
+    view: "workflows",
+    icon: GitBranch,
+  },
+  {
+    title: "Decision Center",
+    href: "/decisions",
+    view: "decisions",
+    icon: Check,
+  },
+);
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.
 export function ApplicationShell({
@@ -105,7 +121,7 @@ export function ApplicationShell({
       </div>
       <div className="sidebar-foot">
         <div className="phase-label">
-          Knowledge Core <span>Phase 0 / 1</span>
+          Knowledge + Action <span>Phase 0–3</span>
         </div>
         <p>Enterprise Knowledge-to-Action Platform</p>
         <div className="sidebar-rule" />
@@ -178,7 +194,7 @@ export function ApplicationShell({
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
           <span>
-            Phase 0 + 1 · Synthetic prototype <ArrowUpRight size={12} />
+            Phase 0–3 · Synthetic prototype <ArrowUpRight size={12} />
           </span>
         </footer>
       </div>

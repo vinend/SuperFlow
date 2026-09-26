@@ -57,7 +57,7 @@ def test_role_inventory_and_direct_read_non_leakage(client, employee, admin):
     assert client.get("/api/documents/proposal-a", headers=employee).status_code == 404
     missing = client.get("/api/documents/unknown", headers=employee)
     assert missing.json() == client.get("/api/documents/proposal-a", headers=employee).json()
-    assert len(client.get("/api/documents", headers=admin).json()) == 12
+    assert len(client.get("/api/documents", headers=admin).json()) == 13
 
 
 def test_retrieval_non_leakage_even_with_restricted_filter(client, employee):
@@ -352,9 +352,6 @@ def test_failed_upload_and_version_are_atomic(client, admin, db):
 
 def test_later_phase_routes_are_absent(client, admin):
     for endpoint in [
-        "cases",
-        "approvals",
-        "audit",
         "analytics/overview",
         "regulatory/compare",
         "finance/calculate",
