@@ -62,7 +62,7 @@ export function ApplicationShell({
           <Layers3 size={21} />
         </span>
         <span>
-          SuperFlow<span className="brand-caption">KNOWLEDGE TO ACTION</span>
+          SuperFlow<span className="brand-caption">Knowledge to action</span>
         </span>
       </Link>
       <div className="workspace-label">
@@ -71,7 +71,7 @@ export function ApplicationShell({
           Superbank<small>Internal knowledge workspace</small>
         </span>
       </div>
-      <p className="nav-label">WORKSPACE</p>
+      <p className="nav-label">Workspace</p>
       <nav aria-label="Main navigation">
         {NAV.map((item) => (
           <Link
@@ -88,7 +88,7 @@ export function ApplicationShell({
         ))}
       </nav>
       <div className="nav-divider" />
-      <p className="nav-label">PLATFORM / LATER PHASES</p>
+      <p className="nav-label">Later phases</p>
       <div className="future-nav">
         {LATER.map((item) => (
           <button
@@ -105,7 +105,7 @@ export function ApplicationShell({
       </div>
       <div className="sidebar-foot">
         <div className="phase-label">
-          KNOWLEDGE CORE <span>0 / 1</span>
+          Knowledge Core <span>Phase 0 / 1</span>
         </div>
         <p>Enterprise Knowledge-to-Action Platform</p>
         <div className="sidebar-rule" />
@@ -150,7 +150,7 @@ export function ApplicationShell({
             <strong>{TITLES[view]}</strong>
           </div>
           <div className="session-controls">
-            <span className="demo-label">DEMO ROLE</span>
+            <span className="demo-label">Demo role</span>
             <span className="avatar">
               {user.name
                 .split(" ")

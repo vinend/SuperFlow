@@ -1,5 +1,63 @@
 import { expect, test } from "@playwright/test";
 
+test("compact Ask and repository filters preserve source inspection", async ({
+  page,
+}) => {
+  await page.goto("/ask");
+  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await expect(
+    page.getByRole("textbox", { name: "Your question" }),
+  ).toBeEnabled();
+  await expect(page.locator(".question-history")).toHaveCount(0);
+  const composer = await page.locator(".question-form").boundingBox();
+  expect(composer!.height).toBeLessThan(120);
+  await expect(
+    page.getByRole("combobox", { name: "Question source" }),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Knowledge Hub", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "Knowledge domain" })
+    .selectOption("People");
+  await expect(
+    page.getByRole("button", { name: /^Annual Leave Policy/ }).first(),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^Incident Reporting SOP/ }),
+  ).toHaveCount(0);
+  await page
+    .getByRole("combobox", { name: "Document status filter" })
+    .selectOption("draft");
+  await expect(
+    page.getByRole("heading", { name: "No matching sources" }),
+  ).toBeVisible();
+  await page
+    .getByRole("combobox", { name: "Document status filter" })
+    .selectOption("active");
+  await page
+    .getByRole("combobox", { name: "Sort documents" })
+    .selectOption("recent");
+  await page
+    .getByRole("button", { name: /^Annual Leave Policy/ })
+    .first()
+    .click();
+  const detail = page.getByRole("dialog", { name: "Document details" });
+  await expect(
+    detail.getByRole("heading", { name: "Source content" }),
+  ).toBeVisible();
+  await expect(detail).toContainText("15 days");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBeTruthy();
+  await expect(
+    detail.getByRole("button", { name: "Close document details" }),
+  ).toBeInViewport();
+  await page.keyboard.press("Escape");
+  await expect(detail).toHaveCount(0);
+});
+
 test("role-aware knowledge inventory and application navigation", async ({
   page,
 }) => {
@@ -7,7 +65,7 @@ test("role-aware knowledge inventory and application navigation", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Welcome back, Maya." }),
+    page.getByRole("heading", { name: "Knowledge workspace" }),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Cases Later" }),

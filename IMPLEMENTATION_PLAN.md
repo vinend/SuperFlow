@@ -44,12 +44,14 @@ Pekerjaan yang diotorisasi saat ini adalah **rekonsiliasi Fase 0/1 dan penyempur
 ## Penyempurnaan UI
 
 1. Baca konteks proyek dan audit implementasi sebelum perubahan.
-2. Periksa komponen yang ada dan referensi publik 21st.dev; dokumentasikan provenance di [UI_REFERENCES.md](docs/UI_REFERENCES.md).
+2. Periksa komponen yang ada, cari kandidat melalui MCP 21st.dev, dan inspeksi source/dependencies sebelum adaptasi. Dokumentasikan provenance dan batas kuota di [UI_REFERENCES.md](docs/UI_REFERENCES.md).
 3. Gunakan shell navy, token terpusat, hierarchy jelas, dan kepadatan enterprise.
 4. Home berpusat pada Ask, sumber terbaru, dan riwayat; counts hanya pendukung.
 5. Knowledge Hub memakai tabel; Ask memisahkan jawaban/evidence/metadata/tindakan membaca sumber.
 6. Gunakan primitive header/badge/metadata/loading/error/empty/dialog; pertahankan API/editor/detail yang sudah berfungsi.
 7. Perbaiki fokus, Escape, navigasi keyboard, responsive sheet, reload, dan race saat pergantian role.
+
+Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tinggi composer, area kosong, rail riwayat, kepadatan tabel, detail sheet, dan label dekoratif. Pola Origin UI Table serta InputBar diadaptasi; API dan backend dipertahankan. Hasil dan kandidat yang tidak diadopsi dicatat di [FRONTEND_REFINEMENT.md](docs/FRONTEND_REFINEMENT.md).
 
 ## Verifikasi
 

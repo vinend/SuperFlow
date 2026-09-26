@@ -243,6 +243,6 @@ Windows sandbox dapat memblokir worker Next.js/Chromium, download dependency, da
 - Pemeriksaan akses/versi dasar tetap ada untuk melindungi konten; reliability/evidence/conflict/audit Fase 2 belum tersedia.
 - Cases, Workflows, Decision Center, Analytics, Governance, regulation comparison, financial analysis, AML/FIU, dan pengukuran penghematan belum diimplementasikan.
 - Kontrak frontend mencadangkan komponen fase berikutnya tanpa fungsi atau data palsu; belum ada engine Generative UI dinamis.
-- Akses 21st.dev pada sesi ini melalui referensi publik, bukan MCP/CLI terkonfigurasi; pola yang diadaptasi dicatat di [UI_REFERENCES.md](docs/UI_REFERENCES.md).
+- Pass frontend memakai MCP 21st.dev untuk pencarian dan inspeksi source tabel. Kuota gratis dua retrieval membatasi pemeriksaan source kandidat lain; komponen yang belum diperiksa tidak dipasang. Adopsi pola dan hasil pass dicatat di [FRONTEND_REFINEMENT.md](docs/FRONTEND_REFINEMENT.md).
 - Docker tidak tersedia pada mesin pemeriksaan; PostgreSQL lokal nyata digunakan untuk verifikasi. Keyboard/browser diuji; audit screen reader lengkap belum dilakukan.
 - Dokumen seed berbahasa Inggris dipertahankan sebagai fixture retrieval sintetis. Panduan proyek menggunakan Bahasa Indonesia; AGENTS/PRD dan file instruksi Next.js mengikuti bahasa sumbernya.

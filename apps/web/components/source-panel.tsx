@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, ExternalLink, FileText, X } from "lucide-react";
+import { BookOpen, ExternalLink, X } from "lucide-react";
 import { dateLabel } from "@/lib/api";
 import type { SourcePanelProps } from "@/lib/workspace-contracts";
 import { Dialog } from "./ui/dialog";
@@ -27,13 +27,10 @@ export function SourcePanel({ source, close, openDocument }: SourcePanelProps) {
         </button>
       </div>
       <div className="source-content">
-        <div className="eyebrow">CITATION [{source.citation_id}]</div>
-        <div className="source-file">
-          <FileText size={26} />
-        </div>
+        <div className="context-label">Citation [{source.citation_id}]</div>
         <h2>{source.title}</h2>
         <div className="tag-row">
-          <span className="pill neutral">{source.domain}</span>
+          <span className="domain-label">{source.domain}</span>
           <StatusBadge status={source.status} />
         </div>
         {source.status !== "active" && (
@@ -54,7 +51,7 @@ export function SourcePanel({ source, close, openDocument }: SourcePanelProps) {
             { label: "Section", value: source.section_path },
           ]}
         />
-        <div className="eyebrow">SOURCE EXCERPT</div>
+        <h3 className="context-label">Source excerpt</h3>
         <blockquote>{source.excerpt}</blockquote>
         <button
           className="button secondary full"
@@ -63,8 +60,7 @@ export function SourcePanel({ source, close, openDocument }: SourcePanelProps) {
           Open document <ExternalLink size={15} />
         </button>
         <p className="muted small">
-          Citations refer to the exact stored version. Access is checked by the
-          API before this content is returned.
+          This excerpt refers to the exact stored version shown above.
         </p>
       </div>
       <details className="source-identity">

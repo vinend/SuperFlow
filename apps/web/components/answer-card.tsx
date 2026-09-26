@@ -15,7 +15,9 @@ export function AnswerCard({
   return (
     <section className="answer-card" aria-label="Answer Card">
       <div className="answer-heading">
-        <div className="eyebrow">ANSWER / {dateLabel(answer.created_at)}</div>
+        <div className="answer-label">
+          Answer <span>· {dateLabel(answer.created_at)}</span>
+        </div>
         <span className="answer-outcome">
           {answer.outcome === "source_grounded"
             ? "Source-grounded"
@@ -84,13 +86,13 @@ export function AnswerCard({
         </span>
         <span>
           {answer.sources.length
-            ? "Guard checks pending Phase 2"
+            ? "Inspect the cited section"
             : "No conclusion generated"}
         </span>
       </div>
       <div className="answer-next">
         <div>
-          <span className="eyebrow">NEXT STEP</span>
+          <span className="context-label">Next action</span>
           <p>
             {answer.sources.length
               ? "Read the full source before applying this guidance."

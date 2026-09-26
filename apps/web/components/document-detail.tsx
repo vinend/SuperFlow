@@ -127,20 +127,24 @@ export function DocumentDetail({
         </button>
       </div>
       <div className="detail-header">
-        <div className="eyebrow">
-          {document.domain.toUpperCase()} / GOVERNED KNOWLEDGE
+        <div className="detail-identity">
+          <div>
+            <div className="context-label">
+              {document.domain} / Knowledge Hub
+            </div>
+            <h2>{document.title}</h2>
+            <p className="muted">
+              Owned by {document.owner_name} · Authority{" "}
+              {document.authority_level} / 5
+            </p>
+          </div>
+          <button
+            className="button secondary"
+            onClick={() => askDocument(document.id)}
+          >
+            <Sparkles size={14} /> Ask about this source
+          </button>
         </div>
-        <h2>{document.title}</h2>
-        <p className="muted">
-          Owned by {document.owner_name} · Authority {document.authority_level}
-          /5
-        </p>
-        <button
-          className="button secondary"
-          onClick={() => askDocument(document.id)}
-        >
-          <Sparkles size={14} /> Ask about this source
-        </button>
         {canManage && (
           <div className="tag-row">
             <button
@@ -183,7 +187,7 @@ export function DocumentDetail({
             <StatusBadge status={version.status} />
             <span className="muted small">
               Effective {dateLabel(version.effective_date)} ·{" "}
-              {version.chunk_count} chunks
+              {version.chunk_count} source sections
             </span>
           </div>
           {version.status !== "active" && (
@@ -202,6 +206,7 @@ export function DocumentDetail({
               {message}
             </div>
           )}
+          <h3 className="source-content-heading">Source content</h3>
           <div className="document-excerpts">
             {version.chunks?.map((chunk) => (
               <section key={chunk.id}>
@@ -249,13 +254,7 @@ export function DocumentDetail({
             <Download size={14} /> Download original
           </button>
           <h3>Access roles</h3>
-          <div className="tag-row">
-            {document.access_roles.map((role) => (
-              <span className="pill neutral" key={role}>
-                {role}
-              </span>
-            ))}
-          </div>
+          <p className="access-roles">{document.access_roles.join(" · ")}</p>
           <h3>Related sources</h3>
           {document.related_document_ids.length ? (
             document.related_document_ids.map((id) => (

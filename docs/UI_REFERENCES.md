@@ -4,6 +4,8 @@
 
 Pada pass rekonsiliasi 26 September 2026, tool MCP, skill, dan CLI 21st.dev tidak terkonfigurasi dalam sesi ini. Katalog publik 21st.dev dapat dibaca melalui web. Kandidat diperiksa setelah komponen repo, termasuk contoh kode, antarmuka props, dan dependensi yang tersedia pada halaman referensi.
 
+Pada pass frontend berikutnya di tanggal yang sama, **MCP 21st.dev berhasil diakses melalui HTTP**. Pencarian tabel, composer, InputBar, dan sheet dilakukan; source Origin UI Table dan Basic Data Table diambil sebelum perubahan. Kuota gratis dua retrieval habis setelah pemeriksaan tersebut; source Records Table terkunci dan tidak diadopsi. InputBar diperiksa melalui source publik resmi penulis. Rincian keputusan dan hasil tersedia di [FRONTEND_REFINEMENT.md](FRONTEND_REFINEMENT.md).
+
 Adopsi dilakukan pada **pola komposisi**, dengan implementasi TypeScript di repo dan token SuperFlow. Tidak ada instalasi otomatis atau klaim bahwa paket komponen vendor telah diimpor.
 
 | Referensi yang diperiksa                                                         | Pola yang diadaptasi                                                                            | Implementasi SuperFlow                                                                          |
@@ -24,6 +26,8 @@ Komposisi Appshell yang dipublikasikan merujuk primitive sidebar/breadcrumb lain
 - Home mengutamakan pertanyaan, sumber terkini menurut waktu versi disimpan, dan riwayat personal. Tidak ada KPI penghematan atau aktivitas yang dibuat-buat.
 - Ask memisahkan jawaban, evidence, metadata, dan tindakan membaca sumber. `Source-grounded` adalah hasil retrieval, bukan keputusan Guard.
 - Knowledge Hub memakai tabel, filter domain/status, pencarian judul, dan pengurutan lokal atas katalog yang sudah difilter backend.
+- Primitive `DataTable` mengadaptasi wrapper tabel semantik Origin UI; DocumentTable tetap memetakan data API dan callback existing. Row dibuat padat; versi/status satu baris, ikon dokumen sederhana, warna status hanya untuk state versi. Tidak memasang TanStack atau primitive vendor tambahan.
+- Composer terkontrol dibuat ringkas, scope retrieval dipisahkan dari form, dan rail riwayat tidak dirender ketika kosong. Detail dokumen memakai Dialog existing sebagai sheet kanan dengan header ringkas, section konten, dan versi/akses yang tidak dibungkus card berulang.
 - Dialog native menyediakan fokus modal, Escape, dan pemulihan fokus. Source Panel bersifat kontekstual di desktop dan menjadi sheet modal di mobile. Navigasi mobile memakai primitive yang sama.
 
 ## Komponen yang dipertahankan

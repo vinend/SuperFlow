@@ -3,15 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import {
-  ArrowRight,
-  BookOpen,
-  Clock3,
-  Plus,
-  Search,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { ArrowRight, BookOpen, Plus, Search, X } from "lucide-react";
 import { DOMAINS } from "@/lib/api";
 import { displayVersion } from "@/lib/knowledge-view";
 import { useSession } from "./session";
@@ -25,7 +17,6 @@ import { SourcePanel } from "./source-panel";
 import { DocumentDetail } from "./document-detail";
 import { DocumentEditor } from "./document-editor";
 import {
-  EmptyState,
   ErrorState,
   LoadingState,
   PageHeader,
@@ -85,7 +76,7 @@ function Workspace({ view }: { view: View }) {
     .slice(0, 4);
   const suggestions = (
     <div className="prompt-suggestions">
-      <span className="eyebrow">START WITH</span>
+      <span className="suggestion-label">Try</span>
       {SUGGESTIONS.map((item) => (
         <button
           disabled={w.asking || w.loading}
@@ -94,7 +85,6 @@ function Workspace({ view }: { view: View }) {
           title={item.question}
         >
           <span>{item.title}</span>
-          <ArrowRight size={13} />
         </button>
       ))}
     </div>
@@ -157,7 +147,6 @@ function Workspace({ view }: { view: View }) {
       onSubmit={() => w.submitQuestion()}
       busy={w.asking}
       disabled={w.loading}
-      toolbar={view === "ask" ? filters : undefined}
     />
   );
   const result = (
@@ -187,19 +176,15 @@ function Workspace({ view }: { view: View }) {
           view === "home"
             ? `${w.user.department} / ${w.user.role_name}`
             : view === "ask"
-              ? "KNOWLEDGE / ASK"
-              : "KNOWLEDGE / REPOSITORY"
+              ? "Knowledge / Ask"
+              : "Knowledge / Repository"
         }
-        title={
-          view === "home"
-            ? `Welcome back, ${w.user.name.split(" ")[0]}.`
-            : TITLES[view]
-        }
+        title={view === "home" ? "Knowledge workspace" : TITLES[view]}
         description={
           view === "home"
-            ? "Your starting point for policies, procedures, and the knowledge behind your work."
+            ? "Policies, procedures, and sources available to your role."
             : view === "ask"
-              ? "Work through a question with its sources, versions, and context in view."
+              ? "Ask a question. Inspect the evidence and the exact source version."
               : "A shared repository of enterprise sources. Your role determines what you can access."
         }
         action={
@@ -247,16 +232,15 @@ function Workspace({ view }: { view: View }) {
             <section className="home-primary">
               <SectionHeader
                 title="Ask SuperFlow"
-                detail="Start with a question. Keep the source close."
-                action={<Sparkles size={18} className="accent" />}
+                detail="Search across the sources available to your role."
               />
               {composer}
               {suggestions}
               {result}
               <section className="knowledge-section">
                 <SectionHeader
-                  title="Recently added sources"
-                  detail="The latest source versions available to your role."
+                  title="Recent source updates"
+                  detail="Latest stored versions available to your role."
                   action={
                     <Link className="text-link" href="/knowledge">
                       View repository <ArrowRight size={14} />
@@ -272,95 +256,100 @@ function Workspace({ view }: { view: View }) {
               </section>
             </section>
             <aside className="home-secondary">
-              <SectionHeader
-                title="Pick up where you left off"
-                action={<Clock3 size={16} className="muted" />}
-              />
-              <QuestionHistory
-                items={w.history}
-                open={w.openQuestion}
-                selectedId={w.answer?.id}
-                loading={w.loading}
-                disabled={w.asking}
-                limit={5}
-              />
-              <Link href="/ask" className="text-link history-more">
-                All recent questions <ArrowRight size={14} />
-              </Link>
               <div className="knowledge-brief">
-                <span className="eyebrow">YOUR KNOWLEDGE CONTEXT</span>
+                <SectionHeader title="Your knowledge context" />
                 <p>
                   <strong>{w.loading ? "—" : w.documents.length}</strong>{" "}
                   accessible documents{" "}
                   <span>· {w.loading ? "—" : activeCount} active</span>
                 </p>
                 <p className="muted small">
-                  Default answers use active versions. Open any citation to
+                  Current answers use active source versions. Open a citation to
                   inspect the exact section.
                 </p>
                 <Link href="/knowledge" className="text-link">
                   Explore your sources <ArrowRight size={13} />
                 </Link>
               </div>
+              <section className="home-history">
+                <SectionHeader title="Recent questions" />
+                <QuestionHistory
+                  items={w.history}
+                  open={w.openQuestion}
+                  selectedId={w.answer?.id}
+                  loading={w.loading}
+                  disabled={w.asking}
+                  limit={5}
+                />
+                {w.history.length > 0 && (
+                  <Link href="/ask" className="text-link history-more">
+                    All recent questions <ArrowRight size={14} />
+                  </Link>
+                )}
+              </section>
             </aside>
           </div>
           <div className="platform-context">
-            <span className="eyebrow">THE SUPERFLOW PLATFORM</span>
+            <span className="context-label">Knowledge to action</span>
             <div>
-              <strong>Governed Knowledge</strong>
+              <strong>Knowledge</strong>
               <ArrowRight size={13} />
-              <strong>AI Agent</strong>
+              <strong>Evidence</strong>
               <ArrowRight size={13} />
-              <span>Reliability Layer</span>
+              <span>Decision</span>
               <ArrowRight size={13} />
-              <span>Controlled Action</span>
-              <ArrowRight size={13} />
-              <span>Business Impact</span>
+              <span>Action</span>
             </div>
             <p>
-              Knowledge Core is available. Reliability and action modules follow
-              in later phases.
+              Knowledge and source inspection are available. Decision and action
+              modules follow in later phases.
             </p>
           </div>
         </>
       )}
       {view === "ask" && (
-        <div className="ask-layout">
+        <div
+          className={`ask-layout ${w.history.length || w.loading ? "has-history" : ""}`}
+        >
           <section className="ask-main">
             <div className="compose-heading">
-              <BookOpen size={19} />
-              <span>Ask across your knowledge repository</span>
+              <span>Question</span>
               <Link className="text-link" href="/knowledge">
                 View sources <ArrowRight size={13} />
               </Link>
             </div>
             {composer}
+            <div
+              className="query-scope"
+              role="group"
+              aria-label="Retrieval scope"
+            >
+              {filters}
+            </div>
             {suggestions}
             {result}
             {!w.answer && !w.asking && !w.loading && (
-              <EmptyState
-                title="Your answer and evidence will appear here"
-                description="Ask about a policy or procedure, or pick up a saved question. Matching sections remain linked to their original document versions."
-              />
+              <p className="ask-guidance">
+                Current answers use active source versions. Open the cited
+                source to inspect the exact section.
+              </p>
             )}
           </section>
-          <aside className="question-history">
-            <SectionHeader
-              title="Recent questions"
-              action={<Clock3 size={15} />}
-            />
-            <QuestionHistory
-              items={w.history}
-              open={w.openQuestion}
-              selectedId={w.answer?.id}
-              loading={w.loading}
-              disabled={w.asking}
-            />
-            <p className="history-note">
-              Saved to {w.user.name}’s demo identity. Source access is checked
-              again when a question is opened.
-            </p>
-          </aside>
+          {(w.history.length > 0 || w.loading) && (
+            <aside className="question-history">
+              <SectionHeader title="Recent questions" />
+              <QuestionHistory
+                items={w.history}
+                open={w.openQuestion}
+                selectedId={w.answer?.id}
+                loading={w.loading}
+                disabled={w.asking}
+              />
+              <p className="history-note">
+                Saved for {w.user.name}. Access is checked when reopened.
+              </p>
+            </aside>
+          )}
         </div>
       )}
       {view === "knowledge" && (
@@ -441,7 +430,7 @@ function Workspace({ view }: { view: View }) {
                   : `${visibleDocs.length} of ${w.documents.length} accessible documents`}
               </span>
               <span>
-                Metadata, versions, and original files stored in PostgreSQL
+                Open a document to inspect its source and version history
               </span>
             </div>
           </section>

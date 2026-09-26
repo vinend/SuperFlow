@@ -24,7 +24,8 @@ export function QuestionComposer({
   useEffect(() => {
     const input = ref.current!;
     input.style.height = "auto";
-    input.style.height = `${Math.max(76, Math.min(input.scrollHeight, 180))}px`;
+    input.style.height = `${Math.max(52, Math.min(input.scrollHeight, 140))}px`;
+    input.style.overflowY = input.scrollHeight > 140 ? "auto" : "hidden";
   }, [value]);
   return (
     <form
@@ -38,6 +39,7 @@ export function QuestionComposer({
         Your question
       </label>
       <textarea
+        rows={1}
         ref={ref}
         id="question"
         aria-label="Your question"
@@ -62,7 +64,7 @@ export function QuestionComposer({
       {toolbar && <div className="composer-context">{toolbar}</div>}
       <div className="composer-footer">
         <span id="question-hint">
-          <CornerDownLeft size={13} /> Enter to ask{" "}
+          <CornerDownLeft size={13} aria-hidden="true" /> Enter to ask{" "}
           <span>· Shift + Enter for a new line</span>
         </span>
         <button

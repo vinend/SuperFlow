@@ -1,8 +1,8 @@
 "use client";
 
-import { ChevronRight, MessageSquare } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { HistoryItem, dateLabel } from "@/lib/api";
-import { EmptyState, LoadingState } from "./ui/primitives";
+import { LoadingState } from "./ui/primitives";
 
 export function QuestionHistory({
   items,
@@ -22,10 +22,9 @@ export function QuestionHistory({
   if (loading) return <LoadingState label="Loading saved questions…" />;
   if (!items.length)
     return (
-      <EmptyState
-        title="No saved questions yet"
-        description="Ask a question to start your personal knowledge history."
-      />
+      <p className="history-empty">
+        No saved questions yet. Your questions will appear here after you ask.
+      </p>
     );
   return (
     <div className="history-list">
@@ -36,7 +35,6 @@ export function QuestionHistory({
           onClick={() => open(item.id)}
           className={selectedId === item.id ? "history-selected" : ""}
         >
-          <MessageSquare size={15} />
           <span>
             {item.question}
             <small>
