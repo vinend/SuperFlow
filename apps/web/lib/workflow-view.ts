@@ -15,7 +15,7 @@ export type DecisionAction = ApprovalView["allowed_actions"][number];
 export const DECISION_LABELS: Record<DecisionAction, string> = {
   approve: "Approve",
   reject: "Reject",
-  "request-evidence": "Request evidence",
+  "request-evidence": "Request More Information",
   escalate: "Escalate",
   override: "Override",
 };

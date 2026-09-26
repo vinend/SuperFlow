@@ -1,5 +1,7 @@
 # SuperFlow Guard — Fase 2
 
+**Rekonsiliasi PRD v2:** model/API di dokumen ini tetap merupakan arsitektur internal. Produk memakai My Work, Progress, Reviews / Approvals, dan Activity. PRD v2 menggantikan PRD v1; Fase 4 belum dimulai.
+
 **Catatan setelah Fase 3:** fondasi ini sekarang dipakai Workflow Core dengan additional EvidenceItem untuk Case requirements; tidak ada reliability engine kedua. GuardEvaluation/QuestionRun tetap sumber persistence. Case context internal dibaca melalui Case API agar requirements tidak dilewati melalui saved Ask. Lihat [WORKFLOW_CORE.md](WORKFLOW_CORE.md). Calculation dan arbitrary action interface tetap tidak dijalankan.
 
 ## Alur dan batas fase

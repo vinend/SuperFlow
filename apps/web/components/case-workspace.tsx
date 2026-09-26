@@ -4,7 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { dateLabel, type Source, type User } from "@/lib/api";
 import type { CaseView } from "@/lib/workflow-contracts";
-import { stateLabel } from "@/lib/workflow-view";
+import {
+  businessStatus,
+  personName,
+  WORK_TYPES,
+  activityLabel,
+} from "@/lib/product-view";
+import { useSession } from "./session";
 import type { useActionWorkspace } from "./use-action-workspace";
 import { EvidenceAttach } from "./case-forms";
 import { WorkflowTimeline } from "./workflow-timeline";
@@ -23,6 +29,7 @@ export function CaseWorkspace({
   user: User;
 }) {
   const router = useRouter();
+  const { users } = useSession();
   const [source, setSource] = useState<Source | null>(null);
   const [reason, setReason] = useState("");
   const [editing, setEditing] = useState(false);
@@ -41,12 +48,11 @@ export function CaseWorkspace({
   return (
     <>
       <div className="case-context-bar">
-        <StatusBadge status={stateLabel(current.status)} />
-        <span>Owner: {current.owner_id}</span>
-        <span>{current.type.replaceAll("_", " ")}</span>
-        <span>Revision {current.revision}</span>
+        <StatusBadge status={businessStatus(current.status)} />
+        <span>Owner: {personName(current.owner_id, users)}</span>
+        <span>{WORK_TYPES[current.type]}</span>
         <span>Updated {dateLabel(current.updated_at)}</span>
-        <Link href="/cases">All cases</Link>
+        <Link href="/cases">My Work</Link>
       </div>
       <div className="case-layout">
         <div className="case-execution">
@@ -59,7 +65,7 @@ export function CaseWorkspace({
               onToggle={(event) => setEditing(event.currentTarget.open)}
               className="case-edit"
             >
-              <summary>Edit case identity</summary>
+              <summary>Edit request details</summary>
               <form
                 className="workflow-form"
                 onSubmit={async (event) => {
@@ -78,7 +84,7 @@ export function CaseWorkspace({
                 <label>
                   Title
                   <input
-                    aria-label="Edit case title"
+                    aria-label="Edit request title"
                     value={title || current.title}
                     onChange={(event) => setTitle(event.target.value)}
                     required
@@ -90,15 +96,21 @@ export function CaseWorkspace({
                   ["manager", "governance"].includes(user.role_id) && (
                     <label>
                       Owner
-                      <input
-                        aria-label="Edit case owner"
+                      <select
+                        aria-label="Edit request owner"
                         value={owner || current.owner_id}
                         onChange={(event) => setOwner(event.target.value)}
-                      />
+                      >
+                        {users.map((person) => (
+                          <option key={person.id} value={person.id}>
+                            {person.name}
+                          </option>
+                        ))}
+                      </select>
                     </label>
                   )}
                 <button className="button secondary" disabled={w.busy}>
-                  Save case
+                  Save request
                 </button>
               </form>
             </details>
@@ -106,65 +118,71 @@ export function CaseWorkspace({
           {current.allowed_actions.includes("start_workflow") && (
             <section className="workflow-start">
               <SectionHeader
-                title="Start controlled review"
+                title="Submit for review"
                 detail="Source-backed evidence still requires an independent human decision."
               />
-              {w.definitions.map((definition) => (
-                <div key={definition.id} className="definition-row">
-                  <div>
-                    <strong>{definition.name}</strong>
-                    <p className="muted small">
-                      v{definition.version} · task → Guard → authority routing →
-                      decision
-                    </p>
+              {w.definitions
+                .filter((definition) => definition.id === "generic-review-v1")
+                .map((definition) => (
+                  <div key={definition.id} className="definition-row">
+                    <button
+                      className="button primary"
+                      disabled={w.busy}
+                      onClick={() =>
+                        void action(`/api/workflows/${definition.id}/start`, {
+                          case_id: current.id,
+                        })
+                      }
+                    >
+                      Submit for review
+                    </button>
                   </div>
-                  <button
-                    className="button primary"
-                    disabled={w.busy}
-                    onClick={() =>
-                      void action(`/api/workflows/${definition.id}/start`, {
-                        case_id: current.id,
-                      })
-                    }
-                  >
-                    Start workflow
-                  </button>
-                </div>
-              ))}
+                ))}
             </section>
           )}
           {current.workflow && (
             <>
-              <SectionHeader
-                title="Execution"
-                detail={stateLabel(current.workflow.status)}
-              />
-              <ul className="task-list" aria-label="Case tasks">
-                {current.workflow.tasks.map((task) => (
-                  <li key={task.id}>
-                    <div>
-                      <strong>{task.title}</strong>
-                      <p className="muted small">
-                        {task.owner_id} · due {dateLabel(task.due_at)}
-                      </p>
-                      <StatusBadge status={stateLabel(task.status)} />
-                    </div>
-                    <div className="task-actions">
-                      {task.allowed_actions.map((item) => (
-                        <button
-                          key={item}
-                          className="button secondary"
-                          disabled={w.busy}
-                          onClick={() =>
-                            void action(`/api/tasks/${task.id}/${item}`)
-                          }
-                        >
-                          {item === "start" ? "Start task" : "Complete task"}
-                        </button>
-                      ))}
-                    </div>
-                  </li>
-                ))}
+              {current.workflow.tasks.some(
+                (task) => !["DONE", "CANCELLED"].includes(task.status),
+              ) && (
+                <SectionHeader
+                  title="Your next action"
+                  detail={businessStatus(current.workflow.status)}
+                />
+              )}
+              <ul className="task-list" aria-label="Action items">
+                {current.workflow.tasks
+                  .filter(
+                    (task) => !["DONE", "CANCELLED"].includes(task.status),
+                  )
+                  .map((task) => (
+                    <li key={task.id}>
+                      <div>
+                        <strong>Check supporting information</strong>
+                        <p className="muted small">
+                          {personName(task.owner_id, users)} · due{" "}
+                          {dateLabel(task.due_at)}
+                        </p>
+                        <StatusBadge status={businessStatus(task.status)} />
+                      </div>
+                      <div className="task-actions">
+                        {task.allowed_actions.map((item) => (
+                          <button
+                            key={item}
+                            className="button secondary"
+                            disabled={w.busy}
+                            onClick={() =>
+                              void action(`/api/tasks/${task.id}/${item}`)
+                            }
+                          >
+                            {item === "start"
+                              ? "Begin review"
+                              : "Information checked"}
+                          </button>
+                        ))}
+                      </div>
+                    </li>
+                  ))}
               </ul>
               <div className="workflow-controls">
                 {current.workflow.allowed_actions
@@ -181,13 +199,13 @@ export function CaseWorkspace({
                       }
                     >
                       {item === "advance"
-                        ? "Resume workflow"
-                        : "Retry failed step"}
+                        ? "Continue review"
+                        : "Try evidence check again"}
                     </button>
                   ))}
                 {current.workflow.allowed_actions.includes("escalate") && (
                   <details>
-                    <summary>Escalate execution</summary>
+                    <summary>Request higher-authority review</summary>
                     <form
                       className="workflow-form"
                       onSubmit={(event) => {
@@ -221,17 +239,17 @@ export function CaseWorkspace({
               <WorkflowTimeline workflow={current.workflow} />
             </>
           )}
-          <section className="case-audit" aria-label="Case audit trail">
+          <section className="case-audit" aria-label="Activity">
             <SectionHeader
-              title="Audit trail"
-              detail="Recorded actors, state changes, and decision reasons."
+              title="Activity"
+              detail="Request updates and recorded decisions."
             />
             <ol>
               {current.activity.map((event) => (
                 <li key={event.id}>
-                  <strong>{stateLabel(event.event_type)}</strong>
+                  <strong>{activityLabel(event)}</strong>
                   <span>
-                    {event.actor_id} ·{" "}
+                    {personName(event.actor_id, users)} ·{" "}
                     {new Date(event.created_at).toLocaleString()}
                   </span>
                   {typeof event.payload.reason === "string" && (
@@ -243,7 +261,7 @@ export function CaseWorkspace({
           </section>
           {current.allowed_actions.includes("cancel") && (
             <details className="case-cancel">
-              <summary>Close this case without approval</summary>
+              <summary>Close this request</summary>
               <button
                 className="button secondary"
                 disabled={w.busy}
@@ -255,12 +273,12 @@ export function CaseWorkspace({
                   )
                 }
               >
-                Cancel case and open execution
+                Close request and pending actions
               </button>
             </details>
           )}
         </div>
-        <aside className="case-evidence" aria-label="Case evidence context">
+        <aside className="case-evidence" aria-label="Supporting information">
           {pending.length > 0 ? (
             pending.map((approval) => (
               <ApprovalPanel
@@ -324,8 +342,11 @@ export function CaseWorkspace({
                 .map((approval) => (
                   <div key={approval.id}>
                     <strong>
-                      {stateLabel(approval.status)} ·{" "}
-                      {approval.decided_by || approval.requested_from}
+                      {businessStatus(approval.status)} ·{" "}
+                      {personName(
+                        approval.decided_by || approval.requested_from,
+                        users,
+                      )}
                     </strong>
                     <p>{approval.decision_reason}</p>
                   </div>

@@ -115,7 +115,21 @@ export async function api<T>(
     const detail = body?.detail;
     throw new Error(
       typeof detail === "string"
-        ? detail
+        ? /^\/api\/(cases|workflow|tasks|approvals)/.test(path)
+          ? detail
+              .replace(/\bCases\b/g, "Requests")
+              .replace(/\bCase\b/g, "Request")
+              .replace(/\bcase\b/g, "request")
+              .replace(/\bworkflows\b/gi, "reviews")
+              .replace(/\bworkflow\b/gi, "review")
+              .replace(/\btask\b/gi, "action item")
+              .replace(/\bGuard\b/g, "Reliability")
+              .replace(/\bdemo authority\b/g, "review authority")
+              .replace(
+                /Idempotency key already belongs to a different request\./,
+                "This action has already been submitted with different details. Refresh before retrying.",
+              )
+          : detail
         : `Request failed (${response.status}). Check the form fields and retry.`,
     );
   }

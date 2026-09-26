@@ -129,9 +129,7 @@ export function DocumentDetail({
       <div className="detail-header">
         <div className="detail-identity">
           <div>
-            <div className="context-label">
-              {document.domain} / Knowledge Hub
-            </div>
+            <div className="context-label">{document.domain} / Knowledge</div>
             <h2>{document.title}</h2>
             <p className="muted">
               Owned by {document.owner_name} · Authority{" "}

@@ -5,9 +5,15 @@ import type { ApprovalPanelProps } from "@/lib/workspace-contracts";
 import {
   DECISION_LABELS,
   decisionError,
-  stateLabel,
   type DecisionAction,
 } from "@/lib/workflow-view";
+import {
+  businessStatus,
+  personName,
+  roleLabel,
+  reviewReason,
+} from "@/lib/product-view";
+import { useSession } from "./session";
 import { EvidenceChecklist } from "./evidence-checklist";
 import { ErrorState, Metadata, StatusBadge } from "./ui/primitives";
 
@@ -19,6 +25,7 @@ export function ApprovalPanel({
   onSource,
   onDocument,
 }: ApprovalPanelProps) {
+  const { users } = useSession();
   const [action, setAction] = useState<DecisionAction>(
     approval.allowed_actions[0] || "approve",
   );
@@ -26,17 +33,23 @@ export function ApprovalPanel({
   const [label, setLabel] = useState("");
   const [error, setError] = useState("");
   return (
-    <section className="approval-panel" aria-label="Approval Panel">
+    <section className="approval-panel" aria-label="Review request">
       <div className="section-header">
-        <h2>Human decision</h2>
-        <StatusBadge status={stateLabel(approval.status)} />
+        <h2>Review request</h2>
+        <StatusBadge status={businessStatus(approval.status)} />
       </div>
-      <p>{approval.reason_required}</p>
+      <p>{reviewReason(approval, context.reliability.status)}</p>
       <Metadata
         items={[
-          { label: "Reviewer", value: approval.requested_from },
-          { label: "Requester", value: approval.requested_by },
-          { label: "Authority", value: approval.requested_role },
+          {
+            label: "Reviewer",
+            value: personName(approval.requested_from, users),
+          },
+          {
+            label: "Requester",
+            value: personName(approval.requested_by, users),
+          },
+          { label: "Authority", value: roleLabel(approval.requested_role) },
         ]}
       />
       <EvidenceChecklist
@@ -68,7 +81,8 @@ export function ApprovalPanel({
       )}
       {approval.decision_reason && (
         <p className="workflow-note">
-          Decision by {approval.decided_by}: {approval.decision_reason}
+          Decision by {personName(approval.decided_by, users)}:{" "}
+          {approval.decision_reason}
         </p>
       )}
       {approval.allowed_actions.length > 0 ? (
@@ -140,15 +154,15 @@ export function ApprovalPanel({
             {busy ? "Recording decision…" : DECISION_LABELS[action]}
           </button>
           <p className="muted small">
-            Decisions are recorded with your identity. Overrides preserve Guard
-            status and require Governance authority.
+            Decisions are recorded with your identity. Overrides preserve
+            reliability and require Governance Admin authority.
           </p>
         </form>
       ) : (
         <p className="muted small">
           {approval.status === "PENDING"
-            ? "Only the assigned independent reviewer or Governance can decide. Guard prerequisites must be satisfied before approval."
-            : "This decision is closed and remains in the audit history."}
+            ? "Waiting for the assigned independent reviewer. Supporting information must be complete before approval."
+            : "This decision is closed and remains in Activity."}
         </p>
       )}
     </section>

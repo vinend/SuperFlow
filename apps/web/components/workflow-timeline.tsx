@@ -1,48 +1,70 @@
 "use client";
-
 import type { WorkflowTimelineProps } from "@/lib/workspace-contracts";
-import { stateLabel } from "@/lib/workflow-view";
+import { businessStatus, progressFor, personName } from "@/lib/product-view";
 import { dateLabel } from "@/lib/api";
+import { useSession } from "./session";
 import { StatusBadge, SectionHeader } from "./ui/primitives";
 
 export function WorkflowTimeline({ workflow }: WorkflowTimelineProps) {
+  const { users } = useSession();
+  const reviewStep = workflow.steps.find(
+    (step) => step.type === "APPROVAL" && step.key === workflow.current_step,
+  );
+  const progress = progressFor(
+    workflow,
+    users.find((person) => person.id === reviewStep?.owner_id)?.role_id,
+  );
   return (
-    <section aria-label="Workflow timeline">
+    <section aria-label="Progress">
       <SectionHeader
-        title="Workflow progression"
-        detail={`${workflow.definition_name} · v${workflow.definition_version}`}
+        title="Progress"
+        detail="Information, review, and completion."
       />
       <ol className="workflow-timeline">
-        {workflow.steps.map((step) => (
+        <li>
+          <span className="timeline-marker" aria-hidden="true" />
+          <div className="workflow-step-heading">
+            <strong>Request submitted</strong>
+            <StatusBadge status="Completed" />
+          </div>
+          <p className="muted small">{dateLabel(workflow.created_at)}</p>
+        </li>
+        {progress.map((step) => (
           <li
-            key={step.id}
-            aria-current={
-              workflow.current_step === step.key ? "step" : undefined
-            }
-            className={workflow.current_step === step.key ? "current" : ""}
+            key={step.key}
+            aria-current={step.current ? "step" : undefined}
+            className={step.current ? "current" : ""}
           >
             <span className="timeline-marker" aria-hidden="true" />
             <div className="workflow-step-heading">
-              <strong>{step.title}</strong>
-              <StatusBadge status={stateLabel(step.status)} />
+              <strong>
+                {step.current && workflow.status === "ESCALATED"
+                  ? "Higher-authority review"
+                  : step.label}
+              </strong>
+              <StatusBadge status={step.status} />
             </div>
             <p className="muted small">
-              {step.type} {step.owner_id && `· ${step.owner_id}`}{" "}
-              {step.started_at && `· ${dateLabel(step.started_at)}`}{" "}
-              {step.retry_count > 0 && `· ${step.retry_count} retries`}
+              {[
+                step.ownerId ? personName(step.ownerId, users) : null,
+                step.timestamp ? dateLabel(step.timestamp) : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
             {step.attempts.length > 0 && (
               <details>
-                <summary>{step.attempts.length} recorded attempts</summary>
+                <summary>Evidence check history</summary>
                 <ul className="attempt-list">
                   {step.attempts.map((attempt) => (
                     <li key={attempt.id}>
                       <strong>
-                        Attempt {attempt.number} · {stateLabel(attempt.outcome)}
+                        Check {attempt.number} ·{" "}
+                        {businessStatus(attempt.outcome)}
                       </strong>
                       <p>{attempt.reason}</p>
                       <small>
-                        {attempt.actor_id} ·{" "}
+                        {personName(attempt.actor_id, users)} ·{" "}
                         {new Date(attempt.created_at).toLocaleString()}
                       </small>
                     </li>
@@ -55,7 +77,8 @@ export function WorkflowTimeline({ workflow }: WorkflowTimelineProps) {
       </ol>
       {workflow.escalation_reason && (
         <p className="workflow-note">
-          Escalated by {workflow.escalated_by}: {workflow.escalation_reason}
+          Escalated by {personName(workflow.escalated_by, users)}:{" "}
+          {workflow.escalation_reason}
         </p>
       )}
     </section>

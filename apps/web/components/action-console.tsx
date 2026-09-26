@@ -7,6 +7,7 @@ import { useActionWorkspace } from "./use-action-workspace";
 import { CaseCreateForm } from "./case-forms";
 import { CaseWorkspace } from "./case-workspace";
 import { ActionLists } from "./action-lists";
+import { canReview, reviewsLabel, workTitle } from "@/lib/product-view";
 import {
   EmptyState,
   ErrorState,
@@ -33,6 +34,7 @@ function ActionWorkspace({ view }: { view: ActionView }) {
   const caseId = params.get("case");
   const w = useActionWorkspace(user, caseId);
   const current = w.current;
+  const reviewAccess = view !== "decisions" || canReview(user.role_id);
   return (
     <main
       className="main-content action-workspace"
@@ -41,24 +43,20 @@ function ActionWorkspace({ view }: { view: ActionView }) {
       aria-labelledby="page-title"
     >
       <PageHeader
-        eyebrow="Controlled action"
+        eyebrow={current ? "My Work / Request" : "Your workspace"}
         title={
           current
-            ? current.title
-            : view === "cases"
-              ? "Cases"
-              : view === "workflows"
-                ? "Workflows"
-                : "Decision Center"
+            ? workTitle(current.title)
+            : view === "decisions"
+              ? reviewsLabel(user.role_id)
+              : "My Work"
         }
         description={
           current
-            ? "Inspect evidence, execute assigned steps, and record human decisions."
-            : view === "cases"
-              ? "Shared workspaces for reliable knowledge and explicit action."
-              : view === "workflows"
-                ? "Versioned review definitions and persistent execution."
-                : "Review evidence before authorizing continuation."
+            ? "Track progress, provide information, and inspect the supporting sources."
+            : view === "decisions"
+              ? "Requests that need your judgment or approval."
+              : "Your requests, next actions, and review progress."
         }
         action={
           view === "cases" &&
@@ -66,7 +64,7 @@ function ActionWorkspace({ view }: { view: ActionView }) {
           !params.has("new") &&
           !params.has("from") ? (
             <Link className="button primary" href="/cases?new=1">
-              New case
+              New request
             </Link>
           ) : (
             <button
@@ -81,12 +79,21 @@ function ActionWorkspace({ view }: { view: ActionView }) {
       {w.error && (
         <ErrorState message={w.error} retry={() => window.location.reload()} />
       )}
-      {w.loading ? (
-        <LoadingState label="Loading authorized action workspace…" />
+      {!reviewAccess ? (
+        <EmptyState
+          title="Reviews are available to assigned reviewers."
+          description="Track your requests and their review progress in My Work."
+        >
+          <Link href="/cases" className="button secondary">
+            Open My Work
+          </Link>
+        </EmptyState>
+      ) : w.loading ? (
+        <LoadingState label="Loading your work…" />
       ) : caseId && !current ? (
         <EmptyState
-          title="Case unavailable"
-          description="Refresh or open another permitted case."
+          title="Work item unavailable"
+          description="Refresh or open another request you can access."
         />
       ) : current ? (
         <CaseWorkspace current={current} w={w} user={user} />

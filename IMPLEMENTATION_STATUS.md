@@ -1,103 +1,97 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 26 September 2026
+**Diperbarui:** 27 September 2026
 
-**Ruang lingkup:** Fase 0–3. Fase 4 belum dimulai.
+**Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Status:** Workflow Core selesai untuk scope prototype; quality gate final dan inspeksi produksi lulus.
+**Ruang lingkup:** rekonsiliasi Product Experience di atas fondasi Fase 0–3. Fase 4 belum dimulai. Backend tetap menjadi sumber kebenaran.
+
+**Status:** selesai untuk scope prototype; quality gate dan inspeksi produksi final lulus.
 
 # Selesai
 
-- Fase 0–2 dipertahankan: Next.js/FastAPI/PostgreSQL, Alembic, role demo, upload/parsing/version/index/download, Knowledge Hub, retrieval/citation/SourcePanel, saved questions, lima status Guard/evidence dan audit.
-- Migrasi 0004: cases, case_evidence, workflow_definitions/runs/steps, step_attempts, tasks, approvals, action_receipts. PostgreSQL schema match dan SQLite migration lifecycle lulus.
-- Case domain-neutral manual atau dari Ask authorized. Context memakai QuestionRun tersendiri/GuardEvaluation existing, tanpa mengubah original saved answer. BLOCKED memerlukan consent recovery; ACCESS_RESTRICTED ditolak.
-- Internal Case context dikecualikan dari Ask history/saved-Ask API agar Case requirements tidak dilewati.
-- Case Workspace dengan identity/owner/status/reliability, actual sources/evidence, workflow, tasks, approvals dan audit. Revoked source context tidak muncul di list dan direct read memberi 404 aman.
-- Generic review definition versi 1.0, config snapshot, persistent TASK/GUARD/CONDITION/APPROVAL/TERMINAL, state lintas refresh.
-- Task owner/due/status/start/complete; completion menjalankan Guard dan human review. Retry maksimum dua, attempt history, manual SME fallback, escalation Governance dengan reason/actor/time.
-- Decision Center: approve, reject, request evidence, escalate, override. Reviewer independen, no self-approval, mandatory override reason.
-- Request Evidence menyimpan required/missing EvidenceItem, waiting state, actual source attachment, Guard re-evaluation, resume dan request baru.
-- Backend role authority, Case/source metadata locks, expected_revision, unique relationships, optional idempotency receipts, 409 untuk stale/duplicate actions.
-- AuditEvent existing untuk material Case/workflow/task/decision/retry/fallback/escalation/override. Tidak ada audit/reliability/evidence system kedua.
-- Navigasi Cases/Workflows/Decision Center aktif. Typed ApprovalPanel/WorkflowTimeline fungsional bersama AnswerCard/SourcePanel/EvidenceChecklist; types workflow generated dari Pydantic.
-- Definition seed idempotent; demo:workflow opsional membuat A verified, B missing source, C conflict. Reset mencakup Fase 0–3.
-- Dokumentasi Bahasa Indonesia diperbarui; [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md) baru. AGENTS/PRD tetap English.
+- Fondasi Next.js/FastAPI/PostgreSQL, migrasi Alembic, seed/reset, enam identitas demo, upload/parsing, metadata, versi immutable, publikasi, re-index dan download tetap tersedia.
+- Ask, retrieval authorized, citation document/version/chunk nyata, SourcePanel, saved questions, lima status SuperFlow Guard, EvidenceItem dan AuditEvent dipertahankan.
+- Case, WorkflowDefinition/Run/Step, Task, Approval, retry/fallback/escalation, authority, row locks, expected_revision dan idempotency receipts tetap menggunakan implementasi Fase 3. Tidak ada migrasi atau engine baru dalam pass ini.
+- Navigasi berbasis role: Employee mendapat Home/Ask SuperFlow/Knowledge/My Work; Manager, Compliance dan Finance mendapat tambahan Reviews / Approvals; SME mendapat Reviews; Governance Admin mendapat Home/Knowledge/My Work/Reviews / Approvals.
+- My Work menggabungkan Case, workflow, task, requirement dan review dari API existing menjadi judul bisnis, status, langkah saat ini, tindakan berikutnya, progress, owner/reviewer, due date dan waktu pembaruan.
+- Workflow tampil sebagai Progress di dalam pekerjaan. Node types, definition/version dan revision tidak menjadi bahasa utama layar produk. Histori pemeriksaan, retry dan escalation tetap dapat diinspeksi.
+- Detail pekerjaan mengambil CaseView dan template yang diperlukan secara langsung; tidak menunggu seluruh daftar Case/workflow/approval. Tes refresh membuktikan detail tetap tersedia ketika API daftar tidak dapat diakses.
+- Reviews hanya menampilkan permintaan pending dengan allowed_actions dari backend. Employee tidak memiliki kontrol keputusan, termasuk melalui route langsung. Authority API tetap ditegakkan backend.
+- Ask mempunyai tindakan kontekstual Request Review, Request Exception, Start Review atau Provide Information. Submit Request membuat Case dan memulai review existing; BLOCKED memerlukan consent recovery eksplisit, ACCESS_RESTRICTED tidak dibawa ke request.
+- Activity menerjemahkan event audit menjadi aktivitas yang dapat dibaca, dengan aktor, waktu dan alasan. Payload JSON dan ID internal tidak menjadi konten utama.
+- Home mendahulukan Ask untuk Employee dan review untuk reviewer; menampilkan pekerjaan/permintaan nyata tanpa KPI atau aktivitas palsu.
+- Judul seed demo diperbaiki: Annual Leave Review, Supporting Evidence Request dan Access Review Clarification. Seed mengenali judul lama agar tidak membuat duplikasi atau menimpa data lama.
+- Dokumentasi README, rencana, status dan referensi UI diperbarui dalam Bahasa Indonesia; AGENTS/PRD tetap English.
 
 # Sebagian Selesai
 
-- Satu generic review definition, satu run per Case; belum tool runtime, scheduler, notification atau graph editor.
-- Evidence attachment berupa approved source chunks; semantic kesesuaian label tetap tugas reviewer, belum arbitrary operational attachments.
-- Guard tetap extractive/explicit conflict rules; belum semantic checks menyeluruh, OCR/vector retrieval.
-- Mock header/roles belum SSO/entitlement produksi.
-- Audit ORM/PostgreSQL bukan WORM eksternal; database owner dapat mengubah trigger. Reset adalah maintenance exception eksplisit.
-- Docker tidak tersedia untuk verifikasi Compose; PostgreSQL lokal nyata digunakan.
-- Keyboard/dialog/responsive diperiksa; audit screen reader lengkap belum dilakukan.
+- Satu generic review definition, satu run per Case; belum scheduler, notification atau tool runtime.
+- Evidence attachment berupa source chunk yang authorized dan current. Kesesuaian makna evidence tetap memerlukan penilaian reviewer.
+- Guard memakai provider extractive dan aturan konflik eksplisit; belum pemeriksaan semantik menyeluruh, OCR atau vector retrieval.
+- Identitas demo belum SSO/entitlement produksi. Role switcher dipertahankan untuk demo.
+- Audit append-only pada ORM/PostgreSQL belum WORM eksternal; database owner dapat mengubah trigger. Reset adalah maintenance exception eksplisit.
+- Keyboard, dialog dan responsive diperiksa; audit screen reader lengkap belum dilakukan.
 
 # Belum Diimplementasikan
 
-- Fase 4: regulation comparison, SOP impact/gap mapping, remediation logic.
-- Fase 5: investment extraction/orchestration, financial formulas, sensitivity, memo.
-- Fase 6: QCD/impact analytics dan savings/capacity measurement.
-- Fase 7: AML/FIU workflow.
-- ComparisonTable, FinancialAnalysis, full Governance, production authentication, external integrations, visual workflow builder.
+- Fase 4: regulation comparison, SOP impact mapping, gap assessment dan remediation-specific logic.
+- Investment Intelligence/rumus keuangan, analytics/QCD, AML/FIU dan full Governance.
+- ComparisonTable, FinancialAnalysis, autentikasi produksi, notifikasi/integrasi eksternal dan visual workflow builder.
+- Regulatory Review dan Investment Analysis tidak ditampilkan sebagai fitur aktif.
 
 # Masalah yang Diketahui
 
-- Sandbox Windows memblokir worker/temp pytest; pemeriksaan memakai izin proses yang sesuai dan runtime Python lokal.
-- Warning Starlette TestClient HTTPX dan NO_COLOR/FORCE_COLOR tetap ada tanpa mengubah hasil tests.
-- Idempotency hanya pada mutasi Case existing; create Case belum mempunyai receipt. UI menahan submit saat busy.
-- Tidak ada higher-authority escalation setelah Governance atau bila reviewer independen authorized tidak tersedia; 409 eksplisit.
-- Reset menghapus execution/audit sintetis dan mengganti ID source; URL lama dapat unavailable.
-- Source MCP 21st.dev dibatasi dua retrieval per hari; komponen tanpa inspeksi tidak dipasang.
+- Pembuatan request dan start review memakai dua transaksi API existing. Jika start gagal, request tetap tersimpan; form menyimpan referensinya untuk retry start tanpa membuat Case kedua pada lifecycle form yang sama.
+- Create Case belum memiliki receipt idempotency untuk respons yang hilang atau refresh di tengah submit. Busy state mengurangi submit ganda; mutasi execution existing tetap memakai revision/idempotency backend.
+- Route internal `/cases`, `/workflows` dan `/decisions` dipertahankan untuk stabilitas URL. Label produk mengikuti PRD v2; legacy `/workflows` membuka My Work.
+- Daftar My Work/Reviews masih memakai endpoint agregasi existing tanpa pagination. Waktu pemuatan meningkat ketika jumlah pekerjaan/histori bertambah; detail pekerjaan sudah tidak bergantung pada pemuatan daftar tersebut.
+- Data operasional/test lama tidak dihapus. Adapter menerjemahkan judul demo lama yang dikenal; judul pengguna tetap dipertahankan.
+- Higher-authority escalation tidak tersedia setelah Governance atau bila reviewer independen authorized tidak tersedia; API mengembalikan konflik yang jelas.
+- Reset mengganti ID sumber dan menghapus execution/audit sintetis; URL lama dapat tidak tersedia.
+- Docker tidak tersedia di lingkungan ini; eksekusi Compose belum diverifikasi. PostgreSQL lokal nyata digunakan untuk aplikasi dan pengujian.
+- MCP 21st.dev membatasi retrieval source harian. Komponen yang source/dependencies-nya tidak dapat diinspeksi tidak dipasang.
+- Sandbox Windows menghalangi beberapa proses worker/temp; pemeriksaan yang memerlukan subprocess dijalankan dengan izin yang sesuai. Warning HTTPX/Starlette dan NO_COLOR/FORCE_COLOR tidak menggagalkan tes.
 
-# Catatan Workflow
+# Rekonsiliasi Product Experience
 
-- Guard existing adalah sumber reliability tunggal. VERIFIED tetap meminta manusia; REVIEW_REQUIRED ke reviewer; BLOCKED/OUTDATED menunggu evidence; restricted tidak dibawa atau dibaca.
-- Guard diperiksa ulang sebelum keputusan/progression, tidak mempercayai cache/badge frontend.
-- Retry/fallback menjaga failure history; manual review tidak melewati Guard prerequisites.
-- Evidence baru membentuk extract context; saved answer asal tetap. Case requirements memakai EvidenceItem yang sama.
-- Row locks PostgreSQL dan expected_revision melindungi execution. Key/payload identik tidak menambah task/approval/audit transition.
-- Arsitektur, lifecycle, API dan batasan: [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md).
-
-# Catatan Decision Center
-
-- Sources/evidence mendahului form; backend menentukan allowed actions dan menegakkan authority.
-- Creator/owner tidak dapat self-approve. Manager generic, SME conflict/audit, Compliance regulatory type, Finance investment type, Governance broad independent authority. Type tidak menambahkan domain analysis.
-- REVIEW_REQUIRED approval membutuhkan reason dan tetap REVIEW_REQUIRED setelah keputusan.
-- Override hanya Governance independen dengan reason; tidak melewati BLOCKED/OUTDATED/ACCESS_RESTRICTED.
-- Request evidence/escalation menutup request lama dan menjaga histori.
-- Concurrent HTTP approve/reject PostgreSQL: satu 200, satu 409; satu material decision event.
+- Mental model produk: Knowledge → Evidence → Decision → Action. Pengguna membuka My Work dan Reviews, bukan memilih entitas Case/WorkflowRun/Approval.
+- Adapter bertipe `product-view.ts` membentuk WorkItemView, WorkProgressView dan ReviewItemView dari state API. Adapter tidak menyimpan state bisnis atau membuat permission/reliability engine kedua.
+- Case tetap workspace domain-neutral. Guard, evidence, source authorization, workflow transitions, retry limit, fallback dan human authority tidak diganti.
+- Backend dalam pass ini hanya mengalami perubahan copy seed demo dan pengenalan alias judul lama. Models, migrations, API, permission, concurrency dan audit service dipertahankan.
+- Request dari Ask menggunakan referensi run/sumber authorized. Informasi terbatas tidak disalin. Reliability tetap terlihat dan dievaluasi backend sebelum progression/decision.
+- Human approval tetap independen; reason wajib pada override, keputusan REVIEW_REQUIRED dan permintaan informasi. Override tidak melewati BLOCKED/OUTDATED/ACCESS_RESTRICTED.
+- Activity menampilkan histori nyata; histori audit, upaya gagal, permintaan informasi lama dan keputusan tidak dihapus untuk menyederhanakan layar.
 
 # Catatan UI/UX
 
-- Home/Ask/Knowledge retained; Ask mempunyai explicit Create case/recovery entry, tanpa fake KPI.
-- Tabel Origin UI existing, Dialog/SourcePanel, metadata/badge/disclosure dan navy/lime tokens dipakai ulang; tidak ada dependency/design system baru.
-- UI dipisah menjadi controller data, action lists, Case Workspace, ApprovalPanel dan WorkflowTimeline.
-- Create/navigation race diperbaiki: workspace action tersedia setelah URL Case memiliki lifecycle request.
-- Workspace padding/max-width konsisten. Mobile mendahulukan evidence/decision; tanpa overflow pada 375/390/768/1024/1440 px.
-- MCP meninjau Activity Timeline, Cubby UI Timeline, experience timeline dan task checklist. Source Cubby UI terkunci kuota; tidak ada vendor baru diadopsi. [UI_REFERENCES.md](docs/UI_REFERENCES.md).
+- Shell navy, accent lime/green, tokens, kepadatan tabel dan responsive behavior existing dipertahankan.
+- Komponen yang dipakai ulang: Origin UI DataTable existing, AskComposer, AnswerCard, SourcePanel, EvidenceChecklist, Dialog, primitive header/status/loading/error dan typed ApprovalPanel/WorkflowTimeline.
+- Detail pekerjaan memakai judul bisnis; source/evidence mendahului tindakan review. Task yang telah selesai tetap berada di Progress dan tidak tampil sebagai tindakan berikutnya.
+- Home memakai area kerja dan daftar review ringkas; empty state tanpa pekerjaan ditampilkan sebagai pesan pendek. Tidak ada placeholder modul masa depan dalam navigasi utama.
+- Label Phase 0–3, Create Case, Start Workflow, Case Workspace, Decision Center, node type, revision counter dan ID runtime dihapus dari tampilan utama.
+- MCP 21st.dev mencari pola task inbox/review queue/work-item list dan activity/progress timeline. Activity Timeline, Process Timeline, Agent Todo List, Task Board Kanban, Notification Panel, Agent Activity dan Agent Progress ditinjau melalui metadata.
+- Retrieval source Activity Timeline ditolak karena kuota harian; tidak ada source vendor baru diadopsi atau dependency/design system baru ditambahkan. Rincian: [UI_REFERENCES.md](docs/UI_REFERENCES.md).
 
 # Hasil Pengujian
 
-| Pemeriksaan          | Hasil aktual                                                                                                                                                  |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend PostgreSQL   | **84 lulus**: Fase 0–3, permission/non-leakage, Guard, transition/task/approval, retry/fallback/escalation, evidence, persistence, idempotency, audit         |
-| Backend SQLite       | **84 lulus**, termasuk lifecycle migrasi dan reset                                                                                                            |
-| Frontend unit        | **11 lulus**, source/reliability/typed controls/decision validation                                                                                           |
-| E2E Chromium         | **20 lulus** pada run final, termasuk regresi Fase 0–2 dan concurrent decision                                                                                |
-| Formatter/lint/types | Ruff format/check, Prettier, ESLint, TypeScript, kedua generated-contract checks lulus                                                                        |
-| Production build     | Lulus: Home/Ask/Knowledge/Cases/Workflows/Decision Center                                                                                                     |
-| PostgreSQL schema    | Head 0004, Alembic check tidak menemukan upgrade tertinggal, seed idempotent                                                                                  |
-| Produksi             | Port 3000/8000 dengan PostgreSQL nyata; A/B/C, source/version, refresh, retry x2/fallback, blocked approval, roles/denied read dan existing screens diperiksa |
-| Responsive/visual    | Screenshot desktop/mobile diperiksa; nol browser runtime errors/overflow pada 375/390/768/1024/1440 px                                                        |
+| Pemeriksaan          | Hasil aktual                                                                                                                                               |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend PostgreSQL   | **84 lulus**: permission/non-leakage, Guard, Case/workflow/task/approval, retry/fallback/escalation, persistence, idempotency dan audit                    |
+| Backend SQLite       | **84 lulus**, termasuk lifecycle migrasi/reset                                                                                                             |
+| Frontend unit        | **19 lulus**: adapter role/work/review/progress/activity, source/reliability dan decision validation                                                       |
+| E2E Chromium         | **28 lulus** pada run final; regresi Fase 0–3, delapan pemeriksaan product experience, refresh detail tanpa API daftar dan concurrent decision             |
+| Formatter/lint/types | Ruff format/check, Prettier, ESLint, TypeScript serta kedua generated-contract checks lulus                                                                |
+| Production build     | Lulus untuk seluruh route existing; frontend produksi berjalan pada port 3000                                                                              |
+| Backend produksi     | FastAPI port 8000 dengan PostgreSQL nyata; schema Fase 0–3 tetap dipertahankan                                                                             |
+| Inspeksi produksi    | Lulus: enam role, Ask/request/source/version, request informasi/resume, konflik SME, retry limit/fallback, escalation/override, activity dan denied source |
+| Responsive/visual    | Desktop 1440 px dan narrow 375/390/768 px diperiksa; nol overflow dan nol browser page errors pada inspeksi produksi                                       |
 
-Retry/fallback produksi memakai Case sintetis khusus dengan stale extract; sumber seed dan Case pengguna tidak diubah. Tidak ada tombol pemalsu failure/reliability. Screenshot di .runtime/screenshots/phase3 diabaikan Git. PostgreSQL tests dan E2E dijalankan berurutan pada database test; database aplikasi terpisah.
+Database test terpisah dari database aplikasi. Inspeksi produksi memakai request sintetis baru tanpa reset atau menghapus pekerjaan pengguna. Pemeriksaan retry/fallback mengubah extract pada context request khusus; sumber seed tidak diubah. Screenshot tersimpan di `.runtime/screenshots/product-experience` dan diabaikan Git.
 
 # Langkah Berikutnya yang Direkomendasikan
 
-Inspeksi tambahan produksi juga memastikan escalation ke Governance, mandatory override reason, override event, Decision Center queue, dan workflow list; nol browser runtime errors.
-
-1. Tinjau independence/reviewer rules dan evidence semantics dengan process owner sebelum deployment nyata.
-2. Verifikasi Compose pada Docker dan audit screen reader.
-3. Evaluasi authentication, scheduler/notification, operational evidence dan audit production bila dibutuhkan.
-4. Mulai Fase 4 hanya setelah instruksi eksplisit. Pekerjaan ini berhenti pada Workflow Core.
+1. Tinjau bahasa tindakan, independence reviewer dan kesesuaian evidence bersama process owner.
+2. Verifikasi Docker Compose dan audit screen reader di lingkungan yang mendukung.
+3. Evaluasi idempotency create/start, autentikasi dan audit produksi sebelum deployment nyata.
+4. Mulai Fase 4 hanya setelah instruksi eksplisit; pass ini berakhir pada rekonsiliasi pengalaman pengguna Fase 0–3.

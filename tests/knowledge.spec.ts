@@ -14,7 +14,7 @@ test("compact Ask and repository filters preserve source inspection", async ({
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Knowledge Hub", exact: true }).click();
+  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
   await page
     .getByRole("combobox", { name: "Knowledge domain" })
     .selectOption("People");
@@ -65,12 +65,12 @@ test("role-aware knowledge inventory and application navigation", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Knowledge workspace" }),
+    page.getByRole("heading", { name: "Your workspace" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "Cases", exact: true }),
+    page.getByRole("link", { name: "My Work", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Knowledge Hub", exact: true }).click();
+  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
   await expect(
     page.getByRole("button", { name: /^Annual Leave Policy/ }).first(),
   ).toBeVisible();
@@ -264,7 +264,8 @@ test("governance uploads, edits metadata, versions, reindexes, and retrieves the
     versionOptions.some((option) => option.includes("v1.0 · outdated")),
   ).toBeTruthy();
   await page.getByRole("button", { name: "Close document details" }).click();
-  await page.getByRole("link", { name: "Ask SuperFlow", exact: true }).click();
+  // Governance navigation is control-focused; its existing Ask route remains available.
+  await page.goto("/ask");
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption({ label: `${title} Updated` });
@@ -286,10 +287,8 @@ test("mobile navigation and actionable API connection failure", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.getByRole("link", { name: "Knowledge Hub", exact: true }).click();
-  await expect(
-    page.getByRole("heading", { name: "Knowledge Hub" }),
-  ).toBeVisible();
+  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Knowledge" })).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

@@ -9,11 +9,13 @@ It is NOT:
 - a generic document chatbot,
 - a ChatGPT wrapper,
 - a pure RAG demo,
+- a BPM/workflow-engine console,
+- a CRM,
 - or a collection of disconnected AI features.
 
 SuperFlow turns governed enterprise knowledge into controlled, auditable, measurable action.
 
-Core value chain:
+Core platform chain:
 
 **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**
 
@@ -21,36 +23,42 @@ Core interaction loop:
 
 **Ask → Retrieve → Verify → Decide → Act → Measure**
 
+User-facing experience:
+
+**Ask → Understand → Review → Act**
+
 AML/FIU is only one optional proof point / workflow running on the shared platform foundation.
 
 ---
 
-## 2. Source of Truth
+## 2. Product Source of Truth
 
 Before making product, architecture, UX, or implementation decisions, read:
 
-1. `SuperFlow_PRD_v1.md`
+1. `SuperFlow_PRD_v2.md`
 2. `AGENTS.md`
 3. `IMPLEMENTATION_STATUS.md`
 4. Existing repository code and tests
 
+`SuperFlow_PRD_v2.md` supersedes `SuperFlow_PRD_v1.md`.
+
+Do not use PRD v1 as the active product source of truth if PRD v2 exists.
+
 Priority when instructions conflict:
 
 1. Explicit task from the user
-2. `SuperFlow_PRD_v1.md`
+2. `SuperFlow_PRD_v2.md`
 3. `AGENTS.md`
 4. Existing implementation conventions
 5. Reasonable engineering judgment
 
-Do not silently change the product direction.
+Do not silently change product direction.
 
-If a requested change conflicts with the PRD, implement the user-requested change but document the deviation in `IMPLEMENTATION_STATUS.md`.
+If a requested change conflicts with PRD v2, implement the explicit user request and document the deviation in `IMPLEMENTATION_STATUS.md`.
 
 ---
 
 ## 3. Product Principles
-
-All implementation decisions should preserve these principles:
 
 ### Source First
 Material answers should be grounded in approved enterprise sources.
@@ -61,9 +69,9 @@ Permission checks happen before retrieval and before output.
 Restricted information must never be retrieved and merely hidden in the frontend.
 
 ### Version Aware
-Active/current documents must be preferred.
+Current documents are preferred.
 
-Outdated sources must be visibly identified and must not be treated as current authority.
+Historical documents must be visibly identified and must not be treated as current authority.
 
 ### Evidence Before Conclusion
 Material conclusions require sufficient supporting evidence.
@@ -72,252 +80,538 @@ Material conclusions require sufficient supporting evidence.
 High-risk or material decisions remain under authorized human control.
 
 ### Knowledge Becomes Action
-Knowledge should be convertible into:
-- tasks,
-- cases,
-- approvals,
-- checklists,
-- remediation,
-- workflows,
-- structured analysis.
+Answers should be able to become meaningful business actions.
 
 ### Impact Is Measurable
-The system should expose operational and business impact metrics.
+Operational and business impact should be measurable.
+
+### Fail Safely
+Missing, conflicting, outdated, or restricted evidence must not silently pass.
+
+### User Goals First
+Design UX around what the user wants to accomplish, not around database entities or backend architecture.
+
+### Progressive Disclosure
+Show technical detail only when useful.
 
 ---
 
-## 4. Scope Discipline
+## 4. Critical UX Rule — Do Not Expose Backend Architecture as the Product
 
-Do not try to build every future SuperFlow feature at once.
+This rule is mandatory.
 
-Current implementation should follow the phases defined in `SuperFlow_PRD_v1.md`.
+Internal concepts such as:
 
-Default priority:
+- Case
+- WorkflowDefinition
+- WorkflowRun
+- WorkflowStep
+- Task
+- Approval
+- GuardResult
+- EvidenceItem
+- AuditEvent
+- retry/fallback internals
+- revision counters
+- implementation phases
+
+may exist in backend/domain architecture without becoming primary user-facing concepts.
+
+Ordinary users must not be required to understand the workflow engine.
+
+Prefer user-facing language such as:
+
+- My Work
+- Reviews
+- Approvals
+- Requests
+- Regulatory Review
+- Investment Analysis
+- Progress
+- Evidence
+- Needs your input
+- Waiting for review
+
+Do not expose internal terms simply because they exist in code or database.
+
+---
+
+## 5. User-Facing Vocabulary
+
+### Prefer
+
+- My Work
+- Reviews / Approvals
+- Request
+- Review
+- Analysis
+- Progress
+- Evidence
+- Source
+- Reliability
+- Required information
+- Next action
+
+### Avoid as primary user vocabulary
+
+- WorkflowRun
+- WorkflowDefinition
+- Condition node
+- Terminal node
+- GuardResult
+- Approval entity
+- Case state machine
+- backend revision
+- Phase 0/1/2/3 labels
+
+`Case` may still be used as a secondary/internal concept when contextually appropriate, but it should not be the default mental model for ordinary users.
+
+---
+
+## 6. User-Facing Navigation
+
+Navigation must be role-aware.
+
+Do not show every internal platform capability to every role.
+
+### Employee
+
+Preferred:
+
+- Home
+- Ask SuperFlow
+- Knowledge
+- My Work
+
+### Manager / Approver
+
+Preferred:
+
+- Home
+- Ask SuperFlow
+- Knowledge
+- My Work
+- Reviews / Approvals
+
+### Subject Matter Expert
+
+Preferred:
+
+- Home
+- Ask SuperFlow
+- Knowledge
+- My Work
+- Reviews
+
+### Compliance
+
+Preferred:
+
+- Home
+- Ask SuperFlow
+- Knowledge
+- Regulatory Review
+- My Work
+- Reviews / Approvals
+
+### Finance
+
+Preferred:
+
+- Home
+- Ask SuperFlow
+- Knowledge
+- Investment Analysis
+- My Work
+- Reviews / Approvals
+
+### Governance Administrator
+
+Preferred:
+
+- Home
+- Knowledge
+- My Work
+- Reviews / Approvals
+- Governance
+
+Do not expose standalone `Workflows` navigation to ordinary users.
+
+Do not expose standalone `Cases` navigation to ordinary users unless there is a clear role-specific reason.
+
+Do not expose `Decision Center` as user-facing wording if `Reviews / Approvals` communicates the job more clearly.
+
+---
+
+## 7. Product Experience Mapping
+
+Internal backend concepts should map to user-facing business language.
+
+| Internal concept | User-facing representation |
+| --- | --- |
+| Case | Work item / request / review / analysis |
+| WorkflowRun | Progress |
+| WorkflowStep | Current step / next step |
+| Task | Action item |
+| Approval | Review / approval |
+| Decision Center | Reviews / Approvals |
+| GuardResult | Reliability |
+| EvidenceItem | Evidence / required information |
+| AuditEvent | Activity / history |
+| WorkflowDefinition | Hidden implementation configuration |
+
+Do not rename database models only to match UI labels.
+
+Prefer frontend adapters/view models where needed.
+
+---
+
+## 8. Primary Product Experiences
+
+The product should be organized around experiences, not backend modules.
+
+### Employee Knowledge Assistant
+
+User asks in natural language.
+
+SuperFlow returns:
+- answer,
+- source,
+- version,
+- reliability,
+- next action.
+
+If work is required, the user clicks a contextual business action.
+
+Example:
+
+`Request Exception`
+
+not:
+
+`Create Case → Start Workflow`
+
+### Regulation-to-Action
+
+User-facing experience:
+
+`Regulatory Review`
+
+Flow:
+- regulation comparison,
+- material change,
+- SOP impact,
+- gap,
+- human review,
+- remediation.
+
+### Investment Intelligence
+
+User-facing experience:
+
+`Investment Analysis`
+
+Flow:
+- source-backed assumptions,
+- deterministic calculations,
+- sensitivity,
+- memo,
+- approval.
+
+### AML/FIU
+
+Optional proof point only.
+
+Do not position the whole product around AML/FIU.
+
+---
+
+## 9. Scope Discipline
+
+Follow the active PRD phases.
+
+Current implementation baseline includes Phase 0–3 foundations.
+
+Before Phase 4, perform product-experience reconciliation if not already completed.
+
+Default progression:
 
 1. Foundation
 2. Knowledge Core
 3. Reliability / SuperFlow Guard
-4. Cases + Workflow + Decision Center
-5. Regulation-to-Action
-6. Investment Intelligence
-7. Analytics
-8. Optional AML/FIU proof point
-9. Demo polish
+4. Controlled Action Core
+5. Product Experience Reconciliation
+6. Regulation-to-Action
+7. Investment Intelligence
+8. Analytics
+9. Optional AML/FIU proof point
+10. Demo polish
 
-Do not start later phases unless the current task explicitly requests them.
+Do not start later work unless requested.
 
 Avoid scope creep.
 
 ---
 
-## 5. Primary Product Modules
+## 10. Frontend Strategy
 
-The application shell should support these main modules:
-
-- Home
-- Ask SuperFlow
-- Knowledge Hub
-- Cases
-- Workflows
-- Decision Center
-- Analytics
-- Governance
-
-Supporting surfaces may be added when they clearly support the PRD.
-
----
-
-## 6. Frontend Strategy
-
-SuperFlow uses a **standard application frontend with Controlled Generative UI inside it**.
-
-Do NOT choose between “frontend” and “generative UI”.
-
-Use:
+SuperFlow uses:
 
 **Next.js application shell + controlled generative workspace**
 
 The application shell remains deterministic.
 
-Examples:
-- sidebar,
-- navigation,
-- tables,
-- filters,
-- document pages,
-- case pages,
-- workflow pages,
-- approval pages,
-- governance settings.
+The generative workspace renders approved structured components based on intent and backend state.
 
-The generative workspace may dynamically select approved UI components based on structured AI output.
+AI may select:
+- approved component type,
+- structured component data,
+- suggested action request.
 
-AI should select:
-- component type,
-- structured data,
-- allowed actions.
-
-AI should NOT generate arbitrary HTML or arbitrary executable UI for workflow-critical surfaces.
+AI must NOT generate arbitrary HTML or executable UI for workflow-critical experiences.
 
 ---
 
-## 7. Controlled Generative UI
+## 11. Controlled Generative UI
 
-Create and maintain a controlled component registry.
+Maintain a controlled component registry.
 
-Initial approved component types:
+Approved component types include:
 
 - `AnswerCard`
 - `SourcePanel`
-- `ComparisonTable`
 - `EvidenceChecklist`
+- `ComparisonTable`
 - `FinancialAnalysis`
 - `ApprovalPanel`
-- `WorkflowTimeline`
+- `WorkflowTimeline` / `ProgressTimeline`
+- `WorkItemCard` / `WorkItemRow`
+- `ReviewPanel`
 
 Additional components may be added when:
+
 1. the use case requires them,
 2. the component is reusable,
-3. the schema is explicit,
-4. the frontend validates it before rendering.
-
-Example structured payload:
-
-```json
-{
-  "components": [
-    {
-      "type": "answer_card",
-      "data": {}
-    },
-    {
-      "type": "source_panel",
-      "data": {}
-    }
-  ]
-}
-```
+3. schema is explicit,
+4. frontend validates it before rendering.
 
 Unknown component types must fail safely.
 
-Do not let arbitrary model output directly become DOM, HTML, JavaScript, or workflow actions.
+Do not let model output directly become DOM, HTML, JavaScript, permission logic, or workflow transitions.
 
 ---
 
-## 8. 21st.dev UI Component Strategy
+## 12. Ask SuperFlow UX
 
-21st.dev is an approved **UI inspiration and reusable component source** for this project when access is available through the user's configured tool, MCP, CLI, skill, or connector.
+Ask SuperFlow is an intent entry point, not a generic chatbot.
+
+The result should visually separate:
+
+- Answer
+- Reliability
+- Evidence
+- Source
+- Metadata
+- Next Action
+
+Do not default to chat bubbles.
+
+Do not expose `Create Case` or `Start Workflow` unless those terms are genuinely useful to the target user.
+
+Prefer contextual business-language actions.
+
+Examples:
+
+- Request Exception
+- Submit Request
+- Review Changes
+- Start Regulatory Review
+- Prepare Analysis
+- Request Approval
+- Provide Information
+
+---
+
+## 13. My Work UX
+
+`My Work` is the main user-facing abstraction over execution state.
+
+It may aggregate:
+
+- Case
+- WorkflowRun
+- Task
+- Approval
+- Evidence requirement
+
+A work item should show:
+
+- business title,
+- current status,
+- progress,
+- current/next action,
+- owner/reviewer where useful,
+- due date where useful,
+- reliability where material,
+- last update.
+
+Avoid using technical IDs as primary titles.
+
+Example:
+
+`Expense reimbursement exception`
+
+not:
+
+`Case 4f98c / WorkflowRun 31`
+
+---
+
+## 14. Reviews / Approvals UX
+
+Review screens must answer:
+
+- What am I reviewing?
+- Who requested it?
+- Why does it need my decision?
+- What evidence supports it?
+- What does reliability indicate?
+- What can I do?
+
+Evidence/source context must appear before decision controls.
+
+Actions:
+- Approve
+- Reject
+- Request More Information
+- Escalate
+- Override where authorized
+
+Override requires a non-empty reason.
+
+---
+
+## 15. Governance UX
+
+Governance is role-gated.
+
+Governance Administrator is an internal enterprise control role.
+
+It is not related to government.
+
+Governance may manage:
+
+- roles,
+- permissions,
+- source authority,
+- document lifecycle,
+- source health,
+- retention,
+- audit,
+- model/prompt policy metadata,
+- quality controls.
+
+Do not show Governance to ordinary users.
+
+---
+
+## 16. 21st.dev UI Component Strategy
+
+21st.dev is an approved UI inspiration and reusable component source when access is available.
 
 21st.dev is NOT a source of business logic.
 
-### Required Search Order
+### Search Order
 
-Before creating a new reusable presentation component:
+Before creating a reusable presentation component:
 
 1. Check existing project components.
 2. Check existing design primitives.
-3. Search 21st.dev for a relevant component if 21st.dev access is available.
-4. Inspect candidate code and dependencies.
-5. Reuse or adapt the best candidate.
-6. Build from scratch only when no suitable existing component exists.
+3. Search 21st.dev if available.
+4. Inspect candidate source/dependencies.
+5. Reuse/adapt the best fit.
+6. Build from scratch only if no suitable option exists.
 
 Do not block development if 21st.dev is unavailable.
 
-### Good Uses of 21st.dev
+### Good Uses
 
-Prefer 21st.dev for reusable presentation patterns such as:
+- navigation
+- command/search
+- AI composer
+- enterprise tables
+- work-item lists
+- review queues
+- timelines
+- progress indicators
+- drawers/sheets
+- dialogs
+- metadata panels
+- status indicators
+- empty/loading/error states
+- charts where appropriate
 
-- sidebars,
-- command/search interfaces,
-- AI composer/chat input,
-- cards,
-- KPI cards,
-- tables,
-- tabs,
-- status badges,
-- dialogs,
-- drawers,
-- file upload interfaces,
-- timelines,
-- step indicators,
-- activity feeds,
-- charts,
-- document cards,
-- dashboard layouts,
-- empty states,
-- loading states,
-- error states.
+### Do Not Outsource
 
-### Do Not Outsource These to 21st.dev
-
-Never use third-party UI code as the source of truth for:
+Never use third-party UI code as source of truth for:
 
 - permissions,
 - authorization,
-- reliability decisions,
-- SuperFlow Guard logic,
+- reliability,
 - evidence completeness,
-- document version selection,
-- workflow state transitions,
+- source version selection,
+- workflow transitions,
 - approval authority,
-- audit logic,
+- audit,
 - financial calculations,
 - backend validation,
-- security logic.
+- security.
 
-### Component Review Checklist
+### Review Checklist
 
-Before adopting a 21st.dev component:
+Before adopting a component:
 
-- inspect its source,
+- inspect source,
 - inspect dependencies,
 - remove unnecessary packages,
-- verify TypeScript compatibility,
+- verify TypeScript,
 - verify Tailwind compatibility,
 - verify accessibility,
 - verify keyboard behavior,
 - verify responsive behavior,
-- verify dark/light behavior if relevant,
-- remove unrelated marketing/demo content,
-- replace placeholder text,
-- adapt styles to SuperFlow tokens,
-- ensure it does not introduce conflicting design systems.
+- remove demo/marketing copy,
+- adapt to SuperFlow tokens,
+- preserve design consistency.
 
 ### Avoid UI Frankenstein
 
-Do not install many visually unrelated components from different authors without normalization.
+Normalize all adopted components.
 
-Every imported component must be restyled to the SuperFlow visual system.
-
-Prefer a small number of reusable primitives over dozens of one-off components.
+Prefer a small number of coherent reusable primitives.
 
 ---
 
-## 9. SuperFlow Design Direction
+## 17. SuperFlow Design Direction
 
-SuperFlow should feel like a modern enterprise banking operating workspace.
+SuperFlow should feel like:
 
-Desired qualities:
-
-- professional,
+- enterprise banking software,
+- modern,
 - calm,
 - trustworthy,
-- modern,
 - structured,
-- information-dense without being cluttered,
+- information-dense without clutter,
 - highly legible,
-- enterprise-oriented,
-- AI-native without looking gimmicky.
+- AI-native without gimmicks.
 
-Preferred visual direction:
+Preferred:
 
-- dark navy / deep neutral foundation,
-- white / light surfaces where useful,
-- restrained lime/green accents,
-- muted borders,
-- clear hierarchy,
-- subtle shadows,
-- consistent radius,
+- dark navy / green-navy shell,
+- light work surfaces,
+- restrained lime/green accent,
+- subtle borders,
+- compact spacing,
+- strong hierarchy,
 - restrained animation.
 
 Avoid:
@@ -326,20 +620,18 @@ Avoid:
 - excessive neon,
 - excessive gradients,
 - gaming UI,
-- overly playful consumer UI,
 - glassmorphism everywhere,
-- huge marketing hero sections inside the product,
+- huge hero sections,
+- excessive cards,
+- excessive pill badges,
 - excessive motion,
-- arbitrary 3D effects,
-- visual noise.
+- generic “AI dashboard” composition.
 
 ---
 
-## 10. Design Tokens
+## 18. Design Tokens
 
-Keep central design tokens rather than styling every component independently.
-
-At minimum define:
+Centralize:
 
 - background
 - surface
@@ -360,36 +652,36 @@ At minimum define:
 
 Also centralize:
 
-- spacing scale,
-- radius scale,
-- typography scale,
-- shadow scale,
-- z-index conventions.
+- spacing
+- radius
+- typography
+- shadows
+- z-index
 
-Do not hardcode random colors repeatedly.
+Do not repeatedly hardcode random colors.
 
 ---
 
-## 11. Accessibility
+## 19. Accessibility
 
 All user-facing UI should support:
 
 - keyboard navigation,
-- visible focus states,
+- visible focus,
 - semantic HTML,
-- labels for interactive controls,
-- accessible dialogs,
+- accessible labels,
+- accessible dialogs/sheets,
 - readable contrast,
 - meaningful loading states,
-- meaningful error messages.
+- meaningful errors.
 
 Do not sacrifice accessibility for visual effects.
 
 ---
 
-## 12. Frontend Engineering Conventions
+## 20. Frontend Engineering Conventions
 
-Preferred stack:
+Preferred:
 
 - Next.js
 - App Router
@@ -397,62 +689,55 @@ Preferred stack:
 - React
 - Tailwind CSS
 
-Use the existing project conventions where they are sound.
-
 Rules:
 
 - keep components small,
-- separate data fetching from presentation where practical,
+- separate data and presentation,
 - avoid giant page components,
-- do not place important business logic inside React components,
 - centralize API clients,
-- centralize schemas/types,
-- use typed server responses,
+- centralize types/schemas,
+- use typed responses,
 - validate generative UI payloads,
-- prefer reusable primitives,
-- avoid duplicated permission logic,
-- avoid duplicated status mappings.
+- reuse primitives,
+- avoid duplicate status mappings,
+- do not reconstruct backend truth independently.
 
-If a state belongs to the backend, do not reconstruct it independently in the frontend.
+Use frontend view models/adapters to translate backend entities into user-facing business language.
 
 ---
 
-## 13. Backend Engineering Conventions
+## 21. Backend Engineering Conventions
 
-Preferred stack:
+Preferred:
 
 - Python
 - FastAPI
 - Pydantic
 - SQLAlchemy
 - Alembic
-
-Database:
-
 - PostgreSQL
-- pgvector if useful and practical
 
-Backend responsibilities include:
+Backend owns:
 
-- permission enforcement,
+- permissions,
 - document/version authority,
 - retrieval,
-- citation source resolution,
-- case state,
+- citation resolution,
+- Case state,
 - workflow state,
 - SuperFlow Guard,
 - approvals,
 - deterministic finance,
-- audit events,
+- audit,
 - analytics calculations.
 
-Do not rely on frontend-only enforcement for critical rules.
+Do not weaken backend controls simply to simplify frontend UX.
 
 ---
 
-## 14. AI Provider Architecture
+## 22. AI Provider Architecture
 
-Do not tightly couple the application to one LLM vendor.
+Do not tightly couple to one LLM vendor.
 
 Use abstractions such as:
 
@@ -461,59 +746,59 @@ Use abstractions such as:
 - `Retriever`
 
 Support:
-- deterministic/mock demo provider,
-- optional real provider configured using environment variables.
 
-The product must remain demoable when no paid external AI credential exists.
+- deterministic/mock provider,
+- optional real provider through environment variables.
+
+The prototype must remain demoable without paid AI credentials.
 
 Never commit API keys.
 
 ---
 
-## 15. Allowed AI Responsibilities
+## 23. Allowed AI Responsibilities
 
 AI may assist with:
 
 - intent classification,
-- grounded question answering,
+- grounded Q&A,
 - summarization,
 - structured extraction,
-- regulation comparison,
-- gap suggestion,
 - document comparison,
+- gap suggestion,
 - assumption extraction,
 - draft memo generation,
 - suggested next action.
 
 AI must NOT independently control:
 
-- permission rules,
+- permissions,
+- authorization,
+- restricted data exposure,
 - final compliance decisions,
 - final investment approvals,
 - financial formulas,
-- authorization decisions,
-- restricted data exposure,
 - final material approvals.
 
 Critical decisions belong to deterministic rules and/or authorized humans.
 
 ---
 
-## 16. SuperFlow Guard
+## 24. SuperFlow Guard
 
-SuperFlow Guard is a core product capability.
+SuperFlow Guard is core infrastructure.
 
-Do not treat reliability as a visual badge only.
+Do not treat reliability as only a visual badge.
 
-Guard logic should evaluate explicit checks such as:
+Applicable checks may include:
 
 - citation coverage,
 - source validity,
 - source authority,
-- active/outdated source state,
+- version validity,
 - permission validity,
 - evidence completeness,
-- material conflict detection,
+- material conflicts,
 - calculation validity,
 - workflow risk,
 - human approval requirement.
@@ -522,152 +807,115 @@ Guard results should be structured and persisted where appropriate.
 
 ---
 
-## 17. Reliability States
+## 25. Reliability States
 
-Use these user-visible reliability states consistently:
+Use canonical values:
 
-### VERIFIED
-Meaning:
-- source is valid,
-- source is current,
-- evidence is sufficient,
-- permission is valid,
-- no material conflict exists.
+- VERIFIED
+- REVIEW_REQUIRED
+- BLOCKED
+- OUTDATED
+- ACCESS_RESTRICTED
 
-### REVIEW REQUIRED
-Meaning:
-- ambiguity,
-- conflict,
-- assumption,
-- exception,
-- or material risk requires human judgment.
+Do not invent equivalent duplicate statuses.
 
-### BLOCKED
-Meaning:
-- mandatory evidence,
-- prerequisite,
-- or required data is missing.
-
-### OUTDATED
-Meaning:
-- source has been superseded or is no longer current.
-
-### ACCESS RESTRICTED
-Meaning:
-- current user is not authorized to access the source/content.
-
-Do not invent additional equivalent labels without a clear reason.
-
-Centralize status mapping.
+Frontend copy may humanize explanation, but canonical backend status stays centralized.
 
 ---
 
-## 18. Permission Model
+## 26. Permission Model
 
-Seeded roles may include:
-
-- Employee
-- Manager
-- SME
-- Compliance
-- Finance
-- Governance Admin
-
-Permission checks must occur:
+Permission checks must happen:
 
 1. before retrieval,
-2. before returning source content,
-3. before workflow actions where relevant.
+2. before source output,
+3. before workflow/action where relevant.
 
-Do not retrieve restricted documents and rely on the frontend to hide them.
+Do not retrieve restricted content and hide it later.
 
-Write tests proving restricted data does not leak.
+Tests must prove restricted data does not leak.
 
 ---
 
-## 19. Knowledge and Documents
+## 27. Knowledge and Documents
 
-The knowledge model should support:
+Knowledge model should support:
 
 - title,
 - domain,
 - owner,
-- authority level,
-- allowed roles,
+- authority,
+- access roles,
 - version,
 - effective date,
 - status,
-- active/outdated relationship,
-- file identity/checksum,
-- source hierarchy,
-- related documents.
+- relationships,
+- file identity,
+- source hierarchy.
 
-Document processing should support:
+Document processing may support:
 
-- PDF,
-- DOCX,
-- metadata,
-- semantic section extraction where practical,
-- structured chunking.
+- PDF
+- DOCX
+- TXT
+- Markdown
+- structural extraction
+- structure-aware chunking
 
-Prefer structure-aware chunking over arbitrary fixed-size character splits when possible.
+Future:
+- OCR
+- vector retrieval
+- semantic reranking
 
 ---
 
-## 20. Retrieval
+## 28. Retrieval
 
-Retrieval should support an abstraction for:
+Retrieval abstraction should support:
 
-- keyword search,
-- vector/semantic retrieval,
-- metadata filtering,
-- permission filtering,
-- source authority weighting,
-- reranking,
-- citation generation.
+- keyword
+- semantic/vector when implemented
+- metadata filter
+- permission filter
+- authority weighting
+- reranking
+- citation generation
 
-A citation must correspond to an actual retrieved source/chunk.
+Citations must point to real source/chunk records.
 
 Never create fake citations.
 
 ---
 
-## 21. Case Model
+## 29. Internal Case Model
 
-Cases provide a shared workspace across domains.
+Case remains a shared backend/domain workspace.
 
-A case may include:
+It may contain:
 
-- metadata,
 - type/domain,
-- owner,
+- title,
 - status,
-- reliability status,
-- sources,
+- owner,
+- reliability,
+- source relationships,
 - evidence,
-- agent activity,
 - tasks,
-- workflow run,
+- workflow,
 - approvals,
-- audit timeline.
+- audit.
 
-Supported future domains include:
+Do not force ordinary users to navigate by the word `Case`.
 
-- regulatory review,
-- investment analysis,
-- audit,
-- operations,
-- AML/FIU.
-
-Do not hardcode the entire case architecture specifically around AML.
+Present it according to business context.
 
 ---
 
-## 22. Workflow Engine
+## 30. Workflow Engine
 
 Use a simple persistent state machine.
 
-Required concepts:
+Concepts:
 
 - WorkflowDefinition
 - WorkflowRun
@@ -679,102 +927,99 @@ Required concepts:
 - Escalation
 - Approval
 
-Workflow state must persist across page reloads.
+Workflow state persists across reloads.
 
-Do not overengineer with large orchestration platforms unless explicitly required.
+Do not introduce heavy orchestration infrastructure without explicit need.
+
+Do not expose engine internals to ordinary users.
 
 ---
 
-## 23. Human Decision Center
+## 31. Human Decision Layer
 
 Material actions should be reviewable.
 
-Supported actions:
+Supported decisions:
 
 - Approve
 - Reject
-- Request Evidence
+- Request More Information
 - Edit where appropriate
 - Escalate
-- Override
+- Override with reason
 
-Override must require a reason.
+Evidence and source context come before action buttons.
 
-Evidence and source context must be visible before approval.
+Human decisions create audit events.
 
-Human decisions must create audit events.
+No self-approval where independent review is required.
 
 ---
 
-## 24. Financial Logic
+## 32. Financial Logic
 
 Financial calculations must be deterministic.
 
-Do NOT use free-form LLM arithmetic for:
+Do not use free-form LLM arithmetic for:
 
 - NPV
 - IRR
 - ROI
-- payback period
+- payback
 - break-even
-- sensitivity calculations
+- sensitivity
 
 Use tested Python functions.
 
-AI may extract candidate assumptions, but calculations use deterministic functions.
+AI may extract assumptions.
 
 Expose:
-
-- assumption,
 - source,
+- assumption,
 - formula,
 - unit,
 - period,
 - result.
 
-Conflicting source values must be surfaced, not silently resolved.
+Surface conflicts instead of silently resolving them.
 
 ---
 
-## 25. Analytics
+## 33. Analytics
 
-Organize business impact around QCD.
+Organize impact around QCD.
 
-### Quality
-Examples:
-- citation coverage,
-- verified answer rate,
-- conflict detection,
-- rework,
-- outdated-source usage avoided.
+Quality:
+- citation coverage
+- verified rate
+- conflict detection
+- rework
+- outdated-source usage avoided
 
-### Cost / Capacity
-Examples:
-- manual effort,
-- hours released,
-- cost per case,
-- capacity release,
-- illustrative cost avoidance,
-- illustrative annual benefit.
+Cost / Capacity:
+- manual effort
+- hours released
+- cost per work item
+- capacity release
+- illustrative cost avoidance
 
-### Delivery
-Examples:
-- answer time,
-- cycle time,
-- backlog,
-- throughput,
-- completion rate,
-- escalation rate.
+Delivery:
+- answer time
+- cycle time
+- backlog
+- throughput
+- completion
+- escalation
 
-Simulated financial values must be visibly labeled:
+Simulated financial values must say:
 
 **Illustrative simulation**
 
-Do not present productivity/soft-dollar value as realized profit.
+Do not present soft-dollar productivity as realized profit.
 
 ---
 
-## 26. Audit Trail
+## 34. Audit Trail
 
 Audit events should be append-only where practical.
 
@@ -782,136 +1027,102 @@ Capture:
 
 - timestamp,
 - actor,
-- actor type,
 - event type,
-- entity type,
-- entity ID,
+- entity,
 - source IDs,
 - agent action,
-- tool action,
-- guard result,
+- Guard result,
 - workflow transition,
 - human decision,
 - override reason.
 
-A reviewer should be able to reconstruct:
-
-- what happened,
-- who did it,
-- what source was used,
-- what the AI did,
-- what the human decided.
+Ordinary users may see a readable activity timeline rather than raw event schema.
 
 ---
 
-## 27. Demo Data
+## 35. Demo Data
 
 Use synthetic/mock data only.
 
-Do not use real customer data.
-
-Seed deterministic scenarios that demonstrate:
+Seed repeatable scenarios for:
 
 - valid/current source,
 - outdated source,
 - restricted source,
 - missing evidence,
 - conflicting evidence,
-- human approval requirement.
+- human approval,
+- regulatory review,
+- investment analysis if implemented.
 
-The application must be resettable to a known demo state.
-
----
-
-## 28. Testing Requirements
-
-Tests should cover meaningful behavior.
-
-Backend unit tests should cover at least:
-
-- permission enforcement,
-- source version selection,
-- reliability state selection,
-- evidence completeness,
-- conflict detection,
-- financial calculations,
-- audit event creation.
-
-Integration/API tests should cover core flows.
-
-Critical browser/E2E tests should include:
-
-- Ask SuperFlow happy path,
-- Access Restricted path,
-- Regulation → Gap → Remediation,
-- Finance → Analysis → Approval.
-
-Do not add meaningless tests just to increase coverage numbers.
+The application should reset to a known demo state.
 
 ---
 
-## 29. Error Handling
+## 36. Error Handling
 
-Build product-quality states for:
+Build usable states for:
 
-- no results,
+- no result,
 - unavailable source,
 - restricted source,
 - outdated source,
 - conflicting evidence,
 - missing evidence,
 - AI provider unavailable,
-- document parsing failure,
+- parsing failure,
 - workflow failure,
-- backend/network failure.
+- network/backend failure.
 
-Never expose raw stack traces to end users.
+Never expose raw stack traces to users.
 
 ---
 
-## 30. Observability
+## 37. Observability
 
-For development and demo:
+Use:
 
-- use structured logs,
-- use request IDs,
-- use agent run IDs,
-- use workflow run IDs where appropriate.
+- structured logs,
+- request IDs,
+- agent run IDs,
+- workflow run IDs where useful.
 
 Make demo failures diagnosable.
 
+Do not expose observability identifiers prominently to ordinary users.
+
 ---
 
-## 31. Security
+## 38. Security
 
 Rules:
 
 - never commit secrets,
-- never expose secret environment variables to browser code,
+- never expose secret environment variables to browser,
 - backend owns permission enforcement,
-- audit human overrides,
+- audit overrides,
 - validate inputs,
 - use synthetic data,
-- do not log sensitive content unnecessarily.
+- minimize sensitive logging.
 
 ---
 
-## 32. Repository Hygiene
+## 39. Repository Hygiene
 
-Before introducing a dependency:
+Before adding a dependency:
 
-- verify it is needed,
-- prefer existing dependency if suitable,
-- avoid overlapping libraries solving the same problem,
-- avoid large dependencies for tiny functionality.
+- verify need,
+- prefer existing dependency,
+- avoid overlapping libraries,
+- avoid heavy dependencies for tiny needs.
 
-Remove unused code and dead dependencies.
+Remove unused code/dependencies.
 
-Do not leave abandoned experiment files in production paths.
+Do not leave abandoned experiments in production paths.
 
 ---
 
-## 33. Documentation
+## 40. Documentation
 
 Maintain:
 
@@ -921,81 +1132,113 @@ Maintain:
 
 README should explain:
 
-- what SuperFlow is,
+- product,
 - architecture,
-- prerequisites,
-- environment variables,
-- installation,
+- setup,
+- environment,
+- database,
 - migrations,
-- seeding,
+- seed/reset,
 - run commands,
 - tests,
 - demo users,
 - demo flow,
 - project structure,
-- known prototype limitations.
+- limitations.
+
+Project documentation is in Bahasa Indonesia unless source/tooling convention requires English.
+
+`AGENTS.md` and `SuperFlow_PRD_v2.md` remain in English.
 
 ---
 
-## 34. Working Process
+## 41. Working Process
 
-Before coding a requested phase:
+Before coding:
 
-1. Read `SuperFlow_PRD_v1.md`.
-2. Read this `AGENTS.md`.
-3. Inspect current repository state.
+1. Read `SuperFlow_PRD_v2.md`.
+2. Read `AGENTS.md`.
+3. Inspect current repository.
 4. Read `IMPLEMENTATION_STATUS.md`.
-5. Identify what already exists.
-6. Reuse good implementation.
-7. Implement the requested scope end-to-end.
-8. Run relevant tests.
+5. Identify existing implementation.
+6. Reuse good code.
+7. Implement requested scope end-to-end.
+8. Run tests.
 9. Fix failures.
-10. Update `IMPLEMENTATION_STATUS.md`.
+10. Update status/docs.
 
-Do not stop after scaffolding unless the task explicitly asks only for scaffolding.
+Do not stop after scaffolding unless explicitly requested.
 
 Do not ask for approval after every small change.
 
-Do not start later product phases unless requested.
+Do not start later phases unless requested.
 
 ---
 
-## 35. Implementation Status Rules
+## 42. Product Experience Reconciliation Rules
 
-`IMPLEMENTATION_STATUS.md` should explicitly identify:
+When reconciling Phase 0–3 UI:
 
-- Completed
-- Partially Implemented
-- Not Implemented
-- Known Issues
-- Blockers
-- Recommended Next Step
+Preserve backend:
 
-Do not describe unfinished work as completed.
+- Case
+- WorkflowDefinition
+- WorkflowRun
+- Task
+- Approval
+- GuardResult
+- Evidence
+- AuditEvent
+- permissions
+- state machine
+- concurrency protections
+- tests
+
+Refactor frontend to:
+
+- role-aware navigation,
+- My Work,
+- Reviews / Approvals,
+- business-language titles,
+- human-readable progress,
+- contextual next actions.
+
+Do not rebuild working backend systems.
+
+Do not rename DB entities only for UX copy.
+
+Remove user-facing development labels such as:
+
+- Phase 0–3
+- Knowledge + Action phase indicators
+- WorkflowDefinition
+- revision/debug identifiers
+
+unless in developer/admin surfaces.
 
 ---
 
-## 36. Definition of Done for a Feature
+## 43. Definition of Done for User-Facing Features
 
-A feature is not done just because UI exists.
+A user-facing feature is not done because backend and UI both exist.
 
-A feature is done when applicable items are satisfied:
+It is done when:
 
-- UI exists,
-- backend exists,
-- data persists,
+- the user can understand what it is for,
+- terminology matches the user's job,
+- next action is clear,
+- internal implementation details are hidden unless useful,
+- backend data persists,
 - permissions work,
-- loading state exists,
-- empty state exists,
-- error state exists,
-- relevant reliability behavior exists,
-- audit behavior exists,
+- loading/empty/error states exist,
+- reliability is represented appropriately,
+- audit behavior exists where material,
 - tests pass,
 - documentation is updated.
 
 ---
 
-## 37. Code Quality Rules
+## 44. Code Quality Rules
 
 Prefer:
 
@@ -1006,75 +1249,84 @@ Prefer:
 - deterministic critical logic,
 - provider abstractions,
 - clear naming,
-- clear data ownership.
+- clear data ownership,
+- frontend view-model translation.
 
 Avoid:
 
 - giant React components,
 - giant service files,
 - magic strings,
-- duplicated status values,
-- duplicated authorization logic,
-- hidden frontend business rules,
+- duplicate statuses,
+- duplicate authorization,
+- frontend-owned business truth,
 - fake backend behavior,
 - fake citations,
 - silent failure,
-- unnecessary abstraction.
+- unnecessary abstraction,
+- exposing backend terminology as UI simply because it is convenient.
 
 ---
 
-## 38. Final Verification Before Stopping
+## 45. Final Verification Before Stopping
 
-Before declaring a phase complete:
-
-Run the relevant:
+Run relevant:
 
 - formatter,
 - linter,
 - type checker,
 - backend tests,
 - frontend tests,
-- critical E2E tests.
+- critical E2E tests,
+- production build.
 
-Then manually verify the requested flow.
+Manually verify:
 
-For Knowledge Core / Reliability work, verify at minimum:
-
-- role switching works,
-- documents persist,
-- current version selection works,
-- citations point to real chunks,
-- restricted source does not leak,
-- outdated source is identified,
-- reliability status behaves correctly,
-- errors are handled,
-- application still boots cleanly.
+- role-aware navigation,
+- Ask flow,
+- Knowledge,
+- My Work,
+- Reviews / Approvals where applicable,
+- reliability,
+- permissions,
+- source/version,
+- no restricted leakage,
+- responsive behavior,
+- no development-only language on user-facing screens.
 
 ---
 
-## 39. Product Framing Reminder
+## 46. Product Framing Reminder
 
-Never accidentally turn the project into:
+Never turn SuperFlow into:
 
-“AML AI Assistant”
-
-or:
-
-“Enterprise Chatbot”
+- AML AI Assistant,
+- enterprise chatbot,
+- workflow-engine console,
+- case-management tool,
+- admin dashboard.
 
 The intended product is:
 
 **SuperFlow — Enterprise Knowledge-to-Action Platform**
 
-The shared foundation should support multiple enterprise workflows.
+Employee knowledge access is the simple entry point.
 
-AML/FIU is only an example proof point.
+Regulation-to-Action is the primary banking-context differentiator.
+
+Investment Intelligence demonstrates cross-division reuse.
+
+AML/FIU is an optional proof point.
 
 ---
 
-## 40. North Star
+## 47. North Star
 
-Every major product decision should support this statement:
+Every major product decision should support:
 
 > Trusted knowledge should not stop at an answer.  
 > It should become controlled, auditable, measurable action.
+
+And every major UX decision should support:
+
+> Users should understand the work they need to do, not the architecture that makes it possible.

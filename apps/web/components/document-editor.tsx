@@ -94,7 +94,7 @@ export function DocumentEditor({
         <p className="muted">
           {isVersion
             ? `A new immutable source version for ${document!.title}. Publishing supersedes the current active version.`
-            : "Use synthetic documents. Metadata and role access are enforced by the backend."}
+            : "Add a source with its owner, authority, and permitted readers."}
         </p>
         {!isVersion && (
           <>

@@ -58,3 +58,20 @@ MCP 21st.dev aktif: search activity timeline dan approval/task list. Kandidat ya
 `get_component(28295)` dicoba: source terkunci `retrieval_limit_reached`, dua retrieval per hari, reset 27 September 2026 00:00 UTC. Karena source/dependency tidak dapat diperiksa, tidak ada vendor baru diadopsi/diinstall. Tidak melewati kuota.
 
 UI menggunakan primitive existing: tabel Origin UI yang sebelumnya sudah diperiksa, Dialog/SourcePanel, metadata, status badge, native details/summary dan tokens. WorkflowTimeline dibuat dengan semantic ordered list/current step/attempt disclosure; ApprovalPanel menggunakan EvidenceChecklist/source references sebelum form keputusan. Tidak ada design system kedua atau dependency baru.
+
+## Rekonsiliasi Product Experience — PRD v2
+
+Inspeksi existing dilakukan pada ApplicationShell, ActionLists/DataTable, ApprovalPanel, WorkflowTimeline, SourcePanel/Dialog dan token navy/lime sebelum pencarian MCP.
+
+Pencarian MCP resmi `search`: `task inbox review queue work item list`, `compact activity progress timeline`.
+
+| Kandidat                        | ID / sumber                                               | Penilaian                                                                                                                                                                  |
+| ------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Activity Timeline               | 28340, 7ovr, https://21st.dev/@7ovr/components/timeline-3 | Actor/action/time cocok untuk Activity; `get_component` terkunci `retrieval_limit_reached`, reset 27 September 00:00 UTC. Source/dependency tidak tersedia untuk inspeksi. |
+| Process Timeline                | 28381, shadcnui-blocks                                    | Progress sequential/check cocok sebagai referensi metadata; source belum diambil, tidak diadopsi.                                                                          |
+| Agent Todo List                 | 28423, starc007                                           | Checklist relevan, tetapi animasi/task count tidak diperlukan; tidak diadopsi.                                                                                             |
+| Task Board Kanban               | 29227, 7ovr                                               | Drag-and-drop dapat menyesatkan transition authority; tidak dipilih.                                                                                                       |
+| Notification Panel              | 27135, uvain                                              | Grouping inbox relevan; notification/read-state baru di luar scope. Tidak diadopsi.                                                                                        |
+| Agent Activity / Agent Progress | 29318 / 29323, starc007                                   | Mengekspos tool/reasoning atau timer; kurang cocok bagi pengguna pekerjaan biasa.                                                                                          |
+
+Tidak ada source vendor baru dipasang atau dependency ditambahkan. Origin UI DataTable existing yang sebelumnya diperiksa, semantic ordered timeline, native disclosure, metadata/badge/empty/error/loading, serta Dialog/SourcePanel dipertahankan. WorkItemRows dan HomeAttention mengadaptasi komponen existing untuk data backend actual; API/Guard/transitions tidak diambil dari referensi UI.

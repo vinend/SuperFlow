@@ -23,6 +23,23 @@ export function useActionWorkspace(user: User, caseId: string | null) {
   const mounted = useRef(true);
   const load = useCallback(
     async (signal: AbortSignal) => {
+      if (caseId) {
+        // A request contains its own progress, tasks, reviews and activity.
+        // Do not make opening it wait for unrelated workspace-wide lists.
+        const [result, templates] = await Promise.all([
+          api<CaseView>(`/api/cases/${caseId}`, user, { signal }),
+          api<DefinitionView[]>("/api/workflow-definitions", user, { signal }),
+        ]);
+        if (!isCaseView(result))
+          throw new Error(
+            "Request details could not be loaded. Refresh before continuing.",
+          );
+        if (!signal.aborted && mounted.current) {
+          setCurrent(result);
+          setDefinitions(templates);
+        }
+        return;
+      }
       const [caseList, templates, workflowRuns, queue] = await Promise.all([
         api<CaseSummary[]>("/api/cases", user, { signal }),
         api<DefinitionView[]>("/api/workflow-definitions", user, { signal }),
@@ -34,16 +51,6 @@ export function useActionWorkspace(user: User, caseId: string | null) {
       setDefinitions(templates);
       setRuns(workflowRuns);
       setApprovals(queue);
-      if (caseId) {
-        const result = await api<CaseView>(`/api/cases/${caseId}`, user, {
-          signal,
-        });
-        if (!isCaseView(result))
-          throw new Error(
-            "Case context is invalid. Refresh after checking the API.",
-          );
-        if (!signal.aborted && mounted.current) setCurrent(result);
-      }
     },
     [user, caseId],
   );
@@ -89,7 +96,9 @@ export function useActionWorkspace(user: User, caseId: string | null) {
         }),
       });
       if (!isCaseView(result))
-        throw new Error("Case result is invalid. Refresh before continuing.");
+        throw new Error(
+          "Request details are unavailable. Refresh before continuing.",
+        );
       if (!mounted.current || abort.signal.aborted) return null;
       // Creation returns an ID to the router; render its workspace only after the
       // new URL owns the request lifecycle. Avoid actions during navigation.

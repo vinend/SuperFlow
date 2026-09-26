@@ -11,28 +11,35 @@ async function askCase(page: Page, question: string, source?: string) {
       .selectOption(source);
   await page.getByRole("textbox", { name: "Your question" }).fill(question);
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
-  await page.getByRole("link", { name: "Create case", exact: true }).click();
-  await page.getByRole("button", { name: "Create case", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Start workflow", exact: true }),
-  ).toBeVisible();
   await page
-    .getByRole("button", { name: "Start workflow", exact: true })
+    .getByRole("link", { name: "Request Review", exact: true })
+    .or(page.getByRole("link", { name: "Start Review", exact: true }))
     .click();
-  await page.getByRole("button", { name: "Start task", exact: true }).click();
   await page
-    .getByRole("button", { name: "Complete task", exact: true })
+    .getByRole("button", { name: "Submit Request", exact: true })
+    .click();
+  await page.getByRole("button", { name: "Begin review", exact: true }).click();
+  await page
+    .getByRole("button", { name: "Information checked", exact: true })
     .click();
   await expect(
-    page.getByRole("region", { name: "Approval Panel" }),
+    page.getByRole("region", { name: "Review request" }),
   ).toBeVisible();
 }
 
 async function role(page: Page, value: string) {
   await page.getByRole("combobox", { name: "Demo role" }).selectOption(value);
   await expect(
-    page.getByRole("region", { name: "Approval Panel" }),
+    page.getByRole("region", { name: "Review request" }),
   ).toBeVisible();
+}
+
+async function submittedAction(page: Page, name: string, endpoint: string) {
+  const response = page.waitForResponse(
+    (r) => r.request().method() === "POST" && r.url().endsWith(endpoint),
+  );
+  await page.getByRole("button", { name, exact: true }).click();
+  expect((await response).status()).toBe(200);
 }
 
 test("verified answer becomes a persistent case, task, approval and completion", async ({
@@ -41,17 +48,17 @@ test("verified answer becomes a persistent case, task, approval and completion",
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await askCase(page, "How many annual leave days do I get?", "leave-policy");
-  await expect(
-    page.getByRole("region", { name: "Workflow timeline" }),
-  ).toContainText("Manager decision");
-  await expect(
-    page.getByRole("region", { name: "Case audit trail" }),
-  ).toContainText("task completed");
+  await expect(page.getByRole("region", { name: "Progress" })).toContainText(
+    "Manager review",
+  );
+  await expect(page.getByRole("region", { name: "Activity" })).toContainText(
+    "Supporting information checked",
+  );
   const url = page.url();
   await page.reload();
   await expect(
-    page.getByRole("region", { name: "Approval Panel" }),
-  ).toContainText("manager");
+    page.getByRole("region", { name: "Review request" }),
+  ).toContainText("Arif Santoso");
   await role(page, "manager");
   await page
     .getByRole("combobox", { name: "Decision action" })
@@ -60,15 +67,15 @@ test("verified answer becomes a persistent case, task, approval and completion",
     .getByRole("textbox", { name: "Decision reason" })
     .fill("Current leave policy reviewed.");
   await page.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(page.locator(".case-context-bar")).toContainText("completed");
+  await expect(page.locator(".case-context-bar")).toContainText("Completed");
   await page.goto(url);
-  await expect(page.locator(".case-context-bar")).toContainText("completed");
+  await expect(page.locator(".case-context-bar")).toContainText("Completed");
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("employee");
-  await expect(
-    page.getByRole("region", { name: "Case audit trail" }),
-  ).toContainText("approval approved");
+  await expect(page.getByRole("region", { name: "Activity" })).toContainText(
+    "Request approved",
+  );
   await page.locator(".case-evidence .source-reference").first().click();
   await expect(
     page.getByRole("dialog", { name: "Source Panel" }),
@@ -88,17 +95,16 @@ test("missing evidence request is persisted and resumes only after a real source
 }) => {
   await page.goto("/cases?new=1");
   await page
-    .getByRole("textbox", { name: "Case title", exact: true })
+    .getByRole("textbox", { name: "Request title", exact: true })
     .fill("Collect current leave policy evidence");
-  await page.getByRole("button", { name: "Create case", exact: true }).click();
   await page
-    .getByRole("button", { name: "Start workflow", exact: true })
+    .getByRole("button", { name: "Submit Request", exact: true })
     .click();
   await page
-    .getByRole("button", { name: "Complete task", exact: true })
+    .getByRole("button", { name: "Information checked", exact: true })
     .click();
   await expect(page.locator(".case-context-bar")).toContainText(
-    "waiting for evidence",
+    "Waiting for information",
   );
   await role(page, "manager");
   await page
@@ -110,13 +116,13 @@ test("missing evidence request is persisted and resumes only after a real source
   await page
     .getByRole("textbox", { name: "Required evidence" })
     .fill("Approved leave policy section");
-  await page
-    .getByRole("button", { name: "Request evidence", exact: true })
-    .click();
+  await submittedAction(page, "Request More Information", "/request-evidence");
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("employee");
-  await page.getByText("Attach source evidence", { exact: true }).click();
+  await page
+    .getByText("Provide supporting information", { exact: true })
+    .click();
   await page
     .getByRole("combobox", { name: "Evidence document" })
     .selectOption("leave-policy");
@@ -127,18 +133,16 @@ test("missing evidence request is persisted and resumes only after a real source
     .getByRole("combobox", { name: "Evidence requirement" })
     .selectOption({ index: 1 });
   await page
-    .getByRole("button", { name: "Attach evidence", exact: true })
+    .getByRole("button", { name: "Add information", exact: true })
     .click();
   await expect(page.locator(".reliability-status")).toHaveText("VERIFIED");
-  await page
-    .getByRole("button", { name: "Resume workflow", exact: true })
-    .click();
+  await submittedAction(page, "Continue review", "/advance");
   await role(page, "manager");
   await page
     .getByRole("combobox", { name: "Decision action" })
     .selectOption("approve");
   await page.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(page.locator(".case-context-bar")).toContainText("completed");
+  await expect(page.locator(".case-context-bar")).toContainText("Completed");
 });
 
 test("conflicting knowledge routes to SME and preserves reliability after decision", async ({
@@ -146,8 +150,8 @@ test("conflicting knowledge routes to SME and preserves reliability after decisi
 }) => {
   await askCase(page, "How often are access rights reviewed?");
   await expect(
-    page.getByRole("region", { name: "Approval Panel" }),
-  ).toContainText("sme");
+    page.getByRole("region", { name: "Review request" }),
+  ).toContainText("Nadia Rahman");
   await role(page, "sme");
   await page
     .getByRole("textbox", { name: "Decision reason" })
@@ -155,7 +159,7 @@ test("conflicting knowledge routes to SME and preserves reliability after decisi
       "Conflicting intervals inspected; record the review outcome for knowledge owner reconciliation.",
     );
   await page.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(page.locator(".case-context-bar")).toContainText("completed");
+  await expect(page.locator(".case-context-bar")).toContainText("Completed");
   await expect(page.locator(".reliability-status")).toHaveText(
     "REVIEW REQUIRED",
   );
@@ -188,7 +192,7 @@ test("requester cannot approve a material decision, including direct API calls",
   expect(denied.status()).toBe(403);
   await page.reload();
   await expect(page.locator(".case-context-bar")).toContainText(
-    "waiting for review",
+    "Waiting for review",
   );
 });
 
@@ -246,7 +250,7 @@ test("escalation reaches Governance and override requires a reason", async ({
   await page
     .getByRole("textbox", { name: "Decision reason" })
     .fill("Request Governance exception review.");
-  await page.getByRole("button", { name: "Escalate", exact: true }).click();
+  await submittedAction(page, "Escalate", "/escalate");
   await role(page, "governance");
   await page
     .getByRole("combobox", { name: "Decision action" })
@@ -256,14 +260,14 @@ test("escalation reaches Governance and override requires a reason", async ({
   ).toHaveAttribute("required", "");
   await page.getByRole("button", { name: "Override", exact: true }).click();
   await expect(page.locator(".case-context-bar")).toContainText(
-    "waiting for review",
+    "Waiting for review",
   );
   await page
     .getByRole("textbox", { name: "Decision reason" })
     .fill("Current approved evidence reviewed; exception decision recorded.");
   await page.getByRole("button", { name: "Override", exact: true }).click();
-  await expect(page.locator(".case-context-bar")).toContainText("completed");
-  await expect(
-    page.getByRole("region", { name: "Case audit trail" }),
-  ).toContainText("override performed");
+  await expect(page.locator(".case-context-bar")).toContainText("Completed");
+  await expect(page.getByRole("region", { name: "Activity" })).toContainText(
+    "Exception decision recorded",
+  );
 });

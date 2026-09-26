@@ -6,6 +6,7 @@ import { citedParagraphs } from "@/lib/knowledge-view";
 import type { AnswerCardProps } from "@/lib/workspace-contracts";
 import { StatusBadge } from "./ui/primitives";
 import { EvidenceChecklist } from "./evidence-checklist";
+import { askAction } from "@/lib/product-view";
 
 export function AnswerCard({
   answer,
@@ -13,6 +14,7 @@ export function AnswerCard({
   onDocument,
   reliabilitySlot,
 }: AnswerCardProps) {
+  const nextAction = askAction(answer);
   return (
     <section className="answer-card" aria-label="Answer Card">
       <div className="answer-heading">
@@ -102,16 +104,12 @@ export function AnswerCard({
           <span className="context-label">Next action</span>
           <p>{answer.reliability.next_step}</p>
         </div>
-        {["VERIFIED", "REVIEW_REQUIRED", "OUTDATED", "BLOCKED"].includes(
-          answer.reliability.status,
-        ) && (
+        {nextAction && (
           <a
             className="button primary"
             href={`/cases?from=${encodeURIComponent(answer.id)}`}
           >
-            {answer.reliability.status === "BLOCKED"
-              ? "Create evidence recovery case"
-              : "Create case"}
+            {nextAction.label}
           </a>
         )}
         {answer.sources[0] ? (
@@ -128,7 +126,7 @@ export function AnswerCard({
           </button>
         ) : (
           <a className="button secondary" href="/knowledge">
-            Browse Knowledge Hub <ChevronRight size={15} />
+            Browse Knowledge <ChevronRight size={15} />
           </a>
         )}
       </div>

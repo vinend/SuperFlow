@@ -4,7 +4,19 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Pekerjaan yang diotorisasi adalah **Fase 3 — Workflow Core**. Reuse QuestionRun, Guard/evidence, permission, dan AuditEvent Fase 0–2. Implementasi berhenti pada Reliable Knowledge → Case → Persistent Workflow → Task → Human Decision → Audit. Fase 4 tidak dimulai.
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Fase 4 tidak dimulai.
+
+## Rekonsiliasi Product Experience
+
+1. Baca PRD v2 dan audit shell, Home, Ask, Knowledge, workspace, serta kontrak/API existing.
+2. Inspeksi MCP 21st.dev untuk inbox dan timeline; gunakan primitive existing bila source tidak tersedia atau kandidat tidak cocok.
+3. Adapter frontend bertipe menerjemahkan Case/WorkflowRun/Task/Approval menjadi work item dan progress tanpa state machine kedua.
+4. Employee mendapat Home/Ask/Knowledge/My Work; reviewer mendapat Reviews; Governance Admin mendapat Home/Knowledge/My Work/Reviews. Modul yang belum diimplementasikan tidak ditampilkan.
+5. Tindakan Ask membawa konteks authorized ke request dan review existing; evidence recovery tetap eksplisit.
+6. Humanisasi status, activity, nama orang, dan progress; hilangkan label fase, revision, definisi dan node types dari layar produk.
+7. Jalankan seluruh quality gate, regresi dan inspeksi produksi enam role/desktop/mobile; dokumentasikan hasil aktual.
+
+Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype; quality gate, regresi dan inspeksi produksi enam role lulus. Fase 4 belum dimulai.
 
 ## Tahapan PRD
 
@@ -27,7 +39,7 @@ Pekerjaan yang diotorisasi adalah **Fase 3 — Workflow Core**. Reuse QuestionRu
 - Migrasi roles, users, documents, versions, chunks, dan saved questions. Original bytes/checksum disimpan bersama versi dokumen.
 - Enam identitas sintetis; 12 dokumen dengan 14 versi. Seed berulang tidak menimpa data pengguna.
 - Role switcher mock yang tersimpan sebagai ID di browser; role sebenarnya dipahami API melalui `X-User-Id`.
-- Home, Ask SuperFlow, Knowledge Hub tersedia. Cases, Workflows, Decision Center, Analytics, Governance hanya placeholder navigasi.
+- Home, Ask SuperFlow, Knowledge tersedia. Navigasi execution sekarang memakai My Work/Reviews sesuai role; tidak ada placeholder modul masa depan sebagai navigasi utama.
 - Reset CLI lokal yang eksplisit, dibatasi database PostgreSQL `superflow`/`superflow_test`, mengembalikan tabel Fase 0/1 secara atomik. Tidak ada endpoint reset produksi atau reset fitur fase berikutnya.
 
 ## Deliverable Fase 1
@@ -38,7 +50,7 @@ Pekerjaan yang diotorisasi adalah **Fase 3 — Workflow Core**. Reuse QuestionRu
 - Pemeriksaan akses dasar sebelum retrieval dan sebelum mengembalikan sumber/download/saved answer. Ini prasyarat keamanan Knowledge Core, bukan arsitektur Guard lengkap.
 - `Retriever` dan `AnswerProvider` dapat diganti. Adapter awal deterministik berbasis keyword/concept, filter metadata, bobot authority, dan active-version selection. Historical retrieval harus dipilih; draft dikecualikan.
 - Jawaban berupa kutipan extractive nyata; citation merujuk ID document/version/chunk sebenarnya.
-- AnswerCard dan SourcePanel bertipe; hanya keduanya fungsional. Komponen fase berikutnya dan slot reliability dicadangkan tanpa output palsu.
+- AnswerCard dan SourcePanel bertipe dibangun pada Fase 1; EvidenceChecklist, ApprovalPanel, dan Progress ditambahkan pada fondasi Fase 2–3 tanpa output palsu.
 - Refresh membuka kembali saved answer/filter dan detail versi melalui referensi URL; API memeriksa izin lagi. Sumber yang tidak tersedia menghasilkan error, bukan konten cache browser.
 
 ## Deliverable Fase 2
@@ -86,7 +98,7 @@ Regulation comparison/remediation, investasi/rumus keuangan, analytics, AML/FIU,
 4. Retry terkendali maksimum dua, manual fallback, escalation Governance, request evidence dan resumable workflow.
 5. Decision Center: approve/reject/request evidence/escalate/override dengan independent authority, mandatory reason, dan backend controls.
 6. Case lock/source metadata locks/revision, unique task/run, optional idempotency receipts, audit append-only existing.
-7. Typed CaseWorkspace/ApprovalPanel/WorkflowTimeline, activated navigation, real evidence/source context, compact tokens existing.
+7. Typed CaseWorkspace/ApprovalPanel/WorkflowTimeline, navigation My Work/Reviews setelah rekonsiliasi PRD v2, real evidence/source context, compact tokens existing.
 8. Demo A/B/C opsional dan reset Fase 0–3; tests backend, contracts, browser/concurrency, regression, production/responsive inspection.
 
 Dependency: seluruh Fase 0–2, PostgreSQL/Alembic, mock identities, Guard extractive rules. Arsitektur dan batasan di [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md). Tidak ada Regulation-to-Action, analytics, investment analysis, atau AML workflow.

@@ -2370,6 +2370,57 @@ select {
   margin-top: 5px;
   max-width: 55ch;
 }
+.home-attention {
+  margin: 24px 0;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+}
+.home-attention .section-header:not(:first-child) {
+  margin-top: 24px;
+}
+.attention-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+}
+.attention-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+  font-size: 12px;
+}
+.attention-list a {
+  min-width: 0;
+}
+.attention-list strong {
+  display: block;
+  font-size: 13px;
+}
+.attention-list span {
+  color: var(--muted);
+  display: block;
+  margin-top: 4px;
+}
+.attention-empty {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 12px 0;
+}
+.work-row-progress {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.work-row-progress summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.work-row-progress ol {
+  padding-left: 18px;
+  line-height: 1.8;
+}
 @media (max-width: 1100px) {
   .case-layout {
     grid-template-columns: 1fr;

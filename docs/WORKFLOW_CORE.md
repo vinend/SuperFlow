@@ -1,5 +1,7 @@
 # Workflow Core — Fase 3
 
+**Rekonsiliasi PRD v2:** model/API di dokumen ini tetap merupakan arsitektur internal. Produk memakai My Work, Progress, Reviews / Approvals, dan Activity. PRD v2 menggantikan PRD v1; Fase 4 belum dimulai.
+
 ## Batas dan arsitektur
 
 Reliable Knowledge → Case → persistent workflow → task → human decision → audit.
@@ -121,7 +123,7 @@ npm.cmd run demo:workflow
 
 CLI demo opsional membuat tiga Case sintetis dan workflow pada task awal; berulang tidak menimpa execution existing. `db:reset -- --confirm-synthetic-data` menghapus data Fase 0–3, termasuk Case/workflow/decision/attempt/receipt/audit demo. Jalankan demo:workflow kembali jika membutuhkan tiga Case awal.
 
-1. **A:** Employee membuka Demo A, complete task → Manager approve → completion. Alternatif: Ask annual leave → Create case → Start workflow.
+1. **A:** Employee membuka Demo A, complete task → Manager approve → completion. Alternatif: Ask annual leave → Request Review → Submit Request → My Work.
 2. **B:** Demo B tanpa sumber → complete task → WAITING_FOR_EVIDENCE. Manager Request evidence dengan label approved leave policy. Employee Attach source evidence, pilih active Annual Leave Policy section dan requirement; Resume → Manager approve.
 3. **C:** Demo C → complete task → SME menerima konflik 12 vs 6 bulan. Inspect sources, record reason → approve atau reject. Guard REVIEW_REQUIRED tetap terlihat.
 4. Manager dapat escalate request ke Governance. Pilih Override; reason wajib. Skenario blocked/outdated tidak dapat dioverride.
@@ -129,7 +131,7 @@ CLI demo opsional membuat tiga Case sintetis dan workflow pada task awal; berula
 
 ## UI dan 21st.dev
 
-AnswerCard mempunyai entry Create case untuk context safe/recovery. Cases, Workflows, Decision Center aktif; Analytics/Governance tetap Later. WorkflowTimeline dan ApprovalPanel bertipe fungsional, bersama AnswerCard/SourcePanel/EvidenceChecklist existing. ComparisonTable/FinancialAnalysis deferred.
+AnswerCard mempunyai tindakan kontekstual Request Review, Start Review, Request Exception, atau Provide Information. Submit Request memakai Case/start API existing. My Work menyajikan work item; Reviews hanya untuk reviewer; Progress dan Activity memakai bahasa pekerjaan. Tidak ada standalone Workflows, Cases, Decision Center atau placeholder masa depan pada navigasi. WorkflowTimeline/ApprovalPanel existing tetap digunakan dengan kontrak yang sama; ComparisonTable/FinancialAnalysis deferred.
 
 MCP mencari Activity Timeline, Cubby UI Timeline dan task checklist. Source Cubby UI terkunci kuota; tidak ada vendor component baru yang dipasang tanpa inspeksi. Primitive tabel Origin UI existing, Dialog, metadata, badge, disclosure, tokens, dan SourcePanel dipakai kembali. Detail pada UI_REFERENCES.md.
 

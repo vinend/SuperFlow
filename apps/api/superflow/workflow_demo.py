@@ -9,9 +9,9 @@ from .workflow_contracts import CaseCreate
 from .workflows import start_workflow
 
 SCENARIOS = [
-    ("Demo A — Annual leave review", ["leave-policy"]),
-    ("Demo B — Missing supporting evidence", []),
-    ("Demo C — Access review conflict", ["access-sop", "access-review-policy"]),
+    ("Annual Leave Review", ["leave-policy"]),
+    ("Supporting Evidence Request", []),
+    ("Access Review Clarification", ["access-sop", "access-review-policy"]),
 ]
 
 
@@ -20,9 +20,18 @@ def seed_workflow_demo(db):
     definition = db.get(WorkflowDefinition, "generic-review-v1")
     if not user or not definition:
         raise ValueError("Run migrations and knowledge seed first.")
+    legacy_titles = {
+        "Annual Leave Review": "Demo A — Annual leave review",
+        "Supporting Evidence Request": "Demo B — Missing supporting evidence",
+        "Access Review Clarification": "Demo C — Access review conflict",
+    }
     created = 0
     for title, source_ids in SCENARIOS:
-        if db.scalar(select(Case).where(Case.title == title, Case.created_by == user.id)):
+        if db.scalar(
+            select(Case).where(
+                Case.title.in_([title, legacy_titles[title]]), Case.created_by == user.id
+            )
+        ):
             continue
         chunks = (
             list(
@@ -43,7 +52,9 @@ def seed_workflow_demo(db):
             db,
             user,
             CaseCreate(
-                title=title, description="Synthetic generic review scenario.", chunk_ids=chunks
+                title=title,
+                description="Review the supporting sources and record an independent decision.",
+                chunk_ids=chunks,
             ),
         )
         case.revision += 1

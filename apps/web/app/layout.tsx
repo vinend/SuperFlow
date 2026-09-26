@@ -3,9 +3,9 @@ import { SessionProvider } from "@/components/session";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SuperFlow · Knowledge Workspace",
+  title: "SuperFlow · Knowledge-to-Action Workspace",
   description:
-    "From trusted knowledge to measurable action. Phase 0–3 synthetic prototype.",
+    "Enterprise knowledge, supporting evidence, and controlled human decisions.",
 };
 
 export default function RootLayout({

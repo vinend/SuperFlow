@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { api, type Answer, type KnowledgeDocument, type User } from "@/lib/api";
 import type { CaseView } from "@/lib/workflow-contracts";
+import { askAction, businessStatus, roleLabel } from "@/lib/product-view";
+import { useSession } from "./session";
 import { ErrorState, LoadingState } from "./ui/primitives";
 
 type Submit = (
@@ -24,6 +26,7 @@ export function CaseCreateForm({
   submit: Submit;
   created: (id: string) => void;
 }) {
+  const { users } = useSession();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState<CaseView["type"]>("general");
@@ -31,6 +34,7 @@ export function CaseCreateForm({
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [error, setError] = useState("");
   const [recovery, setRecovery] = useState(false);
+  const [saved, setSaved] = useState<CaseView | null>(null);
   useEffect(() => {
     if (!origin) return;
     const abort = new AbortController();
@@ -38,7 +42,8 @@ export function CaseCreateForm({
       .then((value) => {
         if (!abort.signal.aborted) {
           setAnswer(value);
-          setTitle(value.question.slice(0, 200));
+          setTitle(askAction(value)?.title || "Policy Review");
+          setDescription(value.question);
         }
       })
       .catch((reason: Error) => {
@@ -51,92 +56,116 @@ export function CaseCreateForm({
   if (error) return <ErrorState message={error} />;
   if (answer?.reliability.status === "ACCESS_RESTRICTED")
     return (
-      <ErrorState message="Restricted context cannot be carried into a case. Create a manual case with permitted sources." />
+      <ErrorState message="This source is restricted. Start a request using sources you can access." />
     );
   return (
     <form
       className="workflow-form case-create-form"
-      aria-label="Create case"
+      aria-label="Submit request"
       onSubmit={async (event) => {
         event.preventDefault();
-        const result = await submit("/api/cases", {
-          title,
-          description,
-          type,
-          owner_id: owner,
-          question_run_id: origin,
-          allow_recovery: recovery,
+        const result =
+          saved ||
+          (await submit("/api/cases", {
+            title,
+            description,
+            type,
+            owner_id: owner,
+            question_run_id: origin,
+            allow_recovery: recovery,
+          }));
+        if (!result) return;
+        setSaved(result);
+        // Retry submission against the saved request, never create a duplicate.
+        const started = await submit("/api/workflows/generic-review-v1/start", {
+          case_id: result.id,
+          expected_revision: result.revision,
+          idempotency_key: `submit-${result.id}`,
         });
-        if (result) created(result.id);
+        if (started) created(started.id);
       }}
     >
-      <h2>{origin ? "Carry knowledge into a case" : "New case"}</h2>
+      <h2>
+        {saved
+          ? "Request saved — submit for review"
+          : answer
+            ? askAction(answer)?.label
+            : "New request"}
+      </h2>
       {answer && (
         <p className="workflow-note">
-          {answer.reliability.status} · {answer.reliability.summary} Only
-          authorized source references are carried forward.
+          {businessStatus(answer.reliability.status)} ·{" "}
+          {answer.reliability.summary}
         </p>
       )}
       <label>
-        Case title
+        Request title
         <input
-          aria-label="Case title"
+          aria-label="Request title"
           required
           minLength={3}
           maxLength={200}
           value={title}
-          disabled={busy}
+          disabled={busy || Boolean(saved)}
           onChange={(event) => setTitle(event.target.value)}
         />
       </label>
       <label>
         Description
         <textarea
-          aria-label="Case description"
+          aria-label="Request description"
           rows={3}
           maxLength={4000}
           value={description}
-          disabled={busy}
+          disabled={busy || Boolean(saved)}
           onChange={(event) => setDescription(event.target.value)}
         />
       </label>
       <div className="form-columns">
         <label>
-          Type
+          Request category
           <select
-            aria-label="Case type"
+            aria-label="Request category"
             value={type}
-            disabled={busy}
+            disabled={busy || Boolean(saved)}
             onChange={(event) =>
               setType(event.target.value as CaseView["type"])
             }
           >
-            {[
-              "general",
-              "operations",
-              "audit",
-              "regulatory_review",
-              "investment",
-            ].map((item) => (
+            {["general", "operations", "audit"].map((item) => (
               <option key={item} value={item}>
-                {item.replaceAll("_", " ")}
+                {item === "general"
+                  ? "General request"
+                  : item === "audit"
+                    ? "Policy review"
+                    : "Operations review"}
               </option>
             ))}
           </select>
         </label>
         <label>
           Owner
-          <input
-            aria-label="Case owner"
+          <select
+            aria-label="Request owner"
             value={owner}
-            disabled={busy || !["manager", "governance"].includes(user.role_id)}
+            disabled={
+              busy ||
+              Boolean(saved) ||
+              !["manager", "governance"].includes(user.role_id)
+            }
             onChange={(event) => setOwner(event.target.value)}
-          />
+          >
+            {users.map((person) => (
+              <option key={person.id} value={person.id}>
+                {person.name} — {roleLabel(person.role_id)}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
       <p className="muted small">
-        Types classify the workspace; regulation and investment logic are
-        deferred. New cases without approved evidence remain blocked.
+        Your request will appear in My Work. An independent reviewer decides
+        after the required supporting information has been checked.
       </p>
       {answer?.reliability.status === "BLOCKED" && (
         <label className="checkbox">
@@ -146,12 +175,12 @@ export function CaseCreateForm({
             checked={recovery}
             onChange={(event) => setRecovery(event.target.checked)}
           />
-          Create this case only to collect missing evidence; no conclusion or
-          action is authorized.
+          I understand this request collects missing information. No exception
+          or business action is authorized yet.
         </label>
       )}
       <button className="button primary" type="submit" disabled={busy}>
-        {busy ? "Creating…" : "Create case"}
+        {busy ? "Submitting…" : "Submit Request"}
       </button>
     </form>
   );
@@ -207,7 +236,7 @@ export function EvidenceAttach({
   };
   return (
     <details className="evidence-attach">
-      <summary>Attach source evidence</summary>
+      <summary>Provide supporting information</summary>
       <form
         className="workflow-form"
         onSubmit={async (event) => {
@@ -273,15 +302,15 @@ export function EvidenceAttach({
           </select>
         </label>
         <p className="muted small">
-          Evidence references exact database chunks. Attaching a current
-          replacement retires historical context for that source.
+          Choose the exact section that supports this request. A current
+          replacement will replace historical material in the request context.
         </p>
         {error && <ErrorState message={error} />}
         <button
           className="button secondary"
           disabled={busy || loading || !chunkId}
         >
-          Attach evidence
+          Add information
         </button>
       </form>
     </details>

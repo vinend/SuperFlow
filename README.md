@@ -5,7 +5,7 @@
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Implementasi saat ini mencakup **Fase 0 — Skeleton**, **Fase 1 — Knowledge Core**, **Fase 2 — Reliability Core / SuperFlow Guard**, dan **Fase 3 — Workflow Core**. Ask mengembalikan hasil Guard, evidence, versi, dan citation nyata; audit tersimpan pada backend. Cases, Workflows, dan Decision Center aktif dengan state database, authority, dan audit. Analytics/Governance tetap `Later`; Fase 4 belum dimulai.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Fase 4 belum dimulai; Regulatory Review, Investment Analysis, Analytics, dan Governance penuh belum tersedia.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -23,14 +23,14 @@ Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Contr
 
 Pertanyaan dikirim ke API dengan identitas demo. Retrieval hanya membaca chunk dari sumber yang diizinkan. Provider mengembalikan excerpt beserta citation sebenarnya, lalu SuperFlow Guard mengevaluasi reliability sebelum output. API memeriksa akses dan hasil Guard lagi saat saved answer atau source dibuka. Frontend merender teks dan komponen terkontrol, tanpa HTML dari model.
 
-Lihat [PRD](SuperFlow_PRD_v1.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
+Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
 
 ## Struktur proyek
 
 ```text
 SuperFlow/
 ├── AGENTS.md
-├── SuperFlow_PRD_v1.md
+├── SuperFlow_PRD_v2.md
 ├── IMPLEMENTATION_PLAN.md
 ├── IMPLEMENTATION_STATUS.md
 ├── README.md
@@ -40,7 +40,7 @@ SuperFlow/
 ├── package-lock.json
 ├── apps/
 │   ├── web/
-│   │   ├── app/                 Home, Ask, Knowledge; stylesheet/token
+│   │   ├── app/                 Home, Ask, Knowledge, My Work, Reviews; stylesheet/token
 │   │   ├── components/          Shell, composer, answer, source, editor, primitive UI
 │   │   └── lib/                 API client dan kontrak bertipe
 │   └── api/
@@ -176,7 +176,7 @@ npm.cmd start
 | Role / `X-User-Id`        | Nama sintetis | Akses                                                                 |
 | ------------------------- | ------------- | --------------------------------------------------------------------- |
 | Employee / `employee`     | Maya Putri    | Membaca sumber yang diizinkan dan bertanya                            |
-| Manager / `manager`       | Arif Santoso  | Membaca, membuat Case, dan independent generic review                 |
+| Manager / `manager`       | Arif Santoso  | Membaca, mengirim request, dan melakukan review independen            |
 | SME / `sme`               | Nadia Rahman  | Membaca dan memelihara sumber yang dapat diakses                      |
 | Compliance / `compliance` | Raka Wijaya   | Membaca dan bertanya; belum ada regulation comparison                 |
 | Finance / `finance`       | Dina Sari     | Membaca dan bertanya; belum ada financial analysis                    |
@@ -232,10 +232,10 @@ Windows sandbox dapat memblokir worker Next.js/Chromium, download dependency, da
 ## Demo flow Fase 0/1
 
 1. Buka Home sebagai **Employee — Maya Putri**. Dari seed awal role ini melihat lima dokumen. Ask, sumber terbaru, dan pertanyaan tersimpan berada dalam satu workspace.
-2. Buka Annual Leave Policy di Knowledge Hub. Periksa owner, authority, akses, active v2.0, dan outdated v1.0. Pilih **Ask about this source** untuk membuka Ask dengan filter sumber tersebut.
+2. Buka Annual Leave Policy di Knowledge. Periksa owner, authority, akses, active v2.0, dan outdated v1.0. Pilih **Ask about this source** untuk membuka Ask dengan filter sumber tersebut.
 3. Tanyakan **How many annual leave days do I get?**. Jawaban mengambil excerpt v2.0: 15 hari. Klik citation untuk melihat chunk, tanggal efektif, versi, owner, dan authority.
 4. Aktifkan **Include historical versions** dan tanyakan lagi. v1.0 memuat 12 hari serta label outdated. Dari Source Panel, **Open document** membuka versi yang tepat. Refresh mempertahankan saved answer/filter atau detail versi dengan pemeriksaan API ulang.
-5. Ganti ke Governance. Knowledge Hub memuat 13 sumber seed termasuk proposal dan regulasi sintetis. Upload Markdown/TXT/PDF/DOCX, edit metadata, tambah versi, ubah status publikasi, atau re-index.
+5. Ganti ke Governance. Knowledge memuat 13 sumber seed termasuk proposal dan regulasi sintetis. Upload Markdown/TXT/PDF/DOCX, edit metadata, tambah versi, ubah status publikasi, atau re-index.
 6. Tanyakan isi dokumen baru dengan source filter. Jawaban memakai chunk tersimpan, bukan hasil frontend hardcoded.
 7. Tanyakan **quasar neutrino spectrum** untuk hasil tanpa evidence. Guard menghasilkan BLOCKED tanpa citation palsu. Coba pergantian role, dialog lewat keyboard, dan navigasi mobile.
 
@@ -280,7 +280,7 @@ npm.cmd run db:seed
 npm.cmd run demo:workflow
 ```
 
-Seed demo workflow opsional/idempotent menyediakan A verified annual leave, B missing source, dan C access review conflict. Semua mulai pada task evidence. Buka Cases sebagai Employee, complete task, lalu ganti ke reviewer yang ditugaskan. Pada B, reviewer Request evidence, owner Attach source evidence beserta requirement, Resume, lalu independent approval. Pada C, SME membaca kedua source dan mencatat alasan keputusan. Refresh mempertahankan state. Governance dapat override dengan reason setelah prerequisites lulus.
+Seed demo opsional/idempotent menyediakan **Annual Leave Review**, **Supporting Evidence Request**, dan **Access Review Clarification**. Buka My Work sebagai Employee, pilih request, dan gunakan **Information checked**. Reviewer membuka Reviews / Approvals atau Reviews untuk SME. Reviewer dapat **Request More Information**; owner memilih **Provide supporting information**, menambahkan section/requirement, dan **Continue review**. Approval tetap independen, konflik tetap membutuhkan reason, dan refresh mempertahankan state. Governance Admin dapat override dengan reason setelah prerequisites lulus. Data demo lama tidak ditimpa atau diduplikasi; adapter menyajikan judul lamanya dalam bahasa pekerjaan.
 
 API execution:
 
@@ -301,3 +301,34 @@ node scripts/python.mjs scripts/generate-workflow.py --check
 ```
 
 Rincian state machine, permission/Guard, retry/fallback, audit, API, demo, dan batasan: [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md). Hasil quality gate aktual ada di IMPLEMENTATION_STATUS.md. Home/Ask/Knowledge existing dipertahankan; tidak ada fake KPI atau arbitrary AI HTML.
+
+## Pengalaman pengguna menurut PRD v2
+
+| Role                  | Navigasi yang tersedia sekarang                              |
+| --------------------- | ------------------------------------------------------------ |
+| Employee              | Home, Ask SuperFlow, Knowledge, My Work                      |
+| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals |
+| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews             |
+| Compliance / Finance  | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals |
+| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals                |
+
+Modul yang belum tersedia tidak menjadi navigasi utama. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas control/review. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
+
+**My Work** menggabungkan proyeksi Case, workflow/tasks, approval, dan status kebutuhan informasi dari endpoint existing. Adapter frontend `product-view.ts` tidak menyimpan state execution baru. Work item menampilkan judul bisnis, status, langkah saat ini, next action, owner/reviewer, due date bila ada, reliability, dan pembaruan terakhir. **Progress** menyembunyikan routing/node types dan cabang yang tidak terpilih. **Activity** menerjemahkan AuditEvent tanpa memperlihatkan payload JSON/revision.
+
+Detail pekerjaan mengambil konteks lengkap langsung dari Case API, sehingga tidak menunggu daftar pekerjaan/review lain. Daftar agregasi masih mengikuti endpoint existing tanpa pagination; waktu pemuatannya dapat bertambah bersama jumlah data.
+
+**Reviews / Approvals** hanya menampilkan pending request dengan `allowed_actions` dari backend. Employee tidak mendapat halaman keputusan atau kontrol approval. Backend tetap menentukan akses, independensi reviewer, kelengkapan evidence, dan concurrency.
+
+### Demo Ask menuju My Work
+
+1. Employee bertanya annual leave lalu memilih **Request Review**, atau bertanya konflik access review lalu **Start Review**.
+2. Periksa/edit judul bisnis dan pilih **Submit Request**. Frontend membuat Case dan memulai generic review memakai API existing; pengguna tidak memilih definisi workflow.
+3. Request muncul di My Work. Pilih **Information checked** untuk menjalankan pemeriksaan evidence dan routing reviewer existing.
+4. Manager/SME membuka Reviews, membaca evidence/source/reliability, lalu Approve/Reject/Request More Information/Escalate. Override hanya sesuai authority backend dan reason wajib.
+5. Refresh dan buka Activity untuk melihat keputusan/progress tersimpan.
+6. Pertanyaan receipt tanpa dokumen pendukung menyediakan **Request Exception** sebagai request pengumpulan informasi. Consent eksplisit wajib; status BLOCKED tidak menjadi approval otomatis.
+
+Creation dan start merupakan dua transaksi API existing. Jika start gagal, request yang sudah tersimpan dipakai kembali untuk retry dalam form; My Work tetap dapat membukanya. Tidak ada transaksi gabungan baru atau perubahan schema. Create Case belum memiliki idempotency backend, sehingga refresh form setelah respons creation hilang tetap memiliki keterbatasan existing.
+
+Fase 4 tidak dimulai. Klasifikasi internal `regulatory_review`/`investment` bukan implementasi Regulatory Review atau Investment Analysis.

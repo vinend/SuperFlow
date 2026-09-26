@@ -20,6 +20,8 @@ import { DocumentTable } from "./document-table";
 import { SourcePanel } from "./source-panel";
 import { DocumentDetail } from "./document-detail";
 import { DocumentEditor } from "./document-editor";
+import { HomeAttention } from "./home-attention";
+import { roleLabel } from "@/lib/product-view";
 import {
   ErrorState,
   LoadingState,
@@ -178,15 +180,15 @@ function Workspace({ view }: { view: View }) {
       <PageHeader
         eyebrow={
           view === "home"
-            ? `${w.user.department} / ${w.user.role_name}`
+            ? `${w.user.department} / ${roleLabel(w.user.role_id)}`
             : view === "ask"
               ? "Knowledge / Ask"
               : "Knowledge / Repository"
         }
-        title={view === "home" ? "Knowledge workspace" : TITLES[view]}
+        title={view === "home" ? "Your workspace" : TITLES[view]}
         description={
           view === "home"
-            ? "Policies, procedures, and sources available to your role."
+            ? "Find guidance, follow your work, and see what needs your attention."
             : view === "ask"
               ? "Ask a question. Inspect the evidence and the exact source version."
               : "A shared repository of enterprise sources. Your role determines what you can access."
@@ -232,15 +234,21 @@ function Workspace({ view }: { view: View }) {
       )}
       {view === "home" && (
         <>
+          {w.user.role_id !== "employee" && <HomeAttention />}
           <div className="home-workspace">
             <section className="home-primary">
-              <SectionHeader
-                title="Ask SuperFlow"
-                detail="Search across the sources available to your role."
-              />
-              {composer}
-              {suggestions}
-              {result}
+              {w.user.role_id !== "governance" && (
+                <>
+                  <SectionHeader
+                    title="Ask SuperFlow"
+                    detail="Search across the sources available to your role."
+                  />
+                  {composer}
+                  {suggestions}
+                  {result}
+                </>
+              )}
+              {w.user.role_id === "employee" && <HomeAttention />}
               <section className="knowledge-section">
                 <SectionHeader
                   title="Recent source updates"
@@ -305,8 +313,8 @@ function Workspace({ view }: { view: View }) {
               <span>Action</span>
             </div>
             <p>
-              Knowledge and source inspection are available. Decision and action
-              modules follow in later phases.
+              Inspect the source, provide supporting information, and request an
+              independent review when work needs to continue.
             </p>
           </div>
         </>
@@ -369,7 +377,7 @@ function Workspace({ view }: { view: View }) {
               <strong>{w.loading ? "—" : versionCount}</strong> stored versions
             </span>
             <span className="summary-context">
-              {w.user.role_name} ·{" "}
+              {roleLabel(w.user.role_id)} ·{" "}
               {w.canManage ? "Read & maintain" : "Read access"}
             </span>
           </div>

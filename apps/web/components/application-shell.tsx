@@ -3,63 +3,38 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
-  ArrowUpRight,
   BookOpen,
-  ChartNoAxesCombined,
   Check,
   ChevronRight,
   FolderKanban,
-  GitBranch,
   Home,
   Layers3,
   Menu,
-  ShieldCheck,
   Sparkles,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSession } from "./session";
 import { Dialog } from "./ui/dialog";
+import { navigationFor, roleLabel, reviewsLabel } from "@/lib/product-view";
 
 export type KnowledgeView = "home" | "ask" | "knowledge";
 export type View = KnowledgeView | "cases" | "workflows" | "decisions";
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
-  knowledge: "Knowledge Hub",
-  cases: "Cases",
-  workflows: "Workflows",
-  decisions: "Decision Center",
+  knowledge: "Knowledge",
+  cases: "My Work",
+  workflows: "My Work",
+  decisions: "Reviews / Approvals",
 };
-const NAV = [
-  { title: "Home", href: "/", view: "home", icon: Home },
-  { title: "Ask SuperFlow", href: "/ask", view: "ask", icon: Sparkles },
-  {
-    title: "Knowledge Hub",
-    href: "/knowledge",
-    view: "knowledge",
-    icon: BookOpen,
-  },
-];
-const LATER = [
-  { title: "Analytics", icon: ChartNoAxesCombined },
-  { title: "Governance", icon: ShieldCheck },
-];
-NAV.push(
-  { title: "Cases", href: "/cases", view: "cases", icon: FolderKanban },
-  {
-    title: "Workflows",
-    href: "/workflows",
-    view: "workflows",
-    icon: GitBranch,
-  },
-  {
-    title: "Decision Center",
-    href: "/decisions",
-    view: "decisions",
-    icon: Check,
-  },
-);
+const ICONS = {
+  home: Home,
+  ask: Sparkles,
+  knowledge: BookOpen,
+  cases: FolderKanban,
+  decisions: Check,
+};
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.
 export function ApplicationShell({
@@ -71,6 +46,8 @@ export function ApplicationShell({
 }) {
   const { user, users, selectUser } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const nav = navigationFor(user.role_id);
+  const activeView = view === "workflows" ? "cases" : view;
   const navigation = (
     <>
       <Link href="/" className="brand" onClick={() => setMenuOpen(false)}>
@@ -89,43 +66,27 @@ export function ApplicationShell({
       </div>
       <p className="nav-label">Workspace</p>
       <nav aria-label="Main navigation">
-        {NAV.map((item) => (
-          <Link
-            key={item.title}
-            href={item.href}
-            onClick={() => setMenuOpen(false)}
-            className={`nav-item ${view === item.view ? "selected" : ""}`}
-            aria-current={view === item.view ? "page" : undefined}
-          >
-            <item.icon size={17} />
-            <span>{item.title}</span>
-            {view === item.view && <ChevronRight size={14} />}
-          </Link>
-        ))}
+        {nav.map((item) => {
+          const Icon = ICONS[item.view as keyof typeof ICONS];
+          return (
+            <Link
+              key={item.title}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className={`nav-item ${activeView === item.view ? "selected" : ""}`}
+              aria-current={activeView === item.view ? "page" : undefined}
+            >
+              <Icon size={17} />
+              <span>{item.title}</span>
+              {activeView === item.view && <ChevronRight size={14} />}
+            </Link>
+          );
+        })}
       </nav>
-      <div className="nav-divider" />
-      <p className="nav-label">Later phases</p>
-      <div className="future-nav">
-        {LATER.map((item) => (
-          <button
-            className="nav-item unavailable"
-            key={item.title}
-            disabled
-            title="Available in a later development phase"
-          >
-            <item.icon size={16} />
-            <span>{item.title}</span>
-            <small>Later</small>
-          </button>
-        ))}
-      </div>
       <div className="sidebar-foot">
-        <div className="phase-label">
-          Knowledge + Action <span>Phase 0–3</span>
-        </div>
         <p>Enterprise Knowledge-to-Action Platform</p>
         <div className="sidebar-rule" />
-        <span className="small">Synthetic data · Demo environment</span>
+        <span className="small">Superbank · Internal workspace</span>
       </div>
     </>
   );
@@ -163,7 +124,9 @@ export function ApplicationShell({
             </button>
             <span>Superbank</span>
             <ChevronRight size={13} />
-            <strong>{TITLES[view]}</strong>
+            <strong>
+              {view === "decisions" ? reviewsLabel(user.role_id) : TITLES[view]}
+            </strong>
           </div>
           <div className="session-controls">
             <span className="demo-label">Demo role</span>
@@ -183,7 +146,7 @@ export function ApplicationShell({
               >
                 {users.map((person) => (
                   <option key={person.id} value={person.id}>
-                    {person.role_name} · {person.name}
+                    {roleLabel(person.role_id)} — {person.name}
                   </option>
                 ))}
               </select>
@@ -193,9 +156,7 @@ export function ApplicationShell({
         {children}
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
-          <span>
-            Phase 0–3 · Synthetic prototype <ArrowUpRight size={12} />
-          </span>
+          <span>Knowledge → Evidence → Decision → Action</span>
         </footer>
       </div>
     </div>

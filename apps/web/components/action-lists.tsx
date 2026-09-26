@@ -1,9 +1,105 @@
 import Link from "next/link";
-import { dateLabel } from "@/lib/api";
-import { stateLabel } from "@/lib/workflow-view";
+import { dateLabel, type User } from "@/lib/api";
+import {
+  personName,
+  reviewItemsFor,
+  reviewReason,
+  workItemsFor,
+  workTitle,
+} from "@/lib/product-view";
+import type { WorkItemView } from "@/lib/product-view";
 import type { useActionWorkspace } from "./use-action-workspace";
+import { useSession } from "./session";
 import { DataTable } from "./ui/data-table";
 import { EmptyState, SectionHeader, StatusBadge } from "./ui/primitives";
+
+export function WorkItemRows({
+  items,
+  users,
+  compact = false,
+}: {
+  items: WorkItemView[];
+  users: User[];
+  compact?: boolean;
+}) {
+  return (
+    <DataTable
+      label="My Work"
+      caption="Your requests, supporting information and review progress"
+    >
+      <thead>
+        <tr>
+          <th>Work item</th>
+          <th>Status / next action</th>
+          {!compact && (
+            <>
+              <th>People</th>
+              <th>Reliability</th>
+              <th>Updated</th>
+            </>
+          )}
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item) => (
+          <tr key={item.id}>
+            <td>
+              <Link
+                href={`/cases?case=${encodeURIComponent(item.id)}`}
+                className="document-name"
+              >
+                {item.title}
+              </Link>
+              <small className="cell-detail">
+                {item.type} · {item.currentStep}
+              </small>
+              {!compact && item.progress.length > 0 && (
+                <details className="work-row-progress">
+                  <summary>Progress</summary>
+                  <ol>
+                    {item.progress.map((step) => (
+                      <li key={step.key}>
+                        {step.label} · {step.status}
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              )}
+            </td>
+            <td>
+              <StatusBadge status={item.status} />
+              <Link
+                className="cell-detail text-link"
+                href={`/cases?case=${encodeURIComponent(item.id)}`}
+              >
+                {item.nextAction}
+              </Link>
+              {item.dueAt && (
+                <small className="cell-detail">
+                  Due {dateLabel(item.dueAt)}
+                </small>
+              )}
+            </td>
+            {!compact && (
+              <>
+                <td>
+                  {personName(item.ownerId, users)}
+                  {item.reviewerId && (
+                    <small className="cell-detail">
+                      Review: {personName(item.reviewerId, users)}
+                    </small>
+                  )}
+                </td>
+                <td>{item.reliability}</td>
+                <td>{dateLabel(item.updatedAt)}</td>
+              </>
+            )}
+          </tr>
+        ))}
+      </tbody>
+    </DataTable>
+  );
+}
 export function ActionLists({
   view,
   w,
@@ -11,148 +107,78 @@ export function ActionLists({
   view: "cases" | "workflows" | "decisions";
   w: ReturnType<typeof useActionWorkspace>;
 }) {
-  const queue = w.approvals.filter((approval) => approval.status === "PENDING");
-  return view === "cases" ? (
-    w.cases.length ? (
-      <DataTable label="Cases" caption="Permitted cases and execution status">
-        <thead>
-          <tr>
-            <th>Case</th>
-            <th>Owner</th>
-            <th>Status</th>
-            <th>Reliability</th>
-            <th>Updated</th>
-          </tr>
-        </thead>
-        <tbody>
-          {w.cases.map((item) => (
-            <tr key={item.id}>
-              <td>
-                <Link href={`/cases?case=${item.id}`} className="document-name">
-                  {item.title}
-                </Link>
-                <small className="cell-detail">
-                  {item.type.replaceAll("_", " ")}
-                </small>
-              </td>
-              <td>{item.owner_id}</td>
-              <td>
-                <StatusBadge status={stateLabel(item.status)} />
-              </td>
-              <td>{stateLabel(item.reliability_status)}</td>
-              <td>{dateLabel(item.updated_at)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </DataTable>
+  const { user, users } = useSession();
+  const work = workItemsFor(w.cases, w.runs, w.approvals, user);
+  const queue = reviewItemsFor(w.approvals, work, user.role_id);
+  if (view !== "decisions")
+    return work.length ? (
+      <WorkItemRows items={work} users={users} />
     ) : (
       <EmptyState
-        title="No permitted cases yet"
-        description="Create a case manually or carry forward an authorized Ask result."
+        title="No active work right now."
+        description="Submit a request or continue from an Ask SuperFlow answer."
       />
-    )
-  ) : view === "workflows" ? (
+    );
+  return (
     <>
       <SectionHeader
-        title="Workflow definitions"
-        detail="Code-defined versions; no visual editor."
-      />
-      {w.definitions.map((item) => (
-        <div key={item.id} className="definition-row">
-          <div>
-            <h3>{item.name}</h3>
-            <p className="muted">
-              v{item.version} · {item.config.steps.length} configured steps
-            </p>
-          </div>
-          <Link className="button secondary" href="/cases">
-            Open a case to start
-          </Link>
-        </div>
-      ))}
-      <SectionHeader title="Workflow runs" />
-      {w.runs.length ? (
-        <DataTable label="Workflow runs" caption="Persistent workflow runs">
-          <thead>
-            <tr>
-              <th>Workflow</th>
-              <th>Current step</th>
-              <th>Status</th>
-              <th>Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {w.runs.map((run) => (
-              <tr key={run.id}>
-                <td>
-                  <Link href={`/workflows?case=${run.case_id}`}>
-                    {run.definition_name}
-                  </Link>
-                  <small className="cell-detail">
-                    v{run.definition_version}
-                  </small>
-                </td>
-                <td>{stateLabel(run.current_step)}</td>
-                <td>{stateLabel(run.status)}</td>
-                <td>{dateLabel(run.created_at)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </DataTable>
-      ) : (
-        <EmptyState
-          title="No workflow runs"
-          description="Start a versioned review from a Case Workspace."
-        />
-      )}
-    </>
-  ) : (
-    <>
-      <SectionHeader
-        title="Pending human decisions"
-        detail={`${queue.length} visible requests · authority is enforced by the API`}
+        title="Needs your decision"
+        detail="Inspect the request and supporting sources before deciding."
       />
       {queue.length ? (
         <DataTable
-          label="Decision queue"
-          caption="Pending human review requests"
+          label="Review queue"
+          caption="Requests awaiting your decision"
         >
           <thead>
             <tr>
-              <th>Case / request</th>
-              <th>Reviewer</th>
-              <th>Requester</th>
-              <th>Status</th>
-              <th>Requested</th>
+              <th>Request / context</th>
+              <th>Requested by</th>
+              <th>Reliability</th>
+              <th>Next action</th>
             </tr>
           </thead>
           <tbody>
-            {queue.map((approval) => (
+            {queue.map(({ approval, work: item }) => (
               <tr key={approval.id}>
                 <td>
-                  <Link href={`/decisions?case=${approval.case_id}`}>
-                    {approval.case_title}
+                  <Link
+                    className="document-name"
+                    href={`/decisions?case=${encodeURIComponent(approval.case_id)}`}
+                  >
+                    {workTitle(approval.case_title)}
                   </Link>
                   <small className="cell-detail">
-                    {approval.reason_required}
+                    {reviewReason(
+                      approval,
+                      w.cases.find((c) => c.id === approval.case_id)
+                        ?.reliability_status,
+                    )}
                   </small>
                 </td>
-                <td>{approval.requested_from}</td>
-                <td>{approval.requested_by}</td>
                 <td>
-                  {approval.allowed_actions.length
-                    ? "Awaiting your decision"
-                    : "Awaiting reviewer"}
+                  {personName(approval.requested_by, users)}
+                  <small className="cell-detail">
+                    {dateLabel(approval.requested_at)}
+                  </small>
                 </td>
-                <td>{dateLabel(approval.requested_at)}</td>
+                <td>{item?.reliability || "Inspect reliability"}</td>
+                <td>
+                  <Link
+                    className="text-link"
+                    href={`/decisions?case=${encodeURIComponent(approval.case_id)}`}
+                  >
+                    Review request
+                  </Link>
+                </td>
               </tr>
             ))}
           </tbody>
         </DataTable>
       ) : (
         <EmptyState
-          title="No pending decisions"
-          description="Requests appear after a workflow reaches review or evidence recovery."
+          title="No reviews need your attention."
+          description="Requests assigned to you will appear here."
         />
       )}
     </>
