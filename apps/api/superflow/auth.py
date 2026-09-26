@@ -1,0 +1,28 @@
+from typing import Annotated
+
+from fastapi import Depends, Header, HTTPException
+from sqlalchemy.orm import Session
+
+from .db import get_db
+from .models import Document, User
+
+
+def current_user(
+    db: Annotated[Session, Depends(get_db)],
+    x_user_id: Annotated[str | None, Header()] = None,
+) -> User:
+    user = db.get(User, x_user_id) if x_user_id else None
+    if user is None or not user.active:
+        raise HTTPException(401, "Select an active demo user using X-User-Id.")
+    return user
+
+
+def can_read(user: User, document: Document) -> bool:
+    return user.role_id == "governance" or user.role_id in document.access_roles
+
+
+def require_manage(user: User) -> None:
+    if "knowledge:write" not in user.role.permissions:
+        raise HTTPException(
+            403, "This demo role cannot manage knowledge. Switch to SME or Governance."
+        )
