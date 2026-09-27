@@ -57,7 +57,13 @@ export type CaseStatus =
   | "CANCELLED";
 export type CaseView = {
   id: string;
-  type: "general" | "regulatory_review" | "investment" | "audit" | "operations";
+  type:
+    | "general"
+    | "regulatory_review"
+    | "remediation"
+    | "investment"
+    | "audit"
+    | "operations";
   title: string;
   description: string;
   status: CaseStatus;

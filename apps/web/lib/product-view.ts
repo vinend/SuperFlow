@@ -39,6 +39,15 @@ export function navigationFor(role: string) {
       ? [{ title: "Ask SuperFlow", href: "/ask", view: "ask" }]
       : []),
     { title: "Knowledge", href: "/knowledge", view: "knowledge" },
+    ...(role === "compliance"
+      ? [
+          {
+            title: "Regulatory Review",
+            href: "/regulatory",
+            view: "regulatory",
+          },
+        ]
+      : []),
     { title: "My Work", href: "/cases", view: "cases" },
     ...(canReview(role)
       ? [{ title: reviewsLabel(role), href: "/decisions", view: "decisions" }]
@@ -80,7 +89,8 @@ export const WORK_TYPES: Record<CaseView["type"], string> = {
   general: "Request",
   operations: "Operations review",
   audit: "Policy review",
-  regulatory_review: "Policy review",
+  regulatory_review: "Regulatory review",
+  remediation: "Remediation",
   investment: "Business review",
 };
 export function workTitle(title: string) {
@@ -110,6 +120,9 @@ export function progressFor(
   reviewerRole?: string,
 ): WorkProgressView[] {
   if (!run) return [];
+  // Domain definitions carry business-language step titles; the generic review maps them.
+  const generic =
+    (run.definition_id || "generic-review-v1") === "generic-review-v1";
   // Routing is an internal operation. Show only the relevant review branch.
   const activeReview =
     run.steps.find(
@@ -127,8 +140,9 @@ export function progressFor(
     )
     .map((s) => ({
       key: s.key,
-      label:
-        s.type === "TASK"
+      label: !generic
+        ? s.title
+        : s.type === "TASK"
           ? "Prepare supporting information"
           : s.type === "GUARD"
             ? s.status === "COMPLETED"
@@ -150,6 +164,7 @@ export function progressFor(
 }
 export type WorkItemView = {
   id: string;
+  href: string;
   title: string;
   type: string;
   status: string;
@@ -188,6 +203,26 @@ export function workItemsFor(
         user.role_id !== "governance"
       )
         return null;
+      if (item.type === "regulatory_review" && !run) {
+        // Regulatory reviews progress through gap decisions in their own workspace.
+        const terminal = ["COMPLETED", "CANCELLED"].includes(item.status);
+        return {
+          id: item.id,
+          href: `/regulatory?review=${encodeURIComponent(item.id)}`,
+          title: workTitle(item.title),
+          type: WORK_TYPES[item.type],
+          status: businessStatus(item.status),
+          currentStep: terminal ? "Complete" : "Gap review and remediation",
+          nextAction: terminal ? "View outcome" : "Open regulatory review",
+          ownerId: item.owner_id,
+          reviewerId: null,
+          dueAt: null,
+          reliability: businessStatus(item.reliability_status),
+          updatedAt: item.updated_at,
+          progress: [],
+          needsAttention: own && !terminal,
+        };
+      }
       const progress = progressFor(run, review?.requested_role);
       const currentStep =
         progress.find((s) => s.current)?.label ||
@@ -207,7 +242,9 @@ export function workItemsFor(
         : review?.allowed_actions.length
           ? "Review request"
           : task
-            ? "Check supporting information"
+            ? item.type === "remediation"
+              ? "Update procedure or control"
+              : "Check supporting information"
             : waitingInfo && own
               ? "Provide information"
               : !run && own
@@ -217,6 +254,7 @@ export function workItemsFor(
                   : "View progress";
       return {
         id: item.id,
+        href: `/cases?case=${encodeURIComponent(item.id)}`,
         title: workTitle(item.title),
         type: WORK_TYPES[item.type],
         status: businessStatus(
@@ -257,9 +295,26 @@ export function reviewItemsFor(
     }));
 }
 export function askAction(
-  answer: Pick<Answer, "question" | "reliability">,
-): { label: string; title: string } | null {
+  answer: Pick<Answer, "question" | "reliability"> & {
+    sources?: Pick<Answer["sources"][number], "document_id" | "domain">[];
+  },
+  role?: string,
+): { label: string; title: string; href?: string } | null {
   if (answer.reliability.status === "ACCESS_RESTRICTED") return null;
+  if (
+    role === "compliance" &&
+    /regulat/i.test(answer.question) &&
+    /chang|new|compar|differ|updat|amend|impact|gap/i.test(answer.question)
+  ) {
+    const regulation = answer.sources?.find((s) => s.domain === "Compliance");
+    return {
+      label: "Start Regulatory Review",
+      title: "Regulatory Review",
+      href: regulation
+        ? `/regulatory?document=${encodeURIComponent(regulation.document_id)}`
+        : "/regulatory",
+    };
+  }
   if (
     /expense|reimburse|receipt/i.test(answer.question) &&
     /without|missing|lost|exception/i.test(answer.question)
@@ -308,6 +363,12 @@ const EVENTS: Record<string, string> = {
   fallback_triggered: "Sent for specialist review",
   escalation_created: "Escalated for review",
   override_performed: "Exception decision recorded",
+  regulatory_review_started: "Regulatory review started",
+  finding_confirmed: "Gap confirmed and remediation assigned",
+  finding_rejected: "Proposed gap rejected",
+  remediation_reassigned: "Remediation reassigned",
+  remediation_assigned: "Remediation assigned",
+  regulatory_review_completed: "Regulatory review closed",
 };
 export function activityLabel(event: ActivityView) {
   if (event.event_type === "workflow_advanced") {
@@ -319,6 +380,10 @@ export function activityLabel(event: ActivityView) {
       expert_review: "Specialist review recorded",
       manual_review: "Specialist review recorded",
       complete: "Review completed",
+      remediate: "Procedure or control updated",
+      verify_sources: "Source checks completed",
+      approve_remediation: "Remediation approval recorded",
+      remediation_complete: "Remediation completed",
     };
     return labels[String(event.payload?.step_key)] || "Progress updated";
   }

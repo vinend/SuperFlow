@@ -42,6 +42,7 @@ export function CaseWorkspace({
   const pending = current.approvals.filter(
     (approval) => approval.status === "PENDING",
   );
+  const remediation = current.type === "remediation";
   const action = async (path: string, values: Record<string, unknown> = {}) => {
     await w.mutate(path, values);
   };
@@ -158,7 +159,14 @@ export function CaseWorkspace({
                   .map((task) => (
                     <li key={task.id}>
                       <div>
-                        <strong>Check supporting information</strong>
+                        <strong>
+                          {remediation
+                            ? "Update the procedure or control"
+                            : "Check supporting information"}
+                        </strong>
+                        {remediation && (
+                          <p className="small">{task.description}</p>
+                        )}
                         <p className="muted small">
                           {personName(task.owner_id, users)} · due{" "}
                           {dateLabel(task.due_at)}
@@ -176,8 +184,12 @@ export function CaseWorkspace({
                             }
                           >
                             {item === "start"
-                              ? "Begin review"
-                              : "Information checked"}
+                              ? remediation
+                                ? "Begin remediation"
+                                : "Begin review"
+                              : remediation
+                                ? "Remediation completed"
+                                : "Information checked"}
                           </button>
                         ))}
                       </div>

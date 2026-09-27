@@ -14,6 +14,7 @@ const navigation: Record<string, string[]> = {
     "Home",
     "Ask SuperFlow",
     "Knowledge",
+    "Regulatory Review",
     "My Work",
     "Reviews / Approvals",
   ],

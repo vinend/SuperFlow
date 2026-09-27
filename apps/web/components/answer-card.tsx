@@ -7,6 +7,7 @@ import type { AnswerCardProps } from "@/lib/workspace-contracts";
 import { StatusBadge } from "./ui/primitives";
 import { EvidenceChecklist } from "./evidence-checklist";
 import { askAction } from "@/lib/product-view";
+import { useSession } from "./session";
 
 export function AnswerCard({
   answer,
@@ -14,7 +15,8 @@ export function AnswerCard({
   onDocument,
   reliabilitySlot,
 }: AnswerCardProps) {
-  const nextAction = askAction(answer);
+  const { user } = useSession();
+  const nextAction = askAction(answer, user.role_id);
   return (
     <section className="answer-card" aria-label="Answer Card">
       <div className="answer-heading">
@@ -107,7 +109,9 @@ export function AnswerCard({
         {nextAction && (
           <a
             className="button primary"
-            href={`/cases?from=${encodeURIComponent(answer.id)}`}
+            href={
+              nextAction.href || `/cases?from=${encodeURIComponent(answer.id)}`
+            }
           >
             {nextAction.label}
           </a>

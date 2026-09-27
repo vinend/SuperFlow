@@ -5,7 +5,7 @@
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Fase 4 belum dimulai; Regulatory Review, Investment Analysis, Analytics, dan Governance penuh belum tersedia.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. **Fase 4 — Regulation-to-Action** tersedia sebagai **Regulatory Review** untuk Compliance. Investment Analysis, Analytics, dan Governance penuh belum tersedia.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -23,7 +23,7 @@ Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Contr
 
 Pertanyaan dikirim ke API dengan identitas demo. Retrieval hanya membaca chunk dari sumber yang diizinkan. Provider mengembalikan excerpt beserta citation sebenarnya, lalu SuperFlow Guard mengevaluasi reliability sebelum output. API memeriksa akses dan hasil Guard lagi saat saved answer atau source dibuka. Frontend merender teks dan komponen terkontrol, tanpa HTML dari model.
 
-Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
+Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), [Regulation-to-Action](docs/REGULATION_TO_ACTION.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
 
 ## Struktur proyek
 
@@ -40,7 +40,7 @@ SuperFlow/
 ├── package-lock.json
 ├── apps/
 │   ├── web/
-│   │   ├── app/                 Home, Ask, Knowledge, My Work, Reviews; stylesheet/token
+│   │   ├── app/                 Home, Ask, Knowledge, Regulatory Review, My Work, Reviews; stylesheet/token
 │   │   ├── components/          Shell, composer, answer, source, editor, primitive UI
 │   │   └── lib/                 API client dan kontrak bertipe
 │   └── api/
@@ -74,7 +74,20 @@ $env:PYTHON = (Resolve-Path .venv/Scripts/python.exe).Path
 & $env:PYTHON -m pip install -r apps/api/requirements-lock.txt
 ```
 
-`requirements-lock.txt` berisi dependencies runtime/development yang diuji. Untuk lingkungan runtime saja, gunakan `apps/api/requirements.txt`. Pada macOS/Linux, gunakan `npm` dan interpreter `bin/python` dari virtual environment.
+`requirements-lock.txt` berisi dependencies runtime/development yang diuji. Untuk lingkungan runtime saja, gunakan `apps/api/requirements.txt`.
+
+macOS/Linux (terverifikasi pada macOS arm64, Node 24.16, npm 11.13, Python 3.12.13):
+
+```bash
+npm ci
+cp .env.example .env
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r apps/api/requirements-lock.txt
+echo "PYTHON=$PWD/.venv/bin/python" >> .env
+PLAYWRIGHT_BROWSERS_PATH="$PWD/.runtime/playwright" npx playwright install chromium   # hanya untuk E2E
+```
+
+`embedded-postgres` memasang binary PostgreSQL untuk platform yang sesuai (termasuk `darwin-arm64`) dari lockfile.
 
 Launcher Python mencari `PYTHON`, lalu `.runtime/python/python.exe`, lalu `python` sistem. Tetapkan `PYTHON` di tiap terminal atau `.env` bila memakai virtual environment. Launcher dan konfigurasi Next.js membaca `.env` root.
 
@@ -130,11 +143,11 @@ npm.cmd run db:migrate
 npm.cmd run db:seed
 ```
 
-API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. Seed menyediakan enam identitas dan 13 dokumen/15 versi. Seed berulang tidak menghapus upload, perubahan metadata, atau pertanyaan yang sudah tersimpan.
+API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. Seed menyediakan enam identitas, 13 dokumen/15 versi, serta template workflow generic review dan regulatory remediation. Seed berulang tidak menghapus upload, perubahan metadata, atau pertanyaan yang sudah tersimpan.
 
 Satu dokumen hanya boleh memiliki satu versi active. Publikasi versi mengambil lock dokumen dan menandai versi active sebelumnya sebagai outdated dalam transaksi yang sama. Versi bertanggal efektif di masa depan harus draft.
 
-### Reset demo Fase 0–3
+### Reset demo Fase 0–4
 
 Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target lalu mengembalikan seed awal. Schema/migration tetap dipertahankan. Hanya PostgreSQL lokal dengan nama `superflow` atau `superflow_test` yang diterima; diperlukan flag eksplisit:
 
@@ -142,7 +155,7 @@ Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target 
 npm.cmd run db:reset -- --confirm-synthetic-data
 ```
 
-`DATABASE_URL` menentukan target. Tanpa flag tersebut atau untuk target lain, CLI menolak reset. Setelah reset, buka Home; URL saved answer/versi sebelum reset dapat menjadi tidak tersedia. Reset mencakup Knowledge Core, GuardResult, AuditEvent, Case, evidence requirements, workflow, task, approval, attempt, dan receipt sintetis Fase 0–3. Untuk tiga demo workflow awal, jalankan `npm.cmd run demo:workflow` setelah reset. Playwright mereset database test sebelum suite agar demo browser dapat diulang.
+`DATABASE_URL` menentukan target. Tanpa flag tersebut atau untuk target lain, CLI menolak reset. Setelah reset, buka Home; URL saved answer/versi sebelum reset dapat menjadi tidak tersedia. Reset mencakup Knowledge Core, GuardResult, AuditEvent, Case, evidence requirements, workflow, task, approval, attempt, receipt, serta regulatory review/finding sintetis Fase 0–4. Untuk tiga demo workflow awal, jalankan `npm.cmd run demo:workflow` setelah reset. Playwright mereset database test sebelum suite agar demo browser dapat diulang.
 
 ## Menjalankan backend
 
@@ -178,7 +191,7 @@ npm.cmd start
 | Employee / `employee`     | Maya Putri    | Membaca sumber yang diizinkan dan bertanya                            |
 | Manager / `manager`       | Arif Santoso  | Membaca, mengirim request, dan melakukan review independen            |
 | SME / `sme`               | Nadia Rahman  | Membaca dan memelihara sumber yang dapat diakses                      |
-| Compliance / `compliance` | Raka Wijaya   | Membaca dan bertanya; belum ada regulation comparison                 |
+| Compliance / `compliance` | Raka Wijaya   | Menjalankan Regulatory Review, memutuskan gap, menugaskan remediation |
 | Finance / `finance`       | Dina Sari     | Membaca dan bertanya; belum ada financial analysis                    |
 | Governance / `governance` | Alex Pratama  | Membaca/memelihara semua sumber demo; modul Governance belum tersedia |
 
@@ -304,13 +317,14 @@ Rincian state machine, permission/Guard, retry/fallback, audit, API, demo, dan b
 
 ## Pengalaman pengguna menurut PRD v2
 
-| Role                  | Navigasi yang tersedia sekarang                              |
-| --------------------- | ------------------------------------------------------------ |
-| Employee              | Home, Ask SuperFlow, Knowledge, My Work                      |
-| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals |
-| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews             |
-| Compliance / Finance  | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals |
-| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals                |
+| Role                  | Navigasi yang tersedia sekarang                                                 |
+| --------------------- | ------------------------------------------------------------------------------- |
+| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                         |
+| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals                    |
+| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews                                |
+| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals |
+| Finance               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals                    |
+| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals                                   |
 
 Modul yang belum tersedia tidak menjadi navigasi utama. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas control/review. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
 
@@ -331,4 +345,24 @@ Detail pekerjaan mengambil konteks lengkap langsung dari Case API, sehingga tida
 
 Creation dan start merupakan dua transaksi API existing. Jika start gagal, request yang sudah tersimpan dipakai kembali untuk retry dalam form; My Work tetap dapat membukanya. Tidak ada transaksi gabungan baru atau perubahan schema. Create Case belum memiliki idempotency backend, sehingga refresh form setelah respons creation hilang tetap memiliki keterbatasan existing.
 
-Fase 4 tidak dimulai. Klasifikasi internal `regulatory_review`/`investment` bukan implementasi Regulatory Review atau Investment Analysis.
+Klasifikasi internal `investment` bukan implementasi Investment Analysis (Fase 5).
+
+## Regulation-to-Action — Fase 4
+
+**Regulatory Review** membandingkan versi regulasi saat ini dengan versi sebelumnya, mengidentifikasi perubahan material, memetakan SOP/kontrol yang dapat diakses, dan mengusulkan gap. Compliance mengonfirmasi (boleh mengedit pernyataan) atau menolak setiap gap. Gap terkonfirmasi menjadi remediation dengan owner dan due date di My Work pemilik; approval Manager independen diperlukan sebelum review dapat ditutup. Semua analisis deterministik dan berbasis citation chunk nyata. Rincian arsitektur, aturan, API, dan batasan: [REGULATION_TO_ACTION.md](docs/REGULATION_TO_ACTION.md).
+
+```bash
+npm run db:migrate   # menambah migrasi 0005
+npm run db:seed      # memasang template regulatory remediation (idempotent)
+```
+
+### Demo Regulatory Review
+
+1. Pilih **Compliance — Raka Wijaya**. Home menampilkan "New current version v2.0 · not yet reviewed against v1.0". Buka **Regulatory Review**, pilih Synthetic Digital Operations Regulation (v1.0 → v2.0), klik **Start Regulatory Review**.
+2. **What changed**: tiga perubahan material — Article 4 every 12 → 6 months, Article 7 within 72 → 24 hours, Article 9 3 → 5 years — masing-masing dengan obligation baru dan prosedur yang dipetakan. Klik **Inspect** untuk membuka chunk sumber (v1.0 ditandai historis).
+3. **Gap review**: empat usulan. Contoh: tolak Access Review Control Policy dengan alasan; konfirmasi Access Review SOP dengan owner Alex Pratama (Governance). Memilih Employee sebagai owner ditolak karena tidak dapat mengakses regulasi. **Source reliability** menampilkan REVIEW_REQUIRED karena konflik 12 vs 6 bulan antar-kontrol saat ini.
+4. Ganti ke **Governance**, buka My Work → "Update Access Review SOP for Article 4 — Access review" → **Remediation completed**.
+5. Ganti ke **Manager** → Reviews / Approvals → Approve dengan alasan (wajib karena REVIEW_REQUIRED).
+6. Kembali ke Compliance → review berstatus **Ready to close** setelah gap lain diputuskan dan semua remediation disetujui → **Close regulatory review**. Activity mencatat seluruh keputusan.
+
+Dari Ask, Compliance yang menanyakan perubahan regulasi (mis. "What changed in the regulation?") mendapat tindakan **Start Regulatory Review**.

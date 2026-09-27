@@ -351,9 +351,9 @@ def test_failed_upload_and_version_are_atomic(client, admin, db):
 
 
 def test_later_phase_routes_are_absent(client, admin):
+    # Regulatory Review (Phase 4) lives under /api/regulatory-reviews; later phases do not.
     for endpoint in [
         "analytics/overview",
-        "regulatory/compare",
         "finance/calculate",
     ]:
         assert client.get(f"/api/{endpoint}", headers=admin).status_code == 404

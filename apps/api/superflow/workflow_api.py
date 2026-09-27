@@ -12,6 +12,7 @@ from .cases import (
     context,
     get_case,
     log,
+    managed_by_domain,
     new_case,
     references_allowed,
     require_edit,
@@ -112,6 +113,8 @@ def patch_case(case_id: str, value: CasePatch, db: Db, user: Actor):
 def attach_evidence(case_id: str, value: EvidenceAdd, db: Db, user: Actor):
     case = get_case(db, user, case_id, lock=True)
     require_edit(user, case)
+    if managed_by_domain(db, case):
+        raise HTTPException(409, "Regulatory review sources are fixed by the comparison.")
     if begin_mutation(db, user, case, value, "evidence"):
         add_evidence(db, user, case, value)
     return returned(db, user, case)
@@ -129,6 +132,8 @@ def start(definition_id: str, value: WorkflowStart, db: Db, user: Actor):
     definition = db.get(WorkflowDefinition, definition_id)
     if not definition:
         raise HTTPException(404, "Workflow definition not found.")
+    if managed_by_domain(db, case):
+        raise HTTPException(409, "Regulatory reviews progress through gap decisions.")
     if begin_mutation(db, user, case, value, "start:" + definition_id):
         start_workflow(db, user, case, definition)
     return returned(db, user, case)

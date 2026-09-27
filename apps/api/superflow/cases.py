@@ -19,6 +19,7 @@ from .models import (
     DocumentChunk,
     DocumentVersion,
     QuestionRun,
+    RegulatoryReview,
     User,
     WorkflowRun,
     now,
@@ -102,7 +103,8 @@ def require_edit(user, case):
 
 def begin_mutation(db, user, case, value: Mutation, action: str) -> bool:
     fingerprint = digest(
-        action + json.dumps(value.model_dump(exclude={"idempotency_key"}), sort_keys=True)
+        action
+        + json.dumps(value.model_dump(mode="json", exclude={"idempotency_key"}), sort_keys=True)
     )
     if value.idempotency_key:
         existing = db.scalar(
@@ -163,11 +165,18 @@ def context(db, user, case):
     return result, sources
 
 
-def new_case(db, user, value: CaseCreate):
+def managed_by_domain(db, case) -> bool:
+    """Regulatory reviews progress through gap decisions, not the generic workflow."""
+    return db.get(RegulatoryReview, case.id) is not None
+
+
+def new_case(db, user, value: CaseCreate, *, may_assign=False):
+    # may_assign: a domain service (e.g. Compliance assigning remediation) has already
+    # checked assignment authority; owner source access is still enforced below.
     owner = db.get(User, value.owner_id or user.id)
     if not owner or not owner.active:
         raise HTTPException(422, "Case owner is unavailable.")
-    if owner.id != user.id and user.role_id not in {"manager", "governance"}:
+    if owner.id != user.id and not may_assign and user.role_id not in {"manager", "governance"}:
         raise HTTPException(403, "Only Manager or Governance may assign another case owner.")
     origin = db.get(QuestionRun, value.question_run_id) if value.question_run_id else None
     if value.question_run_id and (not origin or origin.user_id != user.id):

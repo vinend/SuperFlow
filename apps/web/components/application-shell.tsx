@@ -10,6 +10,7 @@ import {
   Home,
   Layers3,
   Menu,
+  Scale,
   Sparkles,
   X,
 } from "lucide-react";
@@ -19,7 +20,8 @@ import { Dialog } from "./ui/dialog";
 import { navigationFor, roleLabel, reviewsLabel } from "@/lib/product-view";
 
 export type KnowledgeView = "home" | "ask" | "knowledge";
-export type View = KnowledgeView | "cases" | "workflows" | "decisions";
+export type View =
+  KnowledgeView | "cases" | "workflows" | "decisions" | "regulatory";
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
@@ -27,6 +29,7 @@ export const TITLES = {
   cases: "My Work",
   workflows: "My Work",
   decisions: "Reviews / Approvals",
+  regulatory: "Regulatory Review",
 };
 const ICONS = {
   home: Home,
@@ -34,6 +37,7 @@ const ICONS = {
   knowledge: BookOpen,
   cases: FolderKanban,
   decisions: Check,
+  regulatory: Scale,
 };
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.

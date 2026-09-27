@@ -4,9 +4,35 @@
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** rekonsiliasi Product Experience di atas fondasi Fase 0–3. Fase 4 belum dimulai. Backend tetap menjadi sumber kebenaran.
+**Ruang lingkup:** Fase 4 — Regulation-to-Action (Regulatory Review) di atas fondasi Fase 0–3 dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran.
 
-**Status:** selesai untuk scope prototype; quality gate dan inspeksi produksi final lulus.
+**Status:** Fase 4 selesai untuk scope prototype; seluruh quality gate (backend PostgreSQL/SQLite, frontend unit, E2E, build) lulus. Fase 5 belum dimulai.
+
+# Fase 4 — Regulation-to-Action
+
+## Selesai
+
+- **Regulatory Review** untuk Compliance: pilih regulasi (v1.0 → v2.0), perbandingan section-by-section, tiga perubahan material seed (Article 4 every 12 → 6 months, Article 7 within 72 → 24 hours, Article 9 3 → 5 years) beserta obligation baru. Versi lama ditandai historis dan tidak menjadi authority Guard.
+- Mapping SOP/kontrol: Access Review SOP, Incident Reporting SOP, Record Retention SOP (referensi artikel) dan Access Review Control Policy (topik). Hanya sumber yang lolos `can_read` sebelum teks dibaca; tes membuktikan dokumen terbatas tidak dipetakan/bocor.
+- Empat usulan gap; Compliance confirm (edit pernyataan, owner, due date) atau reject (alasan wajib). Keputusan memakai `expected_revision`, idempotency receipt dan audit. Remediation yang ditolak approver dapat di-reassign.
+- Gap terkonfirmasi menjadi Case `remediation` pada workflow `regulatory-remediation-v1` (engine Fase 3 tanpa perubahan): owner menyelesaikan tugas → Guard → approval Manager independen → selesai. Owner harus dapat mengakses regulasi dan kontrol terkait; Employee ditolak.
+- Review ditutup hanya setelah semua gap diputuskan dan semua remediation disetujui. Activity mencatat mulai, konfirmasi, penolakan, reassign, penugasan dan penutupan.
+- Frontend: navigasi Compliance, `/regulatory`, `ComparisonTable` (registry _available_), `GapFinding` dengan evidence sebelum kontrol keputusan, error inline per keputusan, Home Compliance (versi baru belum direview, review menunggu keputusan), My Work dan Ask (**Start Regulatory Review**). Kontrak TS di-generate dari Pydantic.
+- Migrasi `0005` (dua tabel). Reset dan seed mencakup data/template Fase 4. Endpoint generic start workflow/attach evidence menolak Case review.
+- Dependencies macOS disiapkan dan diverifikasi: `npm ci` (termasuk binary `@embedded-postgres/darwin-arm64`), `.venv` Python 3.12 + `requirements-lock.txt`, `.env` dengan `PYTHON`, Chromium Playwright di `.runtime/playwright`, database lokal dimigrasi ke 0005 dan di-seed.
+
+## Perubahan kecil pada kode Fase 0–3
+
+- `new_case(..., may_assign=True)` untuk penugasan owner oleh modul domain; akses sumber owner tetap divalidasi.
+- Fingerprint idempotency memakai `model_dump(mode="json")` (dibutuhkan field `date`; identik untuk field string/int sehingga receipt lama tetap valid).
+- `progressFor` memakai judul langkah untuk definisi non-generic; label tugas remediation di workspace pekerjaan; kontrol form tidak lagi mewarisi font tebal label.
+
+## Batasan Fase 4
+
+- Deteksi berbasis aturan (frasa kuantitas, cakupan istilah ≥ 50%); bukan pemahaman semantik atau penilaian hukum. Semua usulan wajib keputusan manusia.
+- Regulasi = dokumen Compliance authority 5 (belum ada field tipe dokumen). Target harus versi aktif; perbandingan draft belum didukung. Konteks maksimum 30 section.
+- Guard remediation tidak memverifikasi bahwa SOP benar-benar diperbarui; approver menilai. Pada seed, remediation access review tetap REVIEW_REQUIRED karena konflik SOP 12 bulan vs policy 6 bulan hingga SOP versi baru dipublikasikan.
+- Satu pengguna Compliance sintetis; approver remediation default Manager dengan fallback Governance.
 
 # Selesai
 
@@ -35,10 +61,9 @@
 
 # Belum Diimplementasikan
 
-- Fase 4: regulation comparison, SOP impact mapping, gap assessment dan remediation-specific logic.
 - Investment Intelligence/rumus keuangan, analytics/QCD, AML/FIU dan full Governance.
-- ComparisonTable, FinancialAnalysis, autentikasi produksi, notifikasi/integrasi eksternal dan visual workflow builder.
-- Regulatory Review dan Investment Analysis tidak ditampilkan sebagai fitur aktif.
+- FinancialAnalysis, autentikasi produksi, notifikasi/integrasi eksternal dan visual workflow builder.
+- Investment Analysis tidak ditampilkan sebagai fitur aktif.
 
 # Masalah yang Diketahui
 
@@ -75,23 +100,25 @@
 
 # Hasil Pengujian
 
-| Pemeriksaan          | Hasil aktual                                                                                                                                               |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend PostgreSQL   | **84 lulus**: permission/non-leakage, Guard, Case/workflow/task/approval, retry/fallback/escalation, persistence, idempotency dan audit                    |
-| Backend SQLite       | **84 lulus**, termasuk lifecycle migrasi/reset                                                                                                             |
-| Frontend unit        | **19 lulus**: adapter role/work/review/progress/activity, source/reliability dan decision validation                                                       |
-| E2E Chromium         | **28 lulus** pada run final; regresi Fase 0–3, delapan pemeriksaan product experience, refresh detail tanpa API daftar dan concurrent decision             |
-| Formatter/lint/types | Ruff format/check, Prettier, ESLint, TypeScript serta kedua generated-contract checks lulus                                                                |
-| Production build     | Lulus untuk seluruh route existing; frontend produksi berjalan pada port 3000                                                                              |
-| Backend produksi     | FastAPI port 8000 dengan PostgreSQL nyata; schema Fase 0–3 tetap dipertahankan                                                                             |
-| Inspeksi produksi    | Lulus: enam role, Ask/request/source/version, request informasi/resume, konflik SME, retry limit/fallback, escalation/override, activity dan denied source |
-| Responsive/visual    | Desktop 1440 px dan narrow 375/390/768 px diperiksa; nol overflow dan nol browser page errors pada inspeksi produksi                                       |
+Hasil aktual pass Fase 4 pada macOS arm64 (PostgreSQL embedded 18.4 lokal):
 
-Database test terpisah dari database aplikasi. Inspeksi produksi memakai request sintetis baru tanpa reset atau menghapus pekerjaan pengguna. Pemeriksaan retry/fallback mengubah extract pada context request khusus; sumber seed tidak diubah. Screenshot tersimpan di `.runtime/screenshots/product-experience` dan diabaikan Git.
+| Pemeriksaan             | Hasil aktual                                                                                                                                     |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Baseline sebelum Fase 4 | 84 backend dan 19 frontend unit lulus pada environment baru                                                                                      |
+| Backend PostgreSQL      | **102 lulus** (84 regresi + 18 Fase 4: alur penuh, non-leakage, validasi owner/due date/authority, idempotency, stale, reset, analyzer)          |
+| Backend SQLite          | **102 lulus**, termasuk lifecycle migrasi 0005                                                                                                   |
+| Frontend unit           | **26 lulus** (19 lama + navigasi Compliance, work item review/remediation, Ask action, adapter regulatory)                                       |
+| E2E Chromium            | **30 lulus**: 28 regresi Fase 0–3/product experience + journey Regulation-to-Action + role gating                                                |
+| Formatter/lint/types    | Ruff format/check, Prettier, ESLint, TypeScript, `alembic check`, dan ketiga generated-contract checks lulus                                     |
+| Production build        | Lulus, termasuk route `/regulatory`                                                                                                              |
+| Inspeksi visual         | Desktop 1440 px dan mobile 390 px pada database test: nol horizontal overflow, nol page error; layout perbandingan diperbaiki menjadi full-width |
+| Smoke database demo     | API port 8000 pada database `superflow` (migrasi 0005 + seed) melaporkan scope `phase-0-4` dan sumber regulasi                                   |
+
+Docker tetap tidak tersedia di mesin ini; Compose belum dieksekusi. Screenshot inspeksi di `.runtime/screenshots/phase4` (diabaikan Git).
 
 # Langkah Berikutnya yang Direkomendasikan
 
-1. Tinjau bahasa tindakan, independence reviewer dan kesesuaian evidence bersama process owner.
-2. Verifikasi Docker Compose dan audit screen reader di lingkungan yang mendukung.
-3. Evaluasi idempotency create/start, autentikasi dan audit produksi sebelum deployment nyata.
-4. Mulai Fase 4 hanya setelah instruksi eksplisit; pass ini berakhir pada rekonsiliasi pengalaman pengguna Fase 0–3.
+1. Tinjau bahasa gap, ambang cakupan obligation, dan pilihan approver remediation bersama process owner Compliance.
+2. Pertimbangkan field tipe dokumen (regulation/SOP/control) dan dukungan perbandingan versi draft sebelum berlaku.
+3. Verifikasi Docker Compose dan audit screen reader di lingkungan yang mendukung.
+4. Mulai Fase 5 — Investment Intelligence hanya setelah instruksi eksplisit.

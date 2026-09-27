@@ -44,10 +44,7 @@ export function WorkItemRows({
         {items.map((item) => (
           <tr key={item.id}>
             <td>
-              <Link
-                href={`/cases?case=${encodeURIComponent(item.id)}`}
-                className="document-name"
-              >
+              <Link href={item.href} className="document-name">
                 {item.title}
               </Link>
               <small className="cell-detail">
@@ -68,10 +65,7 @@ export function WorkItemRows({
             </td>
             <td>
               <StatusBadge status={item.status} />
-              <Link
-                className="cell-detail text-link"
-                href={`/cases?case=${encodeURIComponent(item.id)}`}
-              >
+              <Link className="cell-detail text-link" href={item.href}>
                 {item.nextAction}
               </Link>
               {item.dueAt && (

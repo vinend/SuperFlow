@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { Answer, Source } from "./api";
+import type { ChangeView } from "./regulatory-contracts";
 import type { GuardResult } from "./reliability-contracts";
 import type {
   ApprovalView,
@@ -35,6 +36,12 @@ export type AnswerCardProps = {
   onDocument: (id: string, versionId?: string) => void;
   reliabilitySlot?: ReactNode;
 };
+export type ComparisonTableProps = {
+  changes: ChangeView[];
+  previousLabel: string;
+  currentLabel: string;
+  onSource: (source: Source) => void;
+};
 export type SourcePanelProps = {
   source: Source;
   close: () => void;
@@ -46,7 +53,7 @@ export type SourcePanelProps = {
 export const WORKSPACE_COMPONENTS = {
   AnswerCard: "available",
   SourcePanel: "available",
-  ComparisonTable: "deferred",
+  ComparisonTable: "available",
   EvidenceChecklist: "available",
   FinancialAnalysis: "deferred",
   ApprovalPanel: "available",
@@ -59,6 +66,7 @@ export type WorkspaceComponent =
   | { type: "EvidenceChecklist"; data: GuardResult }
   | { type: "ApprovalPanel"; data: ApprovalView }
   | { type: "WorkflowTimeline"; data: WorkflowView }
+  | { type: "ComparisonTable"; data: ChangeView[] }
   | {
       type: Exclude<
         keyof typeof WORKSPACE_COMPONENTS,
@@ -67,6 +75,7 @@ export type WorkspaceComponent =
         | "EvidenceChecklist"
         | "ApprovalPanel"
         | "WorkflowTimeline"
+        | "ComparisonTable"
       >;
       availability: "deferred";
       data?: never;

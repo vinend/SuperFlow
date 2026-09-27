@@ -26,6 +26,7 @@ from .knowledge import (
 from .models import AuditEvent, Case, Document, DocumentVersion, QuestionRun, User
 from .parsing import MAX_BYTES, ParseError, parse_file
 from .providers import AnswerProvider, ExtractiveDemoProvider
+from .regulatory_api import router as regulatory_router
 from .reliability import digest, evaluate_run, presented_answer
 from .reliability_contracts import GuardResult, ReliabilityStatus
 from .retrieval import KeywordConceptRetriever, Retriever
@@ -34,10 +35,11 @@ from .workflow_api import router as workflow_router
 
 app = FastAPI(
     title="SuperFlow Knowledge API",
-    version="0.3.0",
-    description="Phase 0–3 prototype. X-User-Id is mock authentication only.",
+    version="0.4.0",
+    description="Phase 0–4 prototype. X-User-Id is mock authentication only.",
 )
 app.include_router(workflow_router)
+app.include_router(regulatory_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -77,7 +79,7 @@ def health(db: Db):
         "status": "ok",
         "database": db.bind.dialect.name,
         "seeded_users": users,
-        "scope": "phase-0-3",
+        "scope": "phase-0-4",
     }
 
 

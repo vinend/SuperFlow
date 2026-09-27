@@ -64,7 +64,9 @@ class ApprovalStatus(StrEnum):
     OVERRIDDEN = "OVERRIDDEN"
 
 
-CaseType = Literal["general", "regulatory_review", "investment", "audit", "operations"]
+CaseType = Literal[
+    "general", "regulatory_review", "remediation", "investment", "audit", "operations"
+]
 DecisionAction = Literal["approve", "reject", "request-evidence", "escalate", "override"]
 
 

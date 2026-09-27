@@ -1,5 +1,28 @@
 # Cara Menjalankan SuperFlow
 
+## macOS / Linux
+
+Dependencies sudah dipasang pada mesin ini (`node_modules`, `.venv`, `.env` dengan `PYTHON`, Chromium untuk E2E). Untuk checkout baru ikuti setup macOS/Linux di [README.md](README.md).
+
+```bash
+cd /path/to/SuperFlow
+
+# Terminal 1 — database (biarkan terbuka)
+npm run db:local
+
+# Terminal 2 — backend
+npm run db:migrate
+npm run db:seed
+npm run dev:api
+
+# Terminal 3 — frontend
+npm run dev
+```
+
+Aplikasi: http://127.0.0.1:3000 · API docs: http://127.0.0.1:8000/docs. Hentikan dengan `Ctrl+C` di tiap terminal.
+
+## Windows (PowerShell)
+
 Buka PowerShell di folder project:
 
 ```powershell

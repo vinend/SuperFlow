@@ -9,9 +9,9 @@ from .audit import demo_reset_mode
 from .config import ROOT, settings
 from .db import Base, SessionLocal
 from .knowledge import add_version
-from .models import Document, Role, User, WorkflowDefinition
+from .models import Document, Role, User
 from .schemas import VersionInput
-from .workflow_definitions import GENERIC_REVIEW
+from .workflow_definitions import DEFINITIONS, install
 
 ROLES = [
     ("employee", "Employee", "People", "Maya Putri"),
@@ -44,8 +44,8 @@ def seed(db, *, commit=True):
                 )
             )
     db.flush()
-    if db.get(WorkflowDefinition, GENERIC_REVIEW["id"]) is None:
-        db.add(WorkflowDefinition(**GENERIC_REVIEW))
+    for definition in DEFINITIONS:
+        install(db, definition)
     directory = ROOT / "data" / "seed"
     manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
     created = 0
@@ -92,7 +92,7 @@ def validate_reset_target(url: str, confirmed: bool) -> None:
 
 
 def reset_synthetic(db):
-    """Reset Phase 0–3 synthetic tables atomically; preserve the schema."""
+    """Reset Phase 0–4 synthetic tables atomically; preserve the schema."""
     try:
         demo_reset_mode(db, True)
         for table in reversed(Base.metadata.sorted_tables):
@@ -108,7 +108,7 @@ def reset_synthetic(db):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Seed synthetic Phase 0–3 knowledge data.")
+    parser = argparse.ArgumentParser(description="Seed synthetic Phase 0–4 knowledge data.")
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--confirm-synthetic-data", action="store_true")
     args = parser.parse_args()

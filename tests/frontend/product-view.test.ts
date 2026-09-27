@@ -239,3 +239,104 @@ test("people and activity use readable names without exposing event schema", () 
     "Request activity recorded",
   );
 });
+test("Compliance alone gets Regulatory Review before My Work", () => {
+  assert.deepEqual(
+    navigationFor("compliance").map((n) => n.title),
+    [
+      "Home",
+      "Ask SuperFlow",
+      "Knowledge",
+      "Regulatory Review",
+      "My Work",
+      "Reviews / Approvals",
+    ],
+  );
+  for (const role of ["employee", "manager", "sme", "finance", "governance"])
+    assert.ok(
+      !navigationFor(role).some((n) => n.title === "Regulatory Review"),
+    );
+});
+test("regulatory reviews open their own workspace; remediation uses step titles", () => {
+  const review = workItemsFor(
+    [
+      {
+        ...item,
+        type: "regulatory_review",
+        status: "IN_PROGRESS",
+        owner_id: "compliance",
+        created_by: "compliance",
+      },
+    ],
+    [],
+    [],
+    { ...employee, id: "compliance", role_id: "compliance" } as User,
+  )[0];
+  assert.equal(review.href, `/regulatory?review=${item.id}`);
+  assert.equal(review.type, "Regulatory review");
+  assert.equal(review.nextAction, "Open regulatory review");
+  assert.ok(review.needsAttention);
+  const remediationRun = {
+    ...run,
+    definition_id: "regulatory-remediation-v1",
+    current_step: "remediate",
+    steps: [
+      {
+        id: "a",
+        key: "remediate",
+        title: "Update the procedure or control",
+        type: "TASK",
+        status: "ACTIVE",
+        attempts: [],
+      },
+      {
+        id: "b",
+        key: "approve_remediation",
+        title: "Remediation approval",
+        type: "APPROVAL",
+        status: "PENDING",
+        attempts: [],
+      },
+    ],
+  } as unknown as WorkflowView;
+  assert.deepEqual(
+    progressFor(remediationRun).map((s) => s.label),
+    ["Update the procedure or control"],
+  );
+  const work = workItemsFor(
+    [{ ...item, type: "remediation" }],
+    [],
+    [],
+    employee,
+  )[0];
+  assert.equal(work.type, "Remediation");
+  assert.equal(work.href, `/cases?case=${item.id}`);
+});
+test("Ask offers Start Regulatory Review only to Compliance for regulation changes", () => {
+  const answer = {
+    question: "What changed in the new regulation?",
+    reliability: { status: "VERIFIED" },
+    sources: [{ document_id: "regulation", domain: "Compliance" }],
+  } as Parameters<typeof askAction>[0];
+  assert.deepEqual(askAction(answer, "compliance"), {
+    label: "Start Regulatory Review",
+    title: "Regulatory Review",
+    href: "/regulatory?document=regulation",
+  });
+  assert.notEqual(
+    askAction(answer, "employee")?.label,
+    "Start Regulatory Review",
+  );
+  assert.equal(
+    askAction(
+      { ...answer, reliability: { status: "ACCESS_RESTRICTED" } } as Parameters<
+        typeof askAction
+      >[0],
+      "compliance",
+    ),
+    null,
+  );
+  assert.equal(
+    activityLabel({ event_type: "finding_confirmed" } as ActivityView),
+    "Gap confirmed and remediation assigned",
+  );
+});

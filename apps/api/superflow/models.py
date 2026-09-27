@@ -18,6 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
+from .regulatory_contracts import FindingStatus
 from .reliability_contracts import ReliabilityStatus
 from .workflow_contracts import ApprovalStatus, CaseStatus, StepStatus, TaskStatus, WorkflowStatus
 
@@ -281,6 +282,45 @@ class Approval(Base):
     decided_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class RegulatoryReview(Base):
+    """Domain snapshot of one regulation comparison; the Case owns access, audit and revision."""
+
+    __tablename__ = "regulatory_reviews"
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"), primary_key=True)
+    document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"))
+    base_version_id: Mapped[str] = mapped_column(ForeignKey("document_versions.id"))
+    target_version_id: Mapped[str] = mapped_column(ForeignKey("document_versions.id"), index=True)
+    comparator: Mapped[str] = mapped_column(String(80))
+    changes: Mapped[list[dict]] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class RegulatoryFinding(Base):
+    __tablename__ = "regulatory_findings"
+    __table_args__ = (
+        UniqueConstraint("review_id", "key"),
+        status_constraint(FindingStatus, "ck_finding_status"),
+    )
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    review_id: Mapped[str] = mapped_column(ForeignKey("regulatory_reviews.case_id"), index=True)
+    key: Mapped[str] = mapped_column(String(200))
+    change_key: Mapped[str] = mapped_column(String(100))
+    target_chunk_id: Mapped[str] = mapped_column(ForeignKey("document_chunks.id"))
+    impacted_chunk_id: Mapped[str] = mapped_column(ForeignKey("document_chunks.id"))
+    basis: Mapped[str] = mapped_column(String(30))
+    issues: Mapped[list[dict]] = mapped_column(JSON)
+    proposed_summary: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(20), default=FindingStatus.PROPOSED)
+    reviewer_summary: Mapped[str | None] = mapped_column(Text)
+    decision_reason: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    remediation_owner_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    remediation_due_date: Mapped[date | None] = mapped_column(Date)
+    remediation_case_id: Mapped[str | None] = mapped_column(ForeignKey("cases.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
 class ActionReceipt(Base):

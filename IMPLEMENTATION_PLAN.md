@@ -4,7 +4,7 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Fase 4 tidak dimulai.
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Pekerjaan terbaru adalah **Fase 4 — Regulation-to-Action** (Regulatory Review) di atas fondasi tersebut.
 
 ## Rekonsiliasi Product Experience
 
@@ -16,7 +16,7 @@ Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerja
 6. Humanisasi status, activity, nama orang, dan progress; hilangkan label fase, revision, definisi dan node types dari layar produk.
 7. Jalankan seluruh quality gate, regresi dan inspeksi produksi enam role/desktop/mobile; dokumentasikan hasil aktual.
 
-Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype; quality gate, regresi dan inspeksi produksi enam role lulus. Fase 4 belum dimulai.
+Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype; quality gate, regresi dan inspeksi produksi enam role lulus.
 
 ## Tahapan PRD
 
@@ -26,7 +26,7 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 | 1 — Knowledge Core          | Pertanyaan yang dapat ditelusuri ke sumber | Upload/parsing/chunking, metadata/versi/relasi, retrieval abstraction, Ask, citation, Source Panel | Fase 0, dokumen seed                 | Selesai untuk scope prototype Fase 0/1; rekonsiliasi dan verifikasi lulus          |
 | 2 — Reliability Core        | Pemeriksaan reliability yang persisten     | SuperFlow Guard, citation coverage, evidence/conflict, audit                                       | Knowledge Core, kontrak reliability  | Selesai untuk scope prototype; seluruh quality gate dan lima demo status lulus     |
 | 3 — Workflow Core           | Aksi dan keputusan manusia                 | Cases, state machine, tasks, retry/escalation, Decision Center, approval                           | Guard dan audit                      | Selesai untuk scope prototype; quality gate final lulus                            |
-| 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Belum dimulai; hanya sumber sintetis tersedia                                      |
+| 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Belum dimulai; hanya proposal/quotation/cash-flow seed tersedia                    |
 | 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization                                              | Data eksekusi dan definisi metrik    | Belum dimulai                                                                      |
 | 7 — AML/FIU Extension       | Contoh workflow opsional                   | Mock evidence, exception, human escalation                                                         | Fondasi bersama                      | Di luar ruang lingkup awal                                                         |
@@ -88,7 +88,7 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-Regulation comparison/remediation, investasi/rumus keuangan, analytics, AML/FIU, autentikasi produksi, OCR, dan vector retrieval tidak diimplementasikan dalam pass ini.
+Investasi/rumus keuangan (Fase 5), analytics (Fase 6), AML/FIU, autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan.
 
 ## Deliverable Fase 3
 
@@ -102,3 +102,15 @@ Regulation comparison/remediation, investasi/rumus keuangan, analytics, AML/FIU,
 8. Demo A/B/C opsional dan reset Fase 0–3; tests backend, contracts, browser/concurrency, regression, production/responsive inspection.
 
 Dependency: seluruh Fase 0–2, PostgreSQL/Alembic, mock identities, Guard extractive rules. Arsitektur dan batasan di [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md). Tidak ada Regulation-to-Action, analytics, investment analysis, atau AML workflow.
+
+## Deliverable Fase 4 — Regulation-to-Action
+
+1. Baca PRD v2 §13/§33, AGENTS, status; audit Case/workflow/Guard/permission existing. Siapkan dependencies dan jalankan baseline (84 backend, 19 frontend lulus) di macOS.
+2. Review = Case `regulatory_review` + tabel `regulatory_reviews` (PK = case_id) dan `regulatory_findings`; migrasi `0005`. Tidak ada perubahan model Fase 0–3; `CaseType` + `remediation`.
+3. Analisis deterministik di balik Protocol (`RegulationComparator`, `ImpactMapper`, `GapAnalyzer`): alignment section, perubahan kuantitas (frequency/deadline/duration), obligation baru, mapping referensi artikel/topik setelah `can_read`, usulan gap requirement_mismatch/missing_obligation.
+4. Keputusan manusia: confirm (edit pernyataan, owner, due date) / reject (alasan wajib) / reassign remediation yang ditolak; `expected_revision`, idempotency receipt, audit.
+5. Remediation = Case `remediation` pada workflow `regulatory-remediation-v1` (TASK → GUARD → APPROVAL Manager → TERMINAL) memakai engine existing; due date pada task; review ditutup hanya setelah semua remediation disetujui.
+6. Frontend: navigasi Compliance "Regulatory Review", `/regulatory`, `ComparisonTable` (registry available), `GapFinding` (evidence sebelum keputusan), Home Compliance, My Work/Ask integration, adapter `regulatory-view.ts`, kontrak TS yang di-generate.
+7. Tests backend (alur penuh, non-leakage, validasi, konkurensi, reset, analyzer), frontend unit, E2E journey + role gating, regresi Fase 0–3, build produksi, inspeksi visual desktop/mobile.
+
+Dependency: Fase 1–3, seed regulasi v1/v2 dan SOP terkait. Arsitektur dan batasan: [REGULATION_TO_ACTION.md](docs/REGULATION_TO_ACTION.md).
