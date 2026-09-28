@@ -15,6 +15,7 @@ from .audit import record
 from .auth import can_read, current_user, require_manage
 from .config import settings
 from .db import get_db
+from .investment_api import router as investment_router
 from .knowledge import (
     accessible_document,
     activate,
@@ -35,11 +36,12 @@ from .workflow_api import router as workflow_router
 
 app = FastAPI(
     title="SuperFlow Knowledge API",
-    version="0.4.0",
-    description="Phase 0–4 prototype. X-User-Id is mock authentication only.",
+    version="0.5.0",
+    description="Phase 0–5 prototype. X-User-Id is mock authentication only.",
 )
 app.include_router(workflow_router)
 app.include_router(regulatory_router)
+app.include_router(investment_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -79,7 +81,7 @@ def health(db: Db):
         "status": "ok",
         "database": db.bind.dialect.name,
         "seeded_users": users,
-        "scope": "phase-0-4",
+        "scope": "phase-0-5",
     }
 
 

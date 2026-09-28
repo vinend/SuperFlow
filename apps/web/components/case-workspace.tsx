@@ -17,6 +17,7 @@ import { WorkflowTimeline } from "./workflow-timeline";
 import { ApprovalPanel } from "./approval-panel";
 import { EvidenceChecklist } from "./evidence-checklist";
 import { SourcePanel } from "./source-panel";
+import { InvestmentContext } from "./investment-context";
 import { SectionHeader, StatusBadge } from "./ui/primitives";
 
 export function CaseWorkspace({
@@ -59,6 +60,9 @@ export function CaseWorkspace({
         <div className="case-execution">
           {current.description && (
             <p className="case-description">{current.description}</p>
+          )}
+          {current.type === "investment" && (
+            <InvestmentContext caseId={current.id} user={user} />
           )}
           {current.allowed_actions.includes("edit") && (
             <details

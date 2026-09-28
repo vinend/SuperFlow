@@ -177,7 +177,8 @@ def enter(db, user, case, run, key):
     elif cfg.type == ST.APPROVAL:
         guard, _ = context(db, user, case)
         role = cfg.reviewer_role
-        if role == "manager":
+        # Type-based routing belongs to the generic review; domain definitions name the role.
+        if role == "manager" and run.definition_id == "generic-review-v1":
             role = {"investment": "finance", "regulatory_review": "compliance", "audit": "sme"}.get(
                 case.type, role
             )

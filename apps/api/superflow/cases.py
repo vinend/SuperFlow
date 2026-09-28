@@ -18,6 +18,7 @@ from .models import (
     Document,
     DocumentChunk,
     DocumentVersion,
+    InvestmentAnalysis,
     QuestionRun,
     RegulatoryReview,
     User,
@@ -28,6 +29,10 @@ from .providers import ExtractiveDemoProvider
 from .reliability import digest, evaluate_run
 from .reliability_contracts import EvidenceItem, ReliabilityStatus
 from .workflow_contracts import CaseCreate, CaseStatus, Mutation
+
+# Domain services register how to resolve calculation inputs for their Case type, so
+# every Guard evaluation of that Case (views, workflow steps, decisions) includes them.
+CALCULATION_INPUTS = {}
 
 
 def log(db, user, case, event_type, **payload):
@@ -148,7 +153,9 @@ def context(db, user, case):
         EvidenceItem.model_validate(row.item)
         for row in db.scalars(select(CaseEvidence).where(CaseEvidence.case_id == case.id))
     )
-    result = evaluate_run(db, user, run, sources, evidence)
+    resolver = CALCULATION_INPUTS.get(case.type)
+    calculation = resolver(db, case) if resolver else None
+    result = evaluate_run(db, user, run, sources, evidence, calculation)
     if case.guard_id != result.id:
         log(
             db,
@@ -165,9 +172,13 @@ def context(db, user, case):
     return result, sources
 
 
-def managed_by_domain(db, case) -> bool:
-    """Regulatory reviews progress through gap decisions, not the generic workflow."""
-    return db.get(RegulatoryReview, case.id) is not None
+def domain_kind(db, case) -> str | None:
+    """Domain workspaces own how their Case starts; the generic workflow start is refused."""
+    if db.get(RegulatoryReview, case.id) is not None:
+        return "regulatory"
+    if db.get(InvestmentAnalysis, case.id) is not None:
+        return "investment"
+    return None
 
 
 def new_case(db, user, value: CaseCreate, *, may_assign=False):

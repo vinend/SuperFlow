@@ -90,7 +90,47 @@ REGULATORY_REMEDIATION = {
         ]
     },
 }
-DEFINITIONS = [GENERIC_REVIEW, REGULATORY_REMEDIATION]
+
+
+# Investment approval: Guard re-checks sources and calculation inputs, then the authority
+# named by the approval-policy source decides. The committee route uses Governance as the
+# demo stand-in for an investment committee.
+def _investment(definition_id, name, role, title):
+    return {
+        "id": definition_id,
+        "name": name,
+        "version": "1.0",
+        "domain": "Finance",
+        "config": {
+            "steps": [
+                {
+                    "id": "verify_analysis",
+                    "title": "Check sources and calculation",
+                    "type": "GUARD",
+                    "next": "approve_investment",
+                    "max_retries": 2,
+                    "fallback": "approve_investment",
+                },
+                {
+                    "id": "approve_investment",
+                    "title": title,
+                    "type": "APPROVAL",
+                    "reviewer_role": role,
+                    "next": "investment_decided",
+                },
+                {"id": "investment_decided", "title": "Investment approved", "type": "TERMINAL"},
+            ]
+        },
+    }
+
+
+INVESTMENT_APPROVAL = _investment(
+    "investment-approval-v1", "Investment approval", "manager", "Manager approval"
+)
+INVESTMENT_COMMITTEE = _investment(
+    "investment-committee-v1", "Investment committee approval", "governance", "Committee approval"
+)
+DEFINITIONS = [GENERIC_REVIEW, REGULATORY_REMEDIATION, INVESTMENT_APPROVAL, INVESTMENT_COMMITTEE]
 for _definition in DEFINITIONS:
     _definition["config"] = DefinitionConfig.model_validate(_definition["config"]).model_dump(
         mode="json"

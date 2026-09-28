@@ -2625,3 +2625,150 @@ select {
 .comparison-list .text-button {
   text-align: left;
 }
+/* Investment Intelligence reuses the regulatory/case primitives and tokens. */
+.metric-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+}
+.metric-tiles > div {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+}
+.metric-tiles dt {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.metric-tiles dd {
+  margin: var(--space-1) 0 0;
+}
+.metric-tiles strong {
+  display: block;
+  font-size: var(--text-lg);
+  font-variant-numeric: tabular-nums;
+}
+.metric-tiles small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-top: 2px;
+}
+.metric-tiles details {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+}
+.metric-tiles summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 600;
+}
+.metric-tiles details p {
+  margin: var(--space-1) 0 0;
+  line-height: 1.5;
+}
+.metric-tiles code {
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+.financial-subheading {
+  font-size: var(--text-sm);
+  margin: var(--space-5) 0 var(--space-2);
+}
+.financial-analysis td,
+.assumption-rows td:nth-child(2) {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.negative-value {
+  color: var(--danger);
+}
+.assumption-rows td {
+  vertical-align: top;
+}
+.assumption-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: var(--text-xs);
+}
+.assumption-sources li + li {
+  margin-top: var(--space-2);
+}
+.assumption-sources .text-button {
+  text-align: left;
+}
+.assumption-sources span {
+  display: block;
+  color: var(--muted);
+}
+.value-choice {
+  display: grid;
+  gap: var(--space-2);
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.value-choice legend {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+.workflow-form .value-choice label {
+  display: flex;
+  align-items: start;
+  gap: var(--space-2);
+  font-weight: 400;
+  font-size: var(--text-sm);
+}
+.workflow-form .value-choice input {
+  width: auto;
+  margin-top: 3px;
+}
+.value-choice q {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-top: 2px;
+}
+.investment-memo {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-sm);
+}
+.investment-memo p {
+  margin: 0 0 var(--space-2);
+  line-height: 1.6;
+}
+.investment-memo .memo-title {
+  font-weight: 600;
+}
+.investment-memo .memo-item {
+  padding-left: var(--space-4);
+  position: relative;
+}
+.investment-memo .memo-item::before {
+  content: "–";
+  position: absolute;
+  left: 0;
+  color: var(--muted);
+}
+.investment-context {
+  margin-bottom: var(--space-6);
+}
+.investment-context-memo summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  padding: var(--space-2) 0;
+}
+.assumption-rows td:last-child {
+  min-width: 260px;
+}
+.assumption-sources .text-button {
+  white-space: normal;
+}

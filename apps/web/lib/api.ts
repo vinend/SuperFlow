@@ -115,7 +115,9 @@ export async function api<T>(
     const detail = body?.detail;
     throw new Error(
       typeof detail === "string"
-        ? /^\/api\/(cases|workflow|tasks|approvals|regulatory)/.test(path)
+        ? /^\/api\/(cases|workflow|tasks|approvals|regulatory|investment)/.test(
+            path,
+          )
           ? detail
               .replace(/\bCases\b/g, "Requests")
               .replace(/\bCase\b/g, "Request")

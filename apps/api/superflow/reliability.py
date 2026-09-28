@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .audit import record
-from .guard import GuardInput, SuperFlowGuard, restricted_relevance
+from .guard import CalculationInput, GuardInput, SuperFlowGuard, restricted_relevance
 from .models import GuardEvaluation, QuestionRun, User
 from .reliability_contracts import EvidenceItem, GuardResult, ReliabilityStatus
 from .schemas import AskInput
@@ -24,6 +24,7 @@ def evaluate_run(
     run: QuestionRun,
     sources: list[dict],
     evidence: tuple[EvidenceItem, ...] = (),
+    calculation: CalculationInput | None = None,
 ) -> GuardResult:
     query = AskInput(question=run.question, **run.filters)
     result = guard.evaluate(
@@ -35,6 +36,7 @@ def evaluate_run(
             answer=run.answer,
             restricted_match=restricted_relevance(db, user, query),
             evidence=evidence,
+            calculation=calculation,
         ),
     )
     payload = result.model_dump(mode="json", exclude={"id", "evaluated_at"})

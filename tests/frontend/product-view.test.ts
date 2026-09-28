@@ -340,3 +340,51 @@ test("Ask offers Start Regulatory Review only to Compliance for regulation chang
     "Gap confirmed and remediation assigned",
   );
 });
+test("Finance alone gets Investment Analysis; analyses open their workspace", () => {
+  assert.deepEqual(
+    navigationFor("finance").map((n) => n.title),
+    [
+      "Home",
+      "Ask SuperFlow",
+      "Knowledge",
+      "Investment Analysis",
+      "My Work",
+      "Reviews / Approvals",
+    ],
+  );
+  assert.ok(
+    !navigationFor("compliance").some((n) => n.title === "Investment Analysis"),
+  );
+  const finance = { ...employee, id: "finance", role_id: "finance" } as User;
+  const [work] = workItemsFor(
+    [
+      {
+        ...item,
+        type: "investment",
+        status: "IN_PROGRESS",
+        owner_id: "finance",
+        created_by: "finance",
+      },
+    ],
+    [],
+    [],
+    finance,
+  );
+  assert.equal(work.href, `/investment?analysis=${item.id}`);
+  assert.equal(work.type, "Investment analysis");
+  assert.equal(work.nextAction, "Open investment analysis");
+  const action = askAction(
+    {
+      question: "What assumptions are in proposal A?",
+      reliability: { status: "REVIEW_REQUIRED" },
+      sources: [{ document_id: "proposal-a", domain: "Finance" }],
+    } as Parameters<typeof askAction>[0],
+    "finance",
+  );
+  assert.equal(action?.label, "Prepare Analysis");
+  assert.equal(action?.href, "/investment?document=proposal-a");
+  assert.equal(
+    activityLabel({ event_type: "investment_submitted" } as ActivityView),
+    "Submitted for approval",
+  );
+});

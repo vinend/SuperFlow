@@ -5,7 +5,7 @@
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. **Fase 4 — Regulation-to-Action** tersedia sebagai **Regulatory Review** untuk Compliance. Investment Analysis, Analytics, dan Governance penuh belum tersedia.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. **Fase 4 — Regulation-to-Action** tersedia sebagai **Regulatory Review** untuk Compliance, dan **Fase 5 — Investment Intelligence** sebagai **Investment Analysis** untuk Finance. Analytics dan Governance penuh belum tersedia.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -23,7 +23,7 @@ Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Contr
 
 Pertanyaan dikirim ke API dengan identitas demo. Retrieval hanya membaca chunk dari sumber yang diizinkan. Provider mengembalikan excerpt beserta citation sebenarnya, lalu SuperFlow Guard mengevaluasi reliability sebelum output. API memeriksa akses dan hasil Guard lagi saat saved answer atau source dibuka. Frontend merender teks dan komponen terkontrol, tanpa HTML dari model.
 
-Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), [Regulation-to-Action](docs/REGULATION_TO_ACTION.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
+Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), [Regulation-to-Action](docs/REGULATION_TO_ACTION.md), [Investment Intelligence](docs/INVESTMENT_INTELLIGENCE.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
 
 ## Struktur proyek
 
@@ -40,7 +40,7 @@ SuperFlow/
 ├── package-lock.json
 ├── apps/
 │   ├── web/
-│   │   ├── app/                 Home, Ask, Knowledge, Regulatory Review, My Work, Reviews; stylesheet/token
+│   │   ├── app/                 Home, Ask, Knowledge, Regulatory Review, Investment Analysis, My Work, Reviews; stylesheet/token
 │   │   ├── components/          Shell, composer, answer, source, editor, primitive UI
 │   │   └── lib/                 API client dan kontrak bertipe
 │   └── api/
@@ -147,7 +147,7 @@ API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. See
 
 Satu dokumen hanya boleh memiliki satu versi active. Publikasi versi mengambil lock dokumen dan menandai versi active sebelumnya sebagai outdated dalam transaksi yang sama. Versi bertanggal efektif di masa depan harus draft.
 
-### Reset demo Fase 0–4
+### Reset demo Fase 0–5
 
 Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target lalu mengembalikan seed awal. Schema/migration tetap dipertahankan. Hanya PostgreSQL lokal dengan nama `superflow` atau `superflow_test` yang diterima; diperlukan flag eksplisit:
 
@@ -155,7 +155,7 @@ Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target 
 npm.cmd run db:reset -- --confirm-synthetic-data
 ```
 
-`DATABASE_URL` menentukan target. Tanpa flag tersebut atau untuk target lain, CLI menolak reset. Setelah reset, buka Home; URL saved answer/versi sebelum reset dapat menjadi tidak tersedia. Reset mencakup Knowledge Core, GuardResult, AuditEvent, Case, evidence requirements, workflow, task, approval, attempt, receipt, serta regulatory review/finding sintetis Fase 0–4. Untuk tiga demo workflow awal, jalankan `npm.cmd run demo:workflow` setelah reset. Playwright mereset database test sebelum suite agar demo browser dapat diulang.
+`DATABASE_URL` menentukan target. Tanpa flag tersebut atau untuk target lain, CLI menolak reset. Setelah reset, buka Home; URL saved answer/versi sebelum reset dapat menjadi tidak tersedia. Reset mencakup Knowledge Core, GuardResult, AuditEvent, Case, evidence requirements, workflow, task, approval, attempt, receipt, serta regulatory review/finding dan investment analysis sintetis Fase 0–5. Untuk tiga demo workflow awal, jalankan `npm.cmd run demo:workflow` setelah reset. Playwright mereset database test sebelum suite agar demo browser dapat diulang.
 
 ## Menjalankan backend
 
@@ -192,7 +192,7 @@ npm.cmd start
 | Manager / `manager`       | Arif Santoso  | Membaca, mengirim request, dan melakukan review independen            |
 | SME / `sme`               | Nadia Rahman  | Membaca dan memelihara sumber yang dapat diakses                      |
 | Compliance / `compliance` | Raka Wijaya   | Menjalankan Regulatory Review, memutuskan gap, menugaskan remediation |
-| Finance / `finance`       | Dina Sari     | Membaca dan bertanya; belum ada financial analysis                    |
+| Finance / `finance`       | Dina Sari     | Menyiapkan Investment Analysis, memilih nilai sumber, submit approval |
 | Governance / `governance` | Alex Pratama  | Membaca/memelihara semua sumber demo; modul Governance belum tersedia |
 
 Role switcher menyimpan ID pilihan di browser. Header `X-User-Id` diterima API dan dipakai untuk pemeriksaan akses. Pergantian role mengosongkan workspace yang sedang tampil. Ini mock identity, bukan login/SSO atau autentikasi produksi.
@@ -272,9 +272,9 @@ Arsitektur, kontrak, precedence status, aturan coverage, model audit, generator 
 
 - Jawaban berupa extract source deterministik, bukan reasoning/synthesis LLM. `Source-grounded` menunjukkan retrieval; VERIFIED berasal dari check Guard yang eksplisit dan tidak berarti izin melakukan tindakan bisnis.
 - Belum ada OCR atau semantic/vector retrieval. Parser mendukung UTF-8 TXT/Markdown, PDF berbasis teks, DOCX hingga 10 MB. File kosong, rusak, encrypted, atau textless ditolak dengan error yang jelas.
-- Guard memakai aturan extractive dan evidence/conflict terbatas pada skenario yang dikonfigurasi. Belum ada semantic conflict detection, ambiguity detection menyeluruh, atau confidence score. Calculation check ditandai tidak applicable.
-- Analytics, full Governance, regulation comparison/remediation, financial analysis, AML/FIU, dan pengukuran penghematan belum diimplementasikan. Workflow memakai satu definisi generic review, satu run per Case, mock authority, dan evidence source chunk; belum scheduler/notifications/tool runtime.
-- AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, dan WorkflowTimeline fungsional. ComparisonTable dan FinancialAnalysis tetap deferred; belum ada engine Generative UI dinamis.
+- Guard memakai aturan extractive dan evidence/conflict terbatas pada skenario yang dikonfigurasi. Belum ada semantic conflict detection, ambiguity detection menyeluruh, atau confidence score. Calculation check hanya berlaku pada Investment Analysis; konteks lain menandainya tidak applicable.
+- Analytics, full Governance, AML/FIU, dan pengukuran penghematan belum diimplementasikan. Workflow memakai definisi code-defined (generic review, regulatory remediation, investment approval/committee), satu run per Case, mock authority, dan evidence source chunk; belum scheduler/notifications/tool runtime.
+- AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, dan WorkflowTimeline fungsional. ComparisonTable (Fase 4) dan FinancialAnalysis (Fase 5) juga fungsional; belum ada engine Generative UI dinamis.
 - Pass frontend memakai MCP 21st.dev untuk pencarian dan inspeksi source tabel. Kuota gratis dua retrieval membatasi pemeriksaan source kandidat lain; komponen yang belum diperiksa tidak dipasang. Adopsi pola dan hasil pass dicatat di [FRONTEND_REFINEMENT.md](docs/FRONTEND_REFINEMENT.md).
 - Docker tidak tersedia pada mesin pemeriksaan; PostgreSQL lokal nyata digunakan untuk verifikasi. Keyboard/browser diuji; audit screen reader lengkap belum dilakukan.
 - Dokumen seed berbahasa Inggris dipertahankan sebagai fixture retrieval sintetis. Panduan proyek menggunakan Bahasa Indonesia; AGENTS/PRD dan file instruksi Next.js mengikuti bahasa sumbernya.
@@ -317,14 +317,14 @@ Rincian state machine, permission/Guard, retry/fallback, audit, API, demo, dan b
 
 ## Pengalaman pengguna menurut PRD v2
 
-| Role                  | Navigasi yang tersedia sekarang                                                 |
-| --------------------- | ------------------------------------------------------------------------------- |
-| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                         |
-| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals                    |
-| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews                                |
-| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals |
-| Finance               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals                    |
-| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals                                   |
+| Role                  | Navigasi yang tersedia sekarang                                                   |
+| --------------------- | --------------------------------------------------------------------------------- |
+| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                           |
+| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals                      |
+| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews                                  |
+| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals   |
+| Finance               | Home, Ask SuperFlow, Knowledge, Investment Analysis, My Work, Reviews / Approvals |
+| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals                                     |
 
 Modul yang belum tersedia tidak menjadi navigasi utama. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas control/review. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
 
@@ -345,8 +345,6 @@ Detail pekerjaan mengambil konteks lengkap langsung dari Case API, sehingga tida
 
 Creation dan start merupakan dua transaksi API existing. Jika start gagal, request yang sudah tersimpan dipakai kembali untuk retry dalam form; My Work tetap dapat membukanya. Tidak ada transaksi gabungan baru atau perubahan schema. Create Case belum memiliki idempotency backend, sehingga refresh form setelah respons creation hilang tetap memiliki keterbatasan existing.
 
-Klasifikasi internal `investment` bukan implementasi Investment Analysis (Fase 5).
-
 ## Regulation-to-Action — Fase 4
 
 **Regulatory Review** membandingkan versi regulasi saat ini dengan versi sebelumnya, mengidentifikasi perubahan material, memetakan SOP/kontrol yang dapat diakses, dan mengusulkan gap. Compliance mengonfirmasi (boleh mengedit pernyataan) atau menolak setiap gap. Gap terkonfirmasi menjadi remediation dengan owner dan due date di My Work pemilik; approval Manager independen diperlukan sebelum review dapat ditutup. Semua analisis deterministik dan berbasis citation chunk nyata. Rincian arsitektur, aturan, API, dan batasan: [REGULATION_TO_ACTION.md](docs/REGULATION_TO_ACTION.md).
@@ -366,3 +364,24 @@ npm run db:seed      # memasang template regulatory remediation (idempotent)
 6. Kembali ke Compliance → review berstatus **Ready to close** setelah gap lain diputuskan dan semua remediation disetujui → **Close regulatory review**. Activity mencatat seluruh keputusan.
 
 Dari Ask, Compliance yang menanyakan perubahan regulasi (mis. "What changed in the regulation?") mendapat tindakan **Start Regulatory Review**.
+
+## Investment Intelligence — Fase 5
+
+**Investment Analysis** membaca proposal beserta quotation, proyeksi cash flow, dan approval policy yang dapat diakses. SuperFlow mengekstrak asumsi dengan citation dan menampilkan nilai yang bertentangan. Finance wajib memilih nilai sumber mana yang dipakai, disertai alasan. NPV, IRR, ROI, payback, break-even, dan sensitivity dihitung dengan fungsi Python deterministik yang dites, lengkap dengan rumus, unit, dan periode. Draft memo dapat diedit. Submit membekukan hasil dan memo, lalu meminta approval dari authority yang ditentukan oleh threshold di approval policy. Rincian: [INVESTMENT_INTELLIGENCE.md](docs/INVESTMENT_INTELLIGENCE.md).
+
+```bash
+npm run db:migrate   # menambah migrasi 0006
+npm run db:seed      # memasang template investment approval (idempotent)
+```
+
+### Demo Investment Analysis
+
+1. Pilih **Finance — Dina Sari**. Home menampilkan dua proposal yang belum dianalisis. Buka **Investment Analysis**, pilih Workflow Modernization Proposal A. Sumber pendukung (Vendor A Quotation, Synthetic Cash Flow Projection, Investment Approval Authority) sudah tercentang. Klik **Prepare Analysis**.
+2. **Source-backed assumptions**: initial investment **Sources conflict**, karena proposal dan proyeksi menyebut IDR 180.000.000 sedangkan quotation menyebut IDR 195.000.000. Hasil belum dihitung dan Source reliability REVIEW_REQUIRED dengan konflik di Evidence checklist.
+3. Di **Conflicting inputs**, pilih IDR 195.000.000, isi alasan, lalu **Use selected value**. Tanpa alasan, pilihan ditolak.
+4. **Financial analysis**: NPV IDR 11.041.254 @10%, IRR 12,59%, ROI 33,33%, payback 3 tahun, break-even IDR 61.516.807/tahun. Tabel sensitivity menunjukkan NPV negatif bila investasi naik 10%. Buka "How it is calculated" untuk melihat rumus.
+5. Edit memo bila perlu, lalu **Submit for approval**. Route: department manager approval (IDR 195.000.000 ≤ IDR 250.000.000, dengan citation ke approval policy).
+6. Ganti ke **Manager** → Reviews / Approvals → buka request. Hasil dan memo tampil sebelum kontrol keputusan. Approve dengan alasan (wajib karena authority proposal di bawah threshold).
+7. Kembali ke Finance: analisis berstatus **Approved**, dan Activity mencatat pilihan, edit memo, submit, dan keputusan.
+
+Proposal B tidak memiliki konflik, jadi langsung **Ready to submit**. Dari Ask, pertanyaan Finance tentang proposal/asumsi (mis. "What assumptions are in proposal A?") menawarkan **Prepare Analysis**.

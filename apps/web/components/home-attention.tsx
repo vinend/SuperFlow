@@ -11,6 +11,7 @@ import {
 } from "@/lib/product-view";
 import { WorkItemRows } from "./action-lists";
 import { RegulatoryAttention } from "./regulatory-attention";
+import { InvestmentAttention } from "./investment-attention";
 import { ErrorState, LoadingState, SectionHeader } from "./ui/primitives";
 
 export function HomeAttention() {
@@ -71,6 +72,7 @@ export function HomeAttention() {
             </>
           )}
           {user.role_id === "compliance" && <RegulatoryAttention />}
+          {user.role_id === "finance" && <InvestmentAttention />}
           <SectionHeader
             title="My Work"
             detail="Your next actions and requests in progress."

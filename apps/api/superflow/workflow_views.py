@@ -2,7 +2,7 @@
 
 from sqlalchemy import select
 
-from .cases import activity, context, managed_by_domain, summary
+from .cases import activity, context, domain_kind, summary
 from .models import Approval, StepAttempt, Task, WorkflowDefinition, WorkflowRun, WorkflowStep
 from .reliability_contracts import ReliabilityStatus
 from .workflow_contracts import ApprovalStatus as AS
@@ -169,8 +169,11 @@ def case_view(db, user, case):
     editor = user.id in {case.owner_id, case.created_by} or user.role_id == "governance"
     actions = []
     if editor and case.status not in {CS.COMPLETED, CS.CANCELLED}:
-        domain = managed_by_domain(db, case)
-        actions = ["edit", "cancel"] if domain else ["edit", "attach_evidence", "cancel"]
+        domain = domain_kind(db, case)
+        actions = ["edit", "cancel"]
+        # Investment evidence can still be supplied when a reviewer requests information.
+        if domain != "regulatory":
+            actions.insert(1, "attach_evidence")
         if not workflow and not domain and guard.status != ReliabilityStatus.ACCESS_RESTRICTED:
             actions.append("start_workflow")
     return summary(db, case) | {

@@ -48,6 +48,15 @@ export function navigationFor(role: string) {
           },
         ]
       : []),
+    ...(role === "finance"
+      ? [
+          {
+            title: "Investment Analysis",
+            href: "/investment",
+            view: "investment",
+          },
+        ]
+      : []),
     { title: "My Work", href: "/cases", view: "cases" },
     ...(canReview(role)
       ? [{ title: reviewsLabel(role), href: "/decisions", view: "decisions" }]
@@ -91,7 +100,7 @@ export const WORK_TYPES: Record<CaseView["type"], string> = {
   audit: "Policy review",
   regulatory_review: "Regulatory review",
   remediation: "Remediation",
-  investment: "Business review",
+  investment: "Investment analysis",
 };
 export function workTitle(title: string) {
   if (/^Demo A — Annual leave review(?: inspection \d+)?$/.test(title))
@@ -223,6 +232,27 @@ export function workItemsFor(
           needsAttention: own && !terminal,
         };
       }
+      const analysisHref = `/investment?analysis=${encodeURIComponent(item.id)}`;
+      if (item.type === "investment" && !run) {
+        // Analyses are prepared in Investment Analysis until they are submitted.
+        const terminal = ["COMPLETED", "CANCELLED"].includes(item.status);
+        return {
+          id: item.id,
+          href: analysisHref,
+          title: workTitle(item.title),
+          type: WORK_TYPES[item.type],
+          status: businessStatus(item.status),
+          currentStep: terminal ? "Complete" : "Analysis in preparation",
+          nextAction: terminal ? "View outcome" : "Open investment analysis",
+          ownerId: item.owner_id,
+          reviewerId: null,
+          dueAt: null,
+          reliability: businessStatus(item.reliability_status),
+          updatedAt: item.updated_at,
+          progress: [],
+          needsAttention: own && !terminal,
+        };
+      }
       const progress = progressFor(run, review?.requested_role);
       const currentStep =
         progress.find((s) => s.current)?.label ||
@@ -254,7 +284,10 @@ export function workItemsFor(
                   : "View progress";
       return {
         id: item.id,
-        href: `/cases?case=${encodeURIComponent(item.id)}`,
+        href:
+          item.type === "investment" && !review?.allowed_actions.length
+            ? analysisHref
+            : `/cases?case=${encodeURIComponent(item.id)}`,
         title: workTitle(item.title),
         type: WORK_TYPES[item.type],
         status: businessStatus(
@@ -316,6 +349,21 @@ export function askAction(
     };
   }
   if (
+    role === "finance" &&
+    /proposal|investment|assumption|npv|irr|roi|payback|cash.?flow/i.test(
+      answer.question,
+    )
+  ) {
+    const proposal = answer.sources?.find((s) => s.domain === "Finance");
+    return {
+      label: "Prepare Analysis",
+      title: "Investment Analysis",
+      href: proposal
+        ? `/investment?document=${encodeURIComponent(proposal.document_id)}`
+        : "/investment",
+    };
+  }
+  if (
     /expense|reimburse|receipt/i.test(answer.question) &&
     /without|missing|lost|exception/i.test(answer.question)
   )
@@ -369,6 +417,10 @@ const EVENTS: Record<string, string> = {
   remediation_reassigned: "Remediation reassigned",
   remediation_assigned: "Remediation assigned",
   regulatory_review_completed: "Regulatory review closed",
+  investment_analysis_started: "Investment analysis started",
+  assumption_selected: "Source value selected",
+  memo_updated: "Memo edited",
+  investment_submitted: "Submitted for approval",
 };
 export function activityLabel(event: ActivityView) {
   if (event.event_type === "workflow_advanced") {
@@ -384,6 +436,9 @@ export function activityLabel(event: ActivityView) {
       verify_sources: "Source checks completed",
       approve_remediation: "Remediation approval recorded",
       remediation_complete: "Remediation completed",
+      verify_analysis: "Sources and calculation checked",
+      approve_investment: "Investment approval recorded",
+      investment_decided: "Investment approved",
     };
     return labels[String(event.payload?.step_key)] || "Progress updated";
   }

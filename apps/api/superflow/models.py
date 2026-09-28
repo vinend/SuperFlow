@@ -323,6 +323,23 @@ class RegulatoryFinding(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class InvestmentAnalysis(Base):
+    """Domain snapshot of one investment analysis; the Case owns access, audit and revision."""
+
+    __tablename__ = "investment_analyses"
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"), primary_key=True)
+    proposal_document_id: Mapped[str] = mapped_column(ForeignKey("documents.id"))
+    proposal_version_id: Mapped[str] = mapped_column(ForeignKey("document_versions.id"), index=True)
+    supporting: Mapped[list[dict]] = mapped_column(JSON)
+    extractor: Mapped[str] = mapped_column(String(80))
+    assumptions: Mapped[list[dict]] = mapped_column(JSON)
+    selections: Mapped[dict] = mapped_column(JSON, default=dict)
+    memo: Mapped[str | None] = mapped_column(Text)
+    submitted: Mapped[dict | None] = mapped_column(JSON)
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class ActionReceipt(Base):
     __tablename__ = "action_receipts"
     __table_args__ = (UniqueConstraint("case_id", "actor_id", "key"),)

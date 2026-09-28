@@ -92,7 +92,7 @@ def validate_reset_target(url: str, confirmed: bool) -> None:
 
 
 def reset_synthetic(db):
-    """Reset Phase 0–4 synthetic tables atomically; preserve the schema."""
+    """Reset Phase 0–5 synthetic tables atomically; preserve the schema."""
     try:
         demo_reset_mode(db, True)
         for table in reversed(Base.metadata.sorted_tables):
@@ -108,7 +108,7 @@ def reset_synthetic(db):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Seed synthetic Phase 0–4 knowledge data.")
+    parser = argparse.ArgumentParser(description="Seed synthetic Phase 0–5 knowledge data.")
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--confirm-synthetic-data", action="store_true")
     args = parser.parse_args()

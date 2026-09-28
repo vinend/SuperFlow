@@ -82,7 +82,7 @@ def test_five_states_persist_and_survive_refresh(client, db, employee, question,
     assert result["checks"]["calculation_validity"] == {
         "passed": None,
         "applicable": False,
-        "details": "Not applicable: no calculation is performed in Phase 2.",
+        "details": "Not applicable: this context involves no calculation.",
     }
     stored = db.get(GuardEvaluation, result["id"])
     assert stored.run_id == answer["id"] and stored.status == status

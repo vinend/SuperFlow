@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   BookOpen,
+  Calculator,
   Check,
   ChevronRight,
   FolderKanban,
@@ -21,7 +22,12 @@ import { navigationFor, roleLabel, reviewsLabel } from "@/lib/product-view";
 
 export type KnowledgeView = "home" | "ask" | "knowledge";
 export type View =
-  KnowledgeView | "cases" | "workflows" | "decisions" | "regulatory";
+  | KnowledgeView
+  | "cases"
+  | "workflows"
+  | "decisions"
+  | "regulatory"
+  | "investment";
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
@@ -30,6 +36,7 @@ export const TITLES = {
   workflows: "My Work",
   decisions: "Reviews / Approvals",
   regulatory: "Regulatory Review",
+  investment: "Investment Analysis",
 };
 const ICONS = {
   home: Home,
@@ -38,6 +45,7 @@ const ICONS = {
   cases: FolderKanban,
   decisions: Check,
   regulatory: Scale,
+  investment: Calculator,
 };
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.

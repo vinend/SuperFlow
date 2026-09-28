@@ -52,7 +52,7 @@ test("VERIFIED current policy has exact evidence, checks and persisted reliabili
     "Every answer extract exactly matches",
   );
   await expect(guard.locator(".guard-checks")).toContainText(
-    "Not applicable: no calculation",
+    "Not applicable: this context involves no calculation",
   );
   await page.reload();
   await expect(guard.locator(".reliability-status")).toHaveText("VERIFIED");

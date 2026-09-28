@@ -4,9 +4,33 @@
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** Fase 4 — Regulation-to-Action (Regulatory Review) di atas fondasi Fase 0–3 dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran.
+**Ruang lingkup:** Fase 5 — Investment Intelligence (Investment Analysis) dan Fase 4 — Regulation-to-Action (Regulatory Review), di atas fondasi Fase 0–3 dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran.
 
-**Status:** Fase 4 selesai untuk scope prototype; seluruh quality gate (backend PostgreSQL/SQLite, frontend unit, E2E, build) lulus. Fase 5 belum dimulai.
+**Status:** Fase 5 selesai untuk scope prototype; seluruh quality gate (backend PostgreSQL/SQLite, frontend unit, E2E, build) lulus. Fase 6 belum dimulai.
+
+# Fase 5 — Investment Intelligence
+
+## Selesai
+
+- **Investment Analysis** untuk Finance. Alurnya: pilih proposal dengan sumber pendukung yang dapat diakses (default dari relasi dokumen), lalu asumsi diekstrak dengan citation chunk nyata dan kalimat sumbernya.
+- Konflik seed ditampilkan: initial investment IDR 180.000.000 (Proposal A, proyeksi) vs IDR 195.000.000 (Vendor A Quotation). Kalkulasi ditahan sampai Finance memilih nilai sumber dengan alasan wajib. SuperFlow tidak pernah memilih nilai sendiri, dan angka bebas tidak diterima.
+- Kalkulasi deterministik (`finance_calc.py`): NPV, IRR, ROI, payback, break-even inflow, dan sensitivity satu-variabel ±10/20%. Setiap hasil menampilkan rumus, unit, dan periode. Nilai referensi: NPV A @10% dengan quotation = IDR 11.041.254, IRR 12,59%, payback 3 tahun.
+- Guard `calculation_validity` menjadi pemeriksaan nyata untuk analisis. Input missing → BLOCKED (misalnya tanpa approval policy), conflict → REVIEW_REQUIRED, dengan citation di Evidence checklist. Proposal ber-authority 2 membuat approval wajib beralasan.
+- Draft memo deterministik yang dapat diedit. Submit membekukan hasil, memo, route, dan input. Routing approval mengikuti threshold di sumber approval policy: ≤ limit ke Manager, di atasnya ke komite (Governance). Finance tidak dapat self-approve. Request More Information mengembalikan analisis ke Finance.
+- Frontend: navigasi Finance, `/investment`, `FinancialAnalysis` (registry _available_), `AssumptionTable`/`InputDecision` (evidence sebelum kontrol), memo editor, Home Finance, konteks analisis di layar review approver, My Work, dan Ask (**Prepare Analysis**). Kontrak TS di-generate dari Pydantic.
+- Migrasi `0006` (satu tabel). Seed memasang template approval, dan reset mencakup data Fase 5. Endpoint generic start workflow menolak Case analisis. Database demo lokal sudah dimigrasi ke 0006 dan di-seed.
+
+## Perubahan kecil pada kode Fase 0–4
+
+- `GuardInput.calculation` opsional, `evaluate_run(..., calculation)`, dan registry `cases.CALCULATION_INPUTS`. Konteks tanpa kalkulasi tidak berubah perilakunya. Teks check diganti dari "…performed in Phase 2" menjadi "Not applicable: this context involves no calculation." (label fase tidak boleh tampil ke user). Test Guard/E2E disesuaikan.
+- Routing tipe Case (manager→finance/compliance/sme) kini hanya berlaku untuk definisi generic review. Definisi domain menyebut role-nya sendiri. Perilaku generic review tidak berubah.
+- `managed_by_domain` menjadi `domain_kind`: start workflow generic ditolak untuk review regulatory dan analisis investment, sedangkan attach evidence hanya ditolak untuk regulatory.
+
+## Batasan Fase 5
+
+- Ekstraksi berbasis pola kalimat seed; belum ada OCR, spreadsheet, atau pemahaman semantik. Model cash flow memakai inflow tetap tanpa pajak, inflasi, nilai sisa, atau pembiayaan. Semua angka sintetis dan ilustratif.
+- Memo yang sudah diedit tidak ikut diperbarui saat input berubah (ditandai "edited"). Komite investasi disimulasikan oleh Governance.
+- Setelah submit, analisis dibekukan. Informasi tambahan diberikan lewat evidence existing, tanpa resubmit kalkulasi.
 
 # Fase 4 — Regulation-to-Action
 
@@ -61,9 +85,8 @@
 
 # Belum Diimplementasikan
 
-- Investment Intelligence/rumus keuangan, analytics/QCD, AML/FIU dan full Governance.
-- FinancialAnalysis, autentikasi produksi, notifikasi/integrasi eksternal dan visual workflow builder.
-- Investment Analysis tidak ditampilkan sebagai fitur aktif.
+- Analytics/QCD (Fase 6), AML/FIU (Fase 7), demo polish (Fase 8), dan full Governance.
+- Autentikasi produksi, notifikasi/integrasi eksternal, dan visual workflow builder.
 
 # Masalah yang Diketahui
 
@@ -100,25 +123,25 @@
 
 # Hasil Pengujian
 
-Hasil aktual pass Fase 4 pada macOS arm64 (PostgreSQL embedded 18.4 lokal):
+Hasil aktual pass Fase 5 pada macOS arm64 (PostgreSQL embedded 18.4 lokal):
 
-| Pemeriksaan             | Hasil aktual                                                                                                                                     |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Baseline sebelum Fase 4 | 84 backend dan 19 frontend unit lulus pada environment baru                                                                                      |
-| Backend PostgreSQL      | **102 lulus** (84 regresi + 18 Fase 4: alur penuh, non-leakage, validasi owner/due date/authority, idempotency, stale, reset, analyzer)          |
-| Backend SQLite          | **102 lulus**, termasuk lifecycle migrasi 0005                                                                                                   |
-| Frontend unit           | **26 lulus** (19 lama + navigasi Compliance, work item review/remediation, Ask action, adapter regulatory)                                       |
-| E2E Chromium            | **30 lulus**: 28 regresi Fase 0–3/product experience + journey Regulation-to-Action + role gating                                                |
-| Formatter/lint/types    | Ruff format/check, Prettier, ESLint, TypeScript, `alembic check`, dan ketiga generated-contract checks lulus                                     |
-| Production build        | Lulus, termasuk route `/regulatory`                                                                                                              |
-| Inspeksi visual         | Desktop 1440 px dan mobile 390 px pada database test: nol horizontal overflow, nol page error; layout perbandingan diperbaiki menjadi full-width |
-| Smoke database demo     | API port 8000 pada database `superflow` (migrasi 0005 + seed) melaporkan scope `phase-0-4` dan sumber regulasi                                   |
+| Pemeriksaan          | Hasil aktual                                                                                                                                                                                   |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend PostgreSQL   | **117 lulus** (102 regresi Fase 0–4 + 15 Fase 5: rumus vs hitungan manual, ekstraksi, konflik, non-leakage, routing manager/komite, freeze, self-approval, idempotency, request information)   |
+| Backend SQLite       | **117 lulus**, termasuk lifecycle migrasi 0006                                                                                                                                                 |
+| Frontend unit        | **30 lulus** (26 lama + navigasi/work item/Ask Finance, adapter investment)                                                                                                                    |
+| E2E Chromium         | **32 lulus**: 30 regresi + journey Investment Analysis (konflik → pilihan → hasil → memo → submit → approval Manager) + role gating                                                            |
+| Formatter/lint/types | Ruff format/check, Prettier, ESLint, TypeScript, `alembic check`, dan keempat generated-contract checks lulus                                                                                  |
+| Production build     | Lulus, termasuk route `/investment` dan `/regulatory`                                                                                                                                          |
+| Inspeksi visual      | Desktop 1440 px dan mobile 390 px pada database test: nol horizontal overflow, nol page error. Tabel asumsi dibuat full-width; duplikasi sumber di memo dan teks route saat konflik diperbaiki |
+| Smoke database demo  | API port 8000 pada database `superflow` (migrasi 0006 + seed) melaporkan scope `phase-0-5` dan dua proposal                                                                                    |
 
-Docker tetap tidak tersedia di mesin ini; Compose belum dieksekusi. Screenshot inspeksi di `.runtime/screenshots/phase4` (diabaikan Git).
+Hasil Fase 4 (sebelumnya): 102 backend, 26 frontend unit, 30 E2E lulus. Docker tetap tidak tersedia di mesin ini; Compose belum dieksekusi. Screenshot inspeksi ada di `.runtime/screenshots/phase4` dan `phase5` (diabaikan Git).
 
 # Langkah Berikutnya yang Direkomendasikan
 
-1. Tinjau bahasa gap, ambang cakupan obligation, dan pilihan approver remediation bersama process owner Compliance.
-2. Pertimbangkan field tipe dokumen (regulation/SOP/control) dan dukungan perbandingan versi draft sebelum berlaku.
-3. Verifikasi Docker Compose dan audit screen reader di lingkungan yang mendukung.
-4. Mulai Fase 5 — Investment Intelligence hanya setelah instruksi eksplisit.
+1. Tinjau bahasa memo, pilihan approver/komite, dan ambang sensitivity bersama process owner Finance.
+2. Pertimbangkan cash flow per tahun yang bervariasi, pajak/nilai sisa, serta field tipe dokumen (proposal/quotation/policy).
+3. Tinjau bahasa gap dan pilihan approver remediation Fase 4 bersama Compliance.
+4. Verifikasi Docker Compose dan audit screen reader di lingkungan yang mendukung.
+5. Mulai Fase 6 — Analytics hanya setelah instruksi eksplisit.

@@ -23,6 +23,23 @@ from .schemas import AskInput
 
 
 @dataclass(frozen=True)
+class CalculationItem:
+    """A required calculation input, resolved by a domain service from stored sources."""
+
+    key: str
+    label: str
+    status: str  # available | missing | conflicting
+    chunk_ids: tuple[str, ...]
+    details: str
+
+
+@dataclass(frozen=True)
+class CalculationInput:
+    items: tuple[CalculationItem, ...]
+    details: str
+
+
+@dataclass(frozen=True)
 class GuardInput:
     user: User
     query: AskInput
@@ -31,6 +48,7 @@ class GuardInput:
     restricted_match: bool = False
     action: str | None = None
     evidence: tuple[EvidenceItem, ...] = ()
+    calculation: CalculationInput | None = None
 
 
 class ConflictDetector(Protocol):
@@ -281,6 +299,22 @@ class SuperFlowGuard:
                     }
                 )
             )
+        # Calculation inputs reuse the evidence contract; references must be in this context.
+        calculation = value.calculation
+        for item in calculation.items if calculation else ():
+            evidence.append(
+                EvidenceItem(
+                    key="calculation:" + item.key,
+                    label=item.label,
+                    required=True,
+                    status=item.status,
+                    source_refs=[reference(s) for s in sources if s["chunk_id"] in item.chunk_ids],
+                    details=item.details,
+                )
+            )
+        conflicts = conflicts + [
+            e for e in evidence if e.key.startswith("calculation:") and e.status == "conflicting"
+        ]
         complete = not any(item.required and item.status == "missing" for item in evidence)
         missing = [item.label for item in evidence if item.required and item.status == "missing"]
         check(
@@ -298,12 +332,16 @@ class SuperFlowGuard:
             else "No conflict found by the configured access-review claim rule; "
             "semantic detection is not performed.",
         )
-        check(
-            "calculation_validity",
-            None,
-            "Not applicable: no calculation is performed in Phase 2.",
-            False,
-        )
+        if calculation:
+            ready = all(item.status == "available" for item in calculation.items)
+            check("calculation_validity", ready, calculation.details)
+        else:
+            check(
+                "calculation_validity",
+                None,
+                "Not applicable: this context involves no calculation.",
+                False,
+            )
         review = bool(conflicts) or (bool(sources) and not authority)
         check(
             "human_review_requirement",

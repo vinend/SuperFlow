@@ -4,7 +4,7 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Pekerjaan terbaru adalah **Fase 4 — Regulation-to-Action** (Regulatory Review) di atas fondasi tersebut.
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Di atas fondasi tersebut telah dibangun **Fase 4 — Regulation-to-Action** (Regulatory Review) dan, terbaru, **Fase 5 — Investment Intelligence** (Investment Analysis).
 
 ## Rekonsiliasi Product Experience
 
@@ -27,7 +27,7 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 | 2 — Reliability Core        | Pemeriksaan reliability yang persisten     | SuperFlow Guard, citation coverage, evidence/conflict, audit                                       | Knowledge Core, kontrak reliability  | Selesai untuk scope prototype; seluruh quality gate dan lima demo status lulus     |
 | 3 — Workflow Core           | Aksi dan keputusan manusia                 | Cases, state machine, tasks, retry/escalation, Decision Center, approval                           | Guard dan audit                      | Selesai untuk scope prototype; quality gate final lulus                            |
 | 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
-| 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Belum dimulai; hanya proposal/quotation/cash-flow seed tersedia                    |
+| 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization                                              | Data eksekusi dan definisi metrik    | Belum dimulai                                                                      |
 | 7 — AML/FIU Extension       | Contoh workflow opsional                   | Mock evidence, exception, human escalation                                                         | Fondasi bersama                      | Di luar ruang lingkup awal                                                         |
 | 8 — Polish                  | Stabilitas demo seluruh platform           | Journey lengkap, reset lintas modul, presentasi                                                    | Modul yang diotorisasi telah selesai | Ditunda; reset lokal dan aksesibilitas Fase 0/1 tersedia sebagai kebutuhan fondasi |
@@ -88,7 +88,7 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-Investasi/rumus keuangan (Fase 5), analytics (Fase 6), AML/FIU, autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan.
+Analytics (Fase 6), AML/FIU (Fase 7), demo polish (Fase 8), autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan.
 
 ## Deliverable Fase 3
 
@@ -114,3 +114,16 @@ Dependency: seluruh Fase 0–2, PostgreSQL/Alembic, mock identities, Guard extra
 7. Tests backend (alur penuh, non-leakage, validasi, konkurensi, reset, analyzer), frontend unit, E2E journey + role gating, regresi Fase 0–3, build produksi, inspeksi visual desktop/mobile.
 
 Dependency: Fase 1–3, seed regulasi v1/v2 dan SOP terkait. Arsitektur dan batasan: [REGULATION_TO_ACTION.md](docs/REGULATION_TO_ACTION.md).
+
+## Deliverable Fase 5 — Investment Intelligence
+
+1. Baca PRD v2 §14/§34, AGENTS §32 (Financial Logic), dan status. Audit seed finance: Proposal A 180 juta vs Vendor A 195 juta (konflik), proyeksi cash flow, dan threshold approval 250 juta.
+2. Analisis = Case `investment` + tabel `investment_analyses` (PK = case_id; assumptions, selections, memo, snapshot submit) lewat migrasi `0006`. Tidak ada perubahan model Fase 0–4.
+3. Ekstraksi deterministik di balik Protocol `AssumptionExtractor` (proposal, quotation, proyeksi, approval policy). Setiap nilai disimpan bersama chunk dan kalimat sumbernya. Resolusi input: consistent/conflict/resolved/missing, tanpa pemilihan otomatis.
+4. `finance_calc.py`: NPV, IRR (bisection), ROI, payback, break-even inflow, dan sensitivity ±10/20%. Dites terhadap perhitungan manual. Rumus, unit, dan periode diekspos.
+5. Guard: `calculation_validity` nyata lewat `GuardInput.calculation` dan registry `CALCULATION_INPUTS`. Missing → BLOCKED, conflict → REVIEW_REQUIRED.
+6. Pilihan nilai (alasan wajib), memo deterministik yang dapat diedit, dan submit yang membekukan snapshot. Routing approval dari threshold approval policy: Manager, atau komite (Governance). Workflow memakai engine existing. Semua mutasi memakai revision, idempotency, dan audit.
+7. Frontend: navigasi Finance "Investment Analysis", `/investment`, `FinancialAnalysis` (registry available), `AssumptionTable`/`InputDecision` (evidence sebelum pilihan), memo, Home Finance, konteks analisis di layar review approver, aksi Ask **Prepare Analysis**, dan kontrak TS yang di-generate.
+8. Test backend (rumus, ekstraksi, konflik, non-leakage, routing, freeze, self-approval, idempotency, request information), frontend unit, E2E journey + role gating, regresi, build, dan inspeksi visual.
+
+Dependency: Fase 1–3 serta dokumen seed proposal/quotation/cash flow/approval policy. Arsitektur dan batasan: [INVESTMENT_INTELLIGENCE.md](docs/INVESTMENT_INTELLIGENCE.md).

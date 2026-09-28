@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Answer, Source } from "./api";
 import type { ChangeView } from "./regulatory-contracts";
+import type { CalculationView } from "./investment-contracts";
 import type { GuardResult } from "./reliability-contracts";
 import type {
   ApprovalView,
@@ -42,6 +43,9 @@ export type ComparisonTableProps = {
   currentLabel: string;
   onSource: (source: Source) => void;
 };
+export type FinancialAnalysisProps = {
+  calculation: CalculationView;
+};
 export type SourcePanelProps = {
   source: Source;
   close: () => void;
@@ -55,7 +59,7 @@ export const WORKSPACE_COMPONENTS = {
   SourcePanel: "available",
   ComparisonTable: "available",
   EvidenceChecklist: "available",
-  FinancialAnalysis: "deferred",
+  FinancialAnalysis: "available",
   ApprovalPanel: "available",
   WorkflowTimeline: "available",
 } as const;
@@ -67,6 +71,7 @@ export type WorkspaceComponent =
   | { type: "ApprovalPanel"; data: ApprovalView }
   | { type: "WorkflowTimeline"; data: WorkflowView }
   | { type: "ComparisonTable"; data: ChangeView[] }
+  | { type: "FinancialAnalysis"; data: CalculationView }
   | {
       type: Exclude<
         keyof typeof WORKSPACE_COMPONENTS,
@@ -76,6 +81,7 @@ export type WorkspaceComponent =
         | "ApprovalPanel"
         | "WorkflowTimeline"
         | "ComparisonTable"
+        | "FinancialAnalysis"
       >;
       availability: "deferred";
       data?: never;

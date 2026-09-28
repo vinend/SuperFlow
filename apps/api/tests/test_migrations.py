@@ -22,6 +22,7 @@ def test_migration_upgrade_downgrade_and_schema_match(tmp_path):
         "audit_events",
         "regulatory_reviews",
         "regulatory_findings",
+        "investment_analyses",
     } <= set(inspect(engine).get_table_names())
     command.check(config)
     command.downgrade(config, "base")
