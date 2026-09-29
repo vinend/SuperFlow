@@ -11,6 +11,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from .analytics_api import router as analytics_router
 from .audit import record
 from .auth import can_read, current_user, require_manage
 from .config import settings
@@ -26,7 +27,7 @@ from .knowledge import (
 )
 from .models import AuditEvent, Case, Document, DocumentVersion, QuestionRun, User
 from .parsing import MAX_BYTES, ParseError, parse_file
-from .providers import AnswerProvider, ExtractiveDemoProvider
+from .providers import AnswerProvider, ProviderUnavailable, configured_answer_provider
 from .regulatory_api import router as regulatory_router
 from .reliability import digest, evaluate_run, presented_answer
 from .reliability_contracts import GuardResult, ReliabilityStatus
@@ -36,12 +37,13 @@ from .workflow_api import router as workflow_router
 
 app = FastAPI(
     title="SuperFlow Knowledge API",
-    version="0.5.0",
-    description="Phase 0–5 prototype. X-User-Id is mock authentication only.",
+    version="0.6.0",
+    description="Phase 0–6 prototype. X-User-Id is mock authentication only.",
 )
 app.include_router(workflow_router)
 app.include_router(regulatory_router)
 app.include_router(investment_router)
+app.include_router(analytics_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -51,7 +53,7 @@ app.add_middleware(
 Db = Annotated[Session, Depends(get_db)]
 Actor = Annotated[User, Depends(current_user)]
 retriever: Retriever = KeywordConceptRetriever()
-provider: AnswerProvider = ExtractiveDemoProvider()
+provider: AnswerProvider = configured_answer_provider(settings)
 
 
 @app.exception_handler(ParseError)
@@ -81,7 +83,9 @@ def health(db: Db):
         "status": "ok",
         "database": db.bind.dialect.name,
         "seeded_users": users,
-        "scope": "phase-0-5",
+        "scope": "phase-0-6",
+        "inference_provider": provider.name,
+        "inference_model": settings.ollama_model if settings.llm_provider == "ollama" else None,
     }
 
 
@@ -277,8 +281,13 @@ def run_payload(db: Session, user: User, run: QuestionRun) -> dict:
         "filters": run.filters,
         "provider": run.provider,
         "created_at": run.created_at,
-        "notice": "Deterministic extractive checks; "
-        "no semantic confidence score or autonomous action.",
+        "notice": (
+            "Local AI synthesis from permission-filtered sources; human review remains "
+            "required and no autonomous action is allowed."
+            if run.provider.startswith("ollama-")
+            else "Deterministic extractive checks; "
+            "no semantic confidence score or autonomous action."
+        ),
         "reliability": reliability.model_dump(mode="json"),
     }
     return result
@@ -324,7 +333,14 @@ def ask(query: AskInput, db: Db, user: Actor):
         ],
         retrieved_count=len(sources),
     )
-    run.answer = provider.answer(query.question, sources)
+    try:
+        run.answer = provider.answer(query.question, sources)
+    except ProviderUnavailable as error:
+        raise HTTPException(
+            503,
+            "Local AI is unavailable or returned an unsafe response. "
+            "Check the Ollama container and model, then retry.",
+        ) from error
     record(
         db,
         user,

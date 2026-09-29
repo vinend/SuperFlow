@@ -87,7 +87,7 @@ Buka Evidence checklist dan Guard checks. Klik evidence/citation untuk source/ve
 
 ## Keterbatasan
 
-- Provider masih extractive; coverage tidak membuktikan bahwa sumber benar atau menjawab seluruh maksud pertanyaan.
+- Provider default masih extractive. Provider Ollama opsional menerima hanya excerpt authorized dan menghasilkan structured paragraphs dengan citation ID. Coverage memastikan setiap paragraf menunjuk citation permitted, tetapi belum membuktikan semantic entailment; seluruh sintesis AI selalu REVIEW_REQUIRED.
 - Requirement/claim rules eksplisit hanya mencakup skenario di atas. Tidak ada pemeriksaan semantic contradiction atau ambiguity menyeluruh; detail check menyatakan cakupannya.
 - ACCESS_RESTRICTED bergantung pada relevansi judul metadata; query samar mungkin menghasilkan BLOCKED. Guidance tidak membocorkan identitas sumber.
 - Retrieval tetap keyword/concept dan top-four, sehingga evidence di luar filter/ranking dapat menjadi missing. Sistem tidak mengklaim pencarian evidence menyeluruh.

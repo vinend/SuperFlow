@@ -361,6 +361,37 @@ def test_unsupported_provider_output_fails_closed(client, monkeypatch):
     assert "99 days" not in result["answer"]
 
 
+def test_local_ai_citations_are_validated_but_synthesis_requires_review(db):
+    value = guard_input(db)
+    result = SuperFlowGuard().evaluate(
+        db,
+        GuardInput(
+            user=value.user,
+            query=value.query,
+            sources=value.sources,
+            answer="Employees receive 15 days of annual leave. [1]",
+            provider="ollama-grounded-v1",
+        ),
+    )
+    assert result.status == ReliabilityStatus.REVIEW_REQUIRED
+    assert result.checks["citation_coverage"].passed is True
+    assert result.checks["human_review_requirement"].passed is False
+    assert result.policy_version == "guard-local-ai-grounding-v1"
+
+    invalid = SuperFlowGuard().evaluate(
+        db,
+        GuardInput(
+            user=value.user,
+            query=value.query,
+            sources=value.sources,
+            answer="Employees receive 99 days without a citation.",
+            provider="ollama-grounded-v1",
+        ),
+    )
+    assert invalid.status == ReliabilityStatus.BLOCKED
+    assert invalid.checks["citation_coverage"].passed is False
+
+
 def test_guard_does_not_read_or_emit_denied_source_content(db):
     value = guard_input(db)
     db.get(Document, "leave-policy").access_roles = ["governance"]

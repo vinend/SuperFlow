@@ -1,12 +1,50 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 27 September 2026
+**Diperbarui:** 28 September 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** Fase 5 — Investment Intelligence (Investment Analysis) dan Fase 4 — Regulation-to-Action (Regulatory Review), di atas fondasi Fase 0–3 dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran.
+**Ruang lingkup:** Fase 6 — Impact Analytics, di atas Fase 4 — Regulation-to-Action, Fase 5 — Investment Intelligence, fondasi Fase 0–3, dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran.
 
-**Status:** Fase 5 selesai untuk scope prototype; seluruh quality gate (backend PostgreSQL/SQLite, frontend unit, E2E, build) lulus. Fase 6 belum dimulai.
+**Status:** Fase 6 selesai untuk scope prototype. Backend/unit/E2E PostgreSQL, lint, typecheck, generated contract, dan production build lulus. Pemeriksaan Prettier terarah untuk seluruh file Fase 6 lulus; pemeriksaan repository penuh masih melaporkan drift format/line-ending lama di 81 file yang tidak diubah agar pass ini tidak memformat massal pekerjaan sebelumnya.
+
+# Inference AI Lokal — Ollama Docker
+
+## Selesai
+
+- Profile Compose `ai` menjalankan Ollama `0.34.1` dengan volume model persisten, API yang hanya bind ke loopback host, healthcheck, dan reservasi satu GPU NVIDIA. Profile `model` menarik model default `qwen3.5:9b` tanpa memasukkan model ke repository.
+- `AnswerProvider` tetap vendor-neutral: default deterministik masih dapat dipakai tanpa model; `LLM_PROVIDER=ollama` mengaktifkan sintesis Ask nyata. Runtime menerima hanya excerpt yang sudah lolos permission dan retrieval backend.
+- Output memakai schema Pydantic terkontrol, thinking dinonaktifkan, output dibatasi 512 token, dan citation ID divalidasi terhadap context authorized. Output invalid/unavailable gagal aman dengan 503 dan tidak menyimpan jawaban setengah jadi. Tanpa evidence, model tidak dipanggil.
+- Guard memberi policy `guard-local-ai-grounding-v1`: citation coverage tetap diperiksa, tetapi seluruh sintesis AI diberi `REVIEW_REQUIRED` karena semantic entailment belum dibuktikan otomatis.
+- Verifikasi aktual Windows/Docker Desktop: container healthy di `127.0.0.1:11435`, CUDA mendeteksi RTX 4070 Laptop GPU, dan `ollama ps` melaporkan model berjalan 100% GPU pada direct smoke 4096 context. Port `11434` milik runtime WSL yang sudah ada tidak diubah.
+- Smoke end-to-end `POST /api/ask` menghasilkan jawaban baru dari `ollama-grounded-v1` dalam 7,55 detik dengan tiga chunk Annual Leave Policy nyata, status `REVIEW_REQUIRED`, serta citation/source dapat dibuka di AnswerCard. Request ke sumber yang tidak dapat diakses menghasilkan nol source dan tidak menambah panggilan Ollama.
+- Browser verification pada aplikasi berjalan membuktikan Home/Ask termuat tanpa error overlay, AnswerCard AI tampil, lima citation action ter-render, dan tiga Evidence source tersedia.
+
+## Batasan
+
+- Inference nyata saat ini hanya untuk sintesis Ask. Retrieval, ImpactComposer, Regulatory Review, dan Investment Analysis tetap deterministik.
+- Cold start model pertama lebih lambat. Qwen `9b` dengan context 8192 memakai sebagian CPU/GPU pada perangkat 8 GB VRAM; batas output mencegah generasi panjang yang tidak terukur.
+- Konfigurasi aktif workstation memakai port `11435` untuk menghindari konflik dengan Ollama WSL di `11434`; default repository tetap `11434` dan dapat dioverride lewat environment.
+
+# Fase 6 — Impact Analytics
+
+## Selesai
+
+- Pengalaman **Impact** untuk Manager, SME, Compliance, Finance, dan Governance. Employee tidak melihat menu dan mendapat 403 dari API. Governance melihat agregat data sintetis platform; role lain hanya melihat QuestionRun miliknya dan Case yang lolos pemeriksaan akses backend.
+- Quality observed: citation coverage, verified rate, konflik terdeteksi, information requested/rework, dan historical-source result. Nilai berasal dari GuardEvaluation/AuditEvent persisted; QuestionRun internal untuk konteks Case tidak dihitung sebagai pertanyaan pengguna.
+- Delivery observed: answer time dari audit `question_submitted` → `result_returned`, work cycle time, active backlog, completed throughput, completion rate, approval review time, dan escalation. Metrik tanpa observasi tampil **Not yet measured**, bukan nol rekaan.
+- Cost / Capacity memisahkan volume observed dari simulasi. Asumsi prototype ditampilkan: lookup 15 → 3 menit, controlled work 90 → 45 menit, loaded capacity cost IDR 150.000/jam. Hours released, capacity value/item, dan cost avoidance selalu bertanda **Illustrative simulation** dan tidak disebut realized profit.
+- Controlled generative UI: `ImpactComposer` mengklasifikasikan intent overview/quality/capacity/delivery dan hanya dapat mengomposisikan `ImpactBrief`, `MetricGroup`, `DistributionChart`, `CapacitySimulation`, serta `NextActions`. Provider deterministik tidak memerlukan kredensial AI. Tidak ada HTML, JavaScript, permission, rumus, atau angka yang dihasilkan model.
+- Pydantic menjadi kontrak utama dan menghasilkan TypeScript melalui `scripts/generate-analytics.py`. Frontend memvalidasi payload, action href, kind metrik, dan disclosure simulasi; unknown component gagal secara aman.
+- API: `GET /api/impact` untuk overview sesuai scope role dan `POST /api/impact` untuk komposisi berdasarkan pertanyaan. Tidak ada migrasi baru karena analytics membaca state operasional Fase 0–5.
+- Frontend: route `/impact`, navigasi role-aware, composer tanpa chat bubble, visual QCD, distribution, asumsi capacity, next action, loading/error/empty state, dan responsive layout.
+
+## Batasan Fase 6
+
+- Belum ada filter periode, baseline organisasi yang dapat dikonfigurasi, business calendar, snapshot warehouse, trend historis, drill-down BI, export, atau alert.
+- Simulasi capacity memakai asumsi prototype statis dan transparan. Process owner perlu memvalidasi baseline sebelum penggunaan selain demo.
+- Composer masih deterministik. Integrasi LLM structured-output dapat ditambahkan di balik Protocol existing, tetapi tetap harus tunduk pada registry dan validasi yang sama.
+- Audit visualization mengelompokkan event yang diizinkan ke bahasa pengguna; ini belum merupakan observability/BI platform penuh.
 
 # Fase 5 — Investment Intelligence
 
@@ -63,7 +101,7 @@
 - Fondasi Next.js/FastAPI/PostgreSQL, migrasi Alembic, seed/reset, enam identitas demo, upload/parsing, metadata, versi immutable, publikasi, re-index dan download tetap tersedia.
 - Ask, retrieval authorized, citation document/version/chunk nyata, SourcePanel, saved questions, lima status SuperFlow Guard, EvidenceItem dan AuditEvent dipertahankan.
 - Case, WorkflowDefinition/Run/Step, Task, Approval, retry/fallback/escalation, authority, row locks, expected_revision dan idempotency receipts tetap menggunakan implementasi Fase 3. Tidak ada migrasi atau engine baru dalam pass ini.
-- Navigasi berbasis role: Employee mendapat Home/Ask SuperFlow/Knowledge/My Work; Manager, Compliance dan Finance mendapat tambahan Reviews / Approvals; SME mendapat Reviews; Governance Admin mendapat Home/Knowledge/My Work/Reviews / Approvals.
+- Navigasi berbasis role: Employee mendapat Home/Ask SuperFlow/Knowledge/My Work; Manager, SME, Compliance, Finance, dan Governance mendapat Impact sesuai scope datanya, di samping Reviews / Approvals dan pengalaman domain yang relevan.
 - My Work menggabungkan Case, workflow, task, requirement dan review dari API existing menjadi judul bisnis, status, langkah saat ini, tindakan berikutnya, progress, owner/reviewer, due date dan waktu pembaruan.
 - Workflow tampil sebagai Progress di dalam pekerjaan. Node types, definition/version dan revision tidak menjadi bahasa utama layar produk. Histori pemeriksaan, retry dan escalation tetap dapat diinspeksi.
 - Detail pekerjaan mengambil CaseView dan template yang diperlukan secara langsung; tidak menunggu seluruh daftar Case/workflow/approval. Tes refresh membuktikan detail tetap tersedia ketika API daftar tidak dapat diakses.
@@ -85,7 +123,7 @@
 
 # Belum Diimplementasikan
 
-- Analytics/QCD (Fase 6), AML/FIU (Fase 7), demo polish (Fase 8), dan full Governance.
+- AML/FIU (Fase 7), demo polish (Fase 8), dan full Governance.
 - Autentikasi produksi, notifikasi/integrasi eksternal, dan visual workflow builder.
 
 # Masalah yang Diketahui
@@ -97,16 +135,17 @@
 - Data operasional/test lama tidak dihapus. Adapter menerjemahkan judul demo lama yang dikenal; judul pengguna tetap dipertahankan.
 - Higher-authority escalation tidak tersedia setelah Governance atau bila reviewer independen authorized tidak tersedia; API mengembalikan konflik yang jelas.
 - Reset mengganti ID sumber dan menghapus execution/audit sintetis; URL lama dapat tidak tersedia.
-- Docker tidak tersedia di lingkungan ini; eksekusi Compose belum diverifikasi. PostgreSQL lokal nyata digunakan untuk aplikasi dan pengujian.
+- PostgreSQL proses aplikasi memakai runner lokal nyata pada port 55432. Profile Docker Ollama sudah diverifikasi terpisah dan tidak mengubah database tersebut.
 - MCP 21st.dev membatasi retrieval source harian. Komponen yang source/dependencies-nya tidak dapat diinspeksi tidak dipasang.
 - Sandbox Windows menghalangi beberapa proses worker/temp; pemeriksaan yang memerlukan subprocess dijalankan dengan izin yang sesuai. Warning HTTPX/Starlette dan NO_COLOR/FORCE_COLOR tidak menggagalkan tes.
+- `npm run format:check` repository penuh melaporkan 81 file lama dengan drift Prettier/line-ending Windows. Semua file yang diubah/ditambah pada Fase 6 lulus pemeriksaan Prettier terarah; file lama tidak diformat massal untuk menghindari diff yang tidak terkait.
 
 # Rekonsiliasi Product Experience
 
 - Mental model produk: Knowledge → Evidence → Decision → Action. Pengguna membuka My Work dan Reviews, bukan memilih entitas Case/WorkflowRun/Approval.
 - Adapter bertipe `product-view.ts` membentuk WorkItemView, WorkProgressView dan ReviewItemView dari state API. Adapter tidak menyimpan state bisnis atau membuat permission/reliability engine kedua.
 - Case tetap workspace domain-neutral. Guard, evidence, source authorization, workflow transitions, retry limit, fallback dan human authority tidak diganti.
-- Backend dalam pass ini hanya mengalami perubahan copy seed demo dan pengenalan alias judul lama. Models, migrations, API, permission, concurrency dan audit service dipertahankan.
+- Backend Fase 6 menambah service/route analytics baca-saja dan kontrak komponen, tanpa mengubah models, migrations, permission execution, concurrency, atau audit service existing.
 - Request dari Ask menggunakan referensi run/sumber authorized. Informasi terbatas tidak disalin. Reliability tetap terlihat dan dievaluasi backend sebelum progression/decision.
 - Human approval tetap independen; reason wajib pada override, keputusan REVIEW_REQUIRED dan permintaan informasi. Override tidak melewati BLOCKED/OUTDATED/ACCESS_RESTRICTED.
 - Activity menampilkan histori nyata; histori audit, upaya gagal, permintaan informasi lama dan keputusan tidak dihapus untuk menyederhanakan layar.
@@ -117,31 +156,30 @@
 - Komponen yang dipakai ulang: Origin UI DataTable existing, AskComposer, AnswerCard, SourcePanel, EvidenceChecklist, Dialog, primitive header/status/loading/error dan typed ApprovalPanel/WorkflowTimeline.
 - Detail pekerjaan memakai judul bisnis; source/evidence mendahului tindakan review. Task yang telah selesai tetap berada di Progress dan tidak tampil sebagai tindakan berikutnya.
 - Home memakai area kerja dan daftar review ringkas; empty state tanpa pekerjaan ditampilkan sebagai pesan pendek. Tidak ada placeholder modul masa depan dalam navigasi utama.
+- Impact memakai komposisi typed di server dan renderer registry eksplisit di client. Composer, hook fetch, dan renderer dipisah; Employee tidak memicu fetch analytics. Evidence metode dan asumsi tampil bersama angka, bukan tersembunyi di tooltip.
 - Label Phase 0–3, Create Case, Start Workflow, Case Workspace, Decision Center, node type, revision counter dan ID runtime dihapus dari tampilan utama.
 - MCP 21st.dev mencari pola task inbox/review queue/work-item list dan activity/progress timeline. Activity Timeline, Process Timeline, Agent Todo List, Task Board Kanban, Notification Panel, Agent Activity dan Agent Progress ditinjau melalui metadata.
 - Retrieval source Activity Timeline ditolak karena kuota harian; tidak ada source vendor baru diadopsi atau dependency/design system baru ditambahkan. Rincian: [UI_REFERENCES.md](docs/UI_REFERENCES.md).
 
 # Hasil Pengujian
 
-Hasil aktual pass Fase 5 pada macOS arm64 (PostgreSQL embedded 18.4 lokal):
+Hasil aktual pass Fase 6 pada Windows dengan SQLite terisolasi untuk suite API dan PostgreSQL embedded terisolasi di port 55432 untuk E2E:
 
-| Pemeriksaan          | Hasil aktual                                                                                                                                                                                   |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend PostgreSQL   | **117 lulus** (102 regresi Fase 0–4 + 15 Fase 5: rumus vs hitungan manual, ekstraksi, konflik, non-leakage, routing manager/komite, freeze, self-approval, idempotency, request information)   |
-| Backend SQLite       | **117 lulus**, termasuk lifecycle migrasi 0006                                                                                                                                                 |
-| Frontend unit        | **30 lulus** (26 lama + navigasi/work item/Ask Finance, adapter investment)                                                                                                                    |
-| E2E Chromium         | **32 lulus**: 30 regresi + journey Investment Analysis (konflik → pilihan → hasil → memo → submit → approval Manager) + role gating                                                            |
-| Formatter/lint/types | Ruff format/check, Prettier, ESLint, TypeScript, `alembic check`, dan keempat generated-contract checks lulus                                                                                  |
-| Production build     | Lulus, termasuk route `/investment` dan `/regulatory`                                                                                                                                          |
-| Inspeksi visual      | Desktop 1440 px dan mobile 390 px pada database test: nol horizontal overflow, nol page error. Tabel asumsi dibuat full-width; duplikasi sumber di memo dan teks route saat konflik diperbaiki |
-| Smoke database demo  | API port 8000 pada database `superflow` (migrasi 0006 + seed) melaporkan scope `phase-0-5` dan dua proposal                                                                                    |
+| Pemeriksaan          | Hasil aktual                                                                                                                                                           |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend API          | **121 lulus**, termasuk permission, approved component registry, disclosure simulasi, observed Guard metric, intent composition, dan non-leakage lintas role           |
+| Frontend unit        | **33 lulus**, termasuk validasi/format analytics, penolakan arbitrary HTML component, disclosure simulasi, dan regresi navigasi role-aware                             |
+| E2E Chromium         | **34 lulus** pada PostgreSQL nyata: seluruh 32 regresi + journey QCD/composer/no backend nouns/mobile overflow + employee role-gating                                  |
+| Formatter/lint/types | Ruff format/check, ESLint, TypeScript, kelima generated-contract checks, dan Prettier terarah untuk file Fase 6 lulus; catatan baseline repository ada di known issues |
+| Production build     | Lulus, termasuk route `/impact`, `/investment`, dan `/regulatory`                                                                                                      |
+| Responsive           | E2E mobile 390 px membuktikan nol horizontal overflow dan tidak ada page error pada Impact                                                                             |
 
-Hasil Fase 4 (sebelumnya): 102 backend, 26 frontend unit, 30 E2E lulus. Docker tetap tidak tersedia di mesin ini; Compose belum dieksekusi. Screenshot inspeksi ada di `.runtime/screenshots/phase4` dan `phase5` (diabaikan Git).
+PostgreSQL E2E berjalan pada cluster terisolasi dan sudah dihentikan setelah suite selesai. Database yang sudah ada di port 5432 tidak diubah. Setelah pass Fase 6, Compose/Ollama kemudian diverifikasi pada Docker Desktop dengan port host alternatif `11435`.
 
 # Langkah Berikutnya yang Direkomendasikan
 
-1. Tinjau bahasa memo, pilihan approver/komite, dan ambang sensitivity bersama process owner Finance.
-2. Pertimbangkan cash flow per tahun yang bervariasi, pajak/nilai sisa, serta field tipe dokumen (proposal/quotation/policy).
-3. Tinjau bahasa gap dan pilihan approver remediation Fase 4 bersama Compliance.
-4. Verifikasi Docker Compose dan audit screen reader di lingkungan yang mendukung.
-5. Mulai Fase 6 — Analytics hanya setelah instruksi eksplisit.
+1. Validasi asumsi baseline capacity, loaded capacity cost, dan definisi cycle time bersama process owner sebelum penggunaan selain demo.
+2. Tambahkan filter periode dan snapshot/trend hanya setelah definisi business calendar serta retention analytics disepakati.
+3. Tinjau bahasa memo/approval bersama Finance dan bahasa gap/remediation bersama Compliance.
+4. Lanjutkan audit screen reader dan normalisasi baseline Prettier di pass terpisah.
+5. Mulai Fase 7 — AML/FIU proof point hanya setelah instruksi eksplisit.

@@ -2,6 +2,13 @@ import type { ReactNode } from "react";
 import type { Answer, Source } from "./api";
 import type { ChangeView } from "./regulatory-contracts";
 import type { CalculationView } from "./investment-contracts";
+import type {
+  CapacitySimulationData,
+  DistributionData,
+  ImpactBriefData,
+  MetricGroupData,
+  NextActionsData,
+} from "./analytics-contracts";
 import type { GuardResult } from "./reliability-contracts";
 import type {
   ApprovalView,
@@ -62,6 +69,11 @@ export const WORKSPACE_COMPONENTS = {
   FinancialAnalysis: "available",
   ApprovalPanel: "available",
   WorkflowTimeline: "available",
+  ImpactBrief: "available",
+  MetricGroup: "available",
+  DistributionChart: "available",
+  CapacitySimulation: "available",
+  NextActions: "available",
 } as const;
 
 export type WorkspaceComponent =
@@ -72,6 +84,11 @@ export type WorkspaceComponent =
   | { type: "WorkflowTimeline"; data: WorkflowView }
   | { type: "ComparisonTable"; data: ChangeView[] }
   | { type: "FinancialAnalysis"; data: CalculationView }
+  | { type: "ImpactBrief"; data: ImpactBriefData }
+  | { type: "MetricGroup"; data: MetricGroupData }
+  | { type: "DistributionChart"; data: DistributionData }
+  | { type: "CapacitySimulation"; data: CapacitySimulationData }
+  | { type: "NextActions"; data: NextActionsData }
   | {
       type: Exclude<
         keyof typeof WORKSPACE_COMPONENTS,
@@ -82,6 +99,11 @@ export type WorkspaceComponent =
         | "WorkflowTimeline"
         | "ComparisonTable"
         | "FinancialAnalysis"
+        | "ImpactBrief"
+        | "MetricGroup"
+        | "DistributionChart"
+        | "CapacitySimulation"
+        | "NextActions"
       >;
       availability: "deferred";
       data?: never;

@@ -8,8 +8,9 @@ const navigation: Record<string, string[]> = {
     "Knowledge",
     "My Work",
     "Reviews / Approvals",
+    "Impact",
   ],
-  sme: ["Home", "Ask SuperFlow", "Knowledge", "My Work", "Reviews"],
+  sme: ["Home", "Ask SuperFlow", "Knowledge", "My Work", "Reviews", "Impact"],
   compliance: [
     "Home",
     "Ask SuperFlow",
@@ -17,6 +18,7 @@ const navigation: Record<string, string[]> = {
     "Regulatory Review",
     "My Work",
     "Reviews / Approvals",
+    "Impact",
   ],
   finance: [
     "Home",
@@ -25,8 +27,9 @@ const navigation: Record<string, string[]> = {
     "Investment Analysis",
     "My Work",
     "Reviews / Approvals",
+    "Impact",
   ],
-  governance: ["Home", "Knowledge", "My Work", "Reviews / Approvals"],
+  governance: ["Home", "Knowledge", "My Work", "Reviews / Approvals", "Impact"],
 };
 for (const [role, labels] of Object.entries(navigation)) {
   test(`${role} sees role-aware navigation without unavailable or internal modules`, async ({

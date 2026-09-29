@@ -4,14 +4,14 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Di atas fondasi tersebut telah dibangun **Fase 4 — Regulation-to-Action** (Regulatory Review) dan, terbaru, **Fase 5 — Investment Intelligence** (Investment Analysis).
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Di atas fondasi tersebut telah dibangun **Fase 4 — Regulation-to-Action** (Regulatory Review), **Fase 5 — Investment Intelligence** (Investment Analysis), dan **Fase 6 — Impact Analytics** (Impact).
 
 ## Rekonsiliasi Product Experience
 
 1. Baca PRD v2 dan audit shell, Home, Ask, Knowledge, workspace, serta kontrak/API existing.
 2. Inspeksi MCP 21st.dev untuk inbox dan timeline; gunakan primitive existing bila source tidak tersedia atau kandidat tidak cocok.
 3. Adapter frontend bertipe menerjemahkan Case/WorkflowRun/Task/Approval menjadi work item dan progress tanpa state machine kedua.
-4. Employee mendapat Home/Ask/Knowledge/My Work; reviewer mendapat Reviews; Governance Admin mendapat Home/Knowledge/My Work/Reviews. Modul yang belum diimplementasikan tidak ditampilkan.
+4. Employee mendapat Home/Ask/Knowledge/My Work; reviewer mendapat Reviews; role berwenang mendapat Impact; Governance Admin mendapat Home/Knowledge/My Work/Reviews/Impact. Modul yang belum diimplementasikan tidak ditampilkan.
 5. Tindakan Ask membawa konteks authorized ke request dan review existing; evidence recovery tetap eksplisit.
 6. Humanisasi status, activity, nama orang, dan progress; hilangkan label fase, revision, definisi dan node types dari layar produk.
 7. Jalankan seluruh quality gate, regresi dan inspeksi produksi enam role/desktop/mobile; dokumentasikan hasil aktual.
@@ -22,13 +22,13 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 
 | Fase                        | Tujuan                                     | Deliverable                                                                                        | Dependency                           | Status                                                                             |
 | --------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------------- |
-| 0 — Skeleton                | Fondasi aplikasi yang dapat dijalankan     | Monorepo Next.js/FastAPI, PostgreSQL, Alembic, seed sintetis, shell dan identitas demo             | Node.js, Python, PostgreSQL          | Selesai; PostgreSQL lokal terverifikasi, Compose menunggu lingkungan Docker        |
+| 0 — Skeleton                | Fondasi aplikasi yang dapat dijalankan     | Monorepo Next.js/FastAPI, PostgreSQL, Alembic, seed sintetis, shell dan identitas demo             | Node.js, Python, PostgreSQL          | Selesai; PostgreSQL lokal serta Compose/Ollama Docker terverifikasi                |
 | 1 — Knowledge Core          | Pertanyaan yang dapat ditelusuri ke sumber | Upload/parsing/chunking, metadata/versi/relasi, retrieval abstraction, Ask, citation, Source Panel | Fase 0, dokumen seed                 | Selesai untuk scope prototype Fase 0/1; rekonsiliasi dan verifikasi lulus          |
 | 2 — Reliability Core        | Pemeriksaan reliability yang persisten     | SuperFlow Guard, citation coverage, evidence/conflict, audit                                       | Knowledge Core, kontrak reliability  | Selesai untuk scope prototype; seluruh quality gate dan lima demo status lulus     |
 | 3 — Workflow Core           | Aksi dan keputusan manusia                 | Cases, state machine, tasks, retry/escalation, Decision Center, approval                           | Guard dan audit                      | Selesai untuk scope prototype; quality gate final lulus                            |
 | 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
-| 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization                                              | Data eksekusi dan definisi metrik    | Belum dimulai                                                                      |
+| 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization, controlled generative UI                    | Data eksekusi dan definisi metrik    | Selesai; functional gate dan format file Fase 6 lulus, baseline format dicatat     |
 | 7 — AML/FIU Extension       | Contoh workflow opsional                   | Mock evidence, exception, human escalation                                                         | Fondasi bersama                      | Di luar ruang lingkup awal                                                         |
 | 8 — Polish                  | Stabilitas demo seluruh platform           | Journey lengkap, reset lintas modul, presentasi                                                    | Modul yang diotorisasi telah selesai | Ditunda; reset lokal dan aksesibilitas Fase 0/1 tersedia sebagai kebutuhan fondasi |
 
@@ -88,7 +88,7 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-Analytics (Fase 6), AML/FIU (Fase 7), demo polish (Fase 8), autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan.
+AML/FIU (Fase 7), demo polish (Fase 8), autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan.
 
 ## Deliverable Fase 3
 
@@ -127,3 +127,16 @@ Dependency: Fase 1–3, seed regulasi v1/v2 dan SOP terkait. Arsitektur dan bata
 8. Test backend (rumus, ekstraksi, konflik, non-leakage, routing, freeze, self-approval, idempotency, request information), frontend unit, E2E journey + role gating, regresi, build, dan inspeksi visual.
 
 Dependency: Fase 1–3 serta dokumen seed proposal/quotation/cash flow/approval policy. Arsitektur dan batasan: [INVESTMENT_INTELLIGENCE.md](docs/INVESTMENT_INTELLIGENCE.md).
+
+## Deliverable Fase 6 — Impact Analytics
+
+1. Workspace **Impact** yang role-aware untuk Manager, SME, Compliance, Finance, dan Governance; Employee tidak melihat navigasi atau agregat.
+2. Quality observed: citation coverage, verified rate, konflik terdeteksi, permintaan informasi/rework, dan historical source yang ditandai.
+3. Delivery observed: answer time dari audit timestamp, cycle time, backlog, throughput/completion, review time, dan escalation.
+4. Cost/Capacity memisahkan volume observed dari **Illustrative simulation** untuk hours released, capacity value per item, dan illustrative cost avoidance. Asumsi selalu terlihat dan bukan realized profit.
+5. Backend menghitung semua metrik dari QuestionRun, GuardEvaluation, Case, Approval, dan AuditEvent yang lolos scope permission; frontend hanya memformat.
+6. `ImpactComposer` memilih intent overview/quality/capacity/delivery dan mengomposisikan `ImpactBrief`, `MetricGroup`, `DistributionChart`, `CapacitySimulation`, serta `NextActions` dari registry approved.
+7. Payload Pydantic/TypeScript divalidasi dan unknown component fail closed. Tidak ada arbitrary HTML atau permission/business truth di frontend.
+8. API/unit/E2E mencakup role gating, non-leakage, observed metrics, simulation disclosure, intent composition, responsive/mobile, generated contract, dan production build.
+
+Dependency: data Fase 0–5 dan audit append-only existing. Tidak ada schema baru; analytics dibaca dari state operasional. Arsitektur dan batasan: [IMPACT_ANALYTICS.md](docs/IMPACT_ANALYTICS.md).

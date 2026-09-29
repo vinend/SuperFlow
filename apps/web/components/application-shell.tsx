@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import {
   BookOpen,
+  ChartNoAxesCombined,
   Calculator,
   Check,
   ChevronRight,
@@ -27,7 +28,8 @@ export type View =
   | "workflows"
   | "decisions"
   | "regulatory"
-  | "investment";
+  | "investment"
+  | "impact";
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
@@ -37,6 +39,7 @@ export const TITLES = {
   decisions: "Reviews / Approvals",
   regulatory: "Regulatory Review",
   investment: "Investment Analysis",
+  impact: "Impact",
 };
 const ICONS = {
   home: Home,
@@ -46,6 +49,7 @@ const ICONS = {
   decisions: Check,
   regulatory: Scale,
   investment: Calculator,
+  impact: ChartNoAxesCombined,
 };
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.

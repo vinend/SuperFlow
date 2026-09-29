@@ -32,6 +32,11 @@ export function canReview(role: string) {
     role,
   );
 }
+export function canViewImpact(role: string) {
+  return ["manager", "sme", "compliance", "finance", "governance"].includes(
+    role,
+  );
+}
 export function navigationFor(role: string) {
   return [
     { title: "Home", href: "/", view: "home" },
@@ -60,6 +65,9 @@ export function navigationFor(role: string) {
     { title: "My Work", href: "/cases", view: "cases" },
     ...(canReview(role)
       ? [{ title: reviewsLabel(role), href: "/decisions", view: "decisions" }]
+      : []),
+    ...(canViewImpact(role)
+      ? [{ title: "Impact", href: "/impact", view: "impact" }]
       : []),
   ];
 }

@@ -45,6 +45,7 @@ class GuardInput:
     query: AskInput
     sources: list[dict]
     answer: str
+    provider: str = "deterministic-extractive-v1"
     restricted_match: bool = False
     action: str | None = None
     evidence: tuple[EvidenceItem, ...] = ()
@@ -163,32 +164,52 @@ class SuperFlowGuard:
             else "Supporting source content is missing or no longer matches the citation.",
         )
 
-        # Every material paragraph MUST equal a complete retrieved chunk plus its marker.
-        # No fuzzy similarity, claims scoring, or confidence percentages.
-        expected = {f"{s['excerpt']} [{s['citation_id']}]" for s in sources}
-        remaining = value.answer.strip()
-        used = set()
-        while remaining:
-            match = next(
-                (
-                    part
-                    for part in expected
-                    if remaining.startswith(part)
-                    and (len(remaining) == len(part) or remaining[len(part) :].startswith("\n\n"))
-                ),
-                None,
+        local_ai = value.provider.startswith("ollama-")
+        if local_ai:
+            permitted = {source["citation_id"] for source in sources}
+            paragraphs = [item.strip() for item in value.answer.split("\n\n") if item.strip()]
+            markers = [re.search(r"\[(\d+)]$", item) for item in paragraphs]
+            covered = bool(paragraphs) and all(
+                marker is not None and int(marker.group(1)) in permitted for marker in markers
             )
-            if match is None:
-                break
-            used.add(match)
-            remaining = remaining[len(match) :].strip()
-        covered = bool(expected) and not remaining and used == expected
+            coverage_details = (
+                "Every AI-synthesized paragraph references a permitted retrieved source; "
+                "semantic support still requires human review."
+                if covered
+                else "An AI-synthesized paragraph is missing a permitted citation."
+            )
+        else:
+            # Extractive mode remains strict: every material paragraph must equal a complete
+            # retrieved chunk plus its marker. No fuzzy similarity or confidence percentages.
+            expected = {f"{s['excerpt']} [{s['citation_id']}]" for s in sources}
+            remaining = value.answer.strip()
+            used = set()
+            while remaining:
+                match = next(
+                    (
+                        part
+                        for part in expected
+                        if remaining.startswith(part)
+                        and (
+                            len(remaining) == len(part) or remaining[len(part) :].startswith("\n\n")
+                        )
+                    ),
+                    None,
+                )
+                if match is None:
+                    break
+                used.add(match)
+                remaining = remaining[len(match) :].strip()
+            covered = bool(expected) and not remaining and used == expected
+            coverage_details = (
+                "Every answer extract exactly matches its cited retrieved chunk."
+                if covered
+                else "A material answer extract is missing a matching source and citation."
+            )
         check(
             "citation_coverage",
             covered,
-            "Every answer extract exactly matches its cited retrieved chunk."
-            if covered
-            else "A material answer extract is missing a matching source and citation.",
+            coverage_details,
         )
 
         authority = bool(sources) and all(s["authority_level"] >= 4 for s in sources)
@@ -342,11 +363,13 @@ class SuperFlowGuard:
                 "Not applicable: this context involves no calculation.",
                 False,
             )
-        review = bool(conflicts) or (bool(sources) and not authority)
+        review = local_ai or bool(conflicts) or (bool(sources) and not authority)
         check(
             "human_review_requirement",
             not review and value.action is None,
-            "Human judgment is required before applying this guidance."
+            "Human review is required for local AI synthesis before applying this guidance."
+            if local_ai
+            else "Human judgment is required before applying this guidance."
             if review
             else "Actions are outside Phase 2; this request cannot continue."
             if value.action
@@ -369,8 +392,8 @@ class SuperFlowGuard:
             status = ReliabilityStatus.VERIFIED
         summaries = {
             ReliabilityStatus.VERIFIED: "Supported by current approved sources.",
-            ReliabilityStatus.REVIEW_REQUIRED: "Conflicting guidance or source authority "
-            "requires human review.",
+            ReliabilityStatus.REVIEW_REQUIRED: "AI synthesis, conflicting guidance, or source "
+            "authority requires human review.",
             ReliabilityStatus.BLOCKED: "Required evidence or a safety prerequisite is missing.",
             ReliabilityStatus.OUTDATED: "Historical source content; "
             "inspect the active replacement.",
@@ -438,4 +461,5 @@ class SuperFlowGuard:
             allowed_actions=actions,
             summary=summaries[status],
             next_step=next_steps[status],
+            policy_version=("guard-local-ai-grounding-v1" if local_ai else "guard-extractive-v1"),
         )

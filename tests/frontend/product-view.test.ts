@@ -10,6 +10,7 @@ import {
   activityLabel,
   personName,
   roleLabel,
+  canViewImpact,
 } from "../../apps/web/lib/product-view.ts";
 import type { User } from "../../apps/web/lib/api.ts";
 import type {
@@ -107,12 +108,16 @@ test("navigation exposes only implemented jobs appropriate to each role", () => 
     ["Home", "Ask SuperFlow", "Knowledge", "My Work"],
   );
   for (const role of ["manager", "compliance", "finance"])
-    assert.equal(navigationFor(role).at(-1)?.title, "Reviews / Approvals");
-  assert.equal(navigationFor("sme").at(-1)?.title, "Reviews");
+    assert.ok(
+      navigationFor(role).some((item) => item.title === "Reviews / Approvals"),
+    );
+  assert.ok(navigationFor("sme").some((item) => item.title === "Reviews"));
   assert.deepEqual(
     navigationFor("governance").map((n) => n.title),
-    ["Home", "Knowledge", "My Work", "Reviews / Approvals"],
+    ["Home", "Knowledge", "My Work", "Reviews / Approvals", "Impact"],
   );
+  assert.equal(canViewImpact("employee"), false);
+  assert.equal(canViewImpact("manager"), true);
 });
 test("My Work joins execution and review state without changing canonical data", () => {
   const before = JSON.stringify([item, run, approval]);
@@ -249,6 +254,7 @@ test("Compliance alone gets Regulatory Review before My Work", () => {
       "Regulatory Review",
       "My Work",
       "Reviews / Approvals",
+      "Impact",
     ],
   );
   for (const role of ["employee", "manager", "sme", "finance", "governance"])
@@ -350,6 +356,7 @@ test("Finance alone gets Investment Analysis; analyses open their workspace", ()
       "Investment Analysis",
       "My Work",
       "Reviews / Approvals",
+      "Impact",
     ],
   );
   assert.ok(

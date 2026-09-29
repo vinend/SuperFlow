@@ -131,7 +131,7 @@ CLI demo opsional membuat tiga Case sintetis dan workflow pada task awal; berula
 
 ## UI dan 21st.dev
 
-AnswerCard mempunyai tindakan kontekstual Request Review, Start Review, Request Exception, atau Provide Information. Submit Request memakai Case/start API existing. My Work menyajikan work item; Reviews hanya untuk reviewer; Progress dan Activity memakai bahasa pekerjaan. Tidak ada standalone Workflows, Cases, Decision Center atau placeholder masa depan pada navigasi. WorkflowTimeline/ApprovalPanel existing tetap digunakan dengan kontrak yang sama; ComparisonTable/FinancialAnalysis deferred.
+AnswerCard mempunyai tindakan kontekstual Request Review, Start Review, Request Exception, atau Provide Information. Submit Request memakai Case/start API existing. My Work menyajikan work item; Reviews hanya untuk reviewer; Progress dan Activity memakai bahasa pekerjaan. Tidak ada standalone Workflows, Cases, Decision Center atau placeholder masa depan pada navigasi. WorkflowTimeline/ApprovalPanel existing tetap digunakan dengan kontrak yang sama; ComparisonTable tersedia pada Fase 4 dan FinancialAnalysis tersedia pada Fase 5.
 
 MCP mencari Activity Timeline, Cubby UI Timeline dan task checklist. Source Cubby UI terkunci kuota; tidak ada vendor component baru yang dipasang tanpa inspeksi. Primitive tabel Origin UI existing, Dialog, metadata, badge, disclosure, tokens, dan SourcePanel dipakai kembali. Detail pada UI_REFERENCES.md.
 

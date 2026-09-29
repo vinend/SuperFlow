@@ -34,6 +34,7 @@ def evaluate_run(
             query=query,
             sources=sources,
             answer=run.answer,
+            provider=run.provider,
             restricted_match=restricted_relevance(db, user, query),
             evidence=evidence,
             calculation=calculation,
@@ -91,7 +92,7 @@ def presented_answer(run: QuestionRun, result: GuardResult) -> str:
         )
     if result.status == ReliabilityStatus.REVIEW_REQUIRED:
         return (
-            "Human review is required; the following extracts are evidence, "
+            "Human review is required; the following cited answer is evidence-backed, "
             "not a resolved conclusion.\n\n" + run.answer
         )
     if result.status == ReliabilityStatus.OUTDATED:

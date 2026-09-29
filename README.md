@@ -5,7 +5,7 @@
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. **Fase 4 — Regulation-to-Action** tersedia sebagai **Regulatory Review** untuk Compliance, dan **Fase 5 — Investment Intelligence** sebagai **Investment Analysis** untuk Finance. Analytics dan Governance penuh belum tersedia.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. **Fase 4 — Regulation-to-Action** tersedia sebagai **Regulatory Review** untuk Compliance, **Fase 5 — Investment Intelligence** sebagai **Investment Analysis** untuk Finance, dan **Fase 6 — Impact Analytics** sebagai **Impact** untuk role yang berwenang. Governance penuh belum tersedia.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -17,13 +17,14 @@ Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Contr
 | API       | FastAPI, Pydantic, SQLAlchemy; REST dan pemeriksaan akses dasar server                                                |
 | Database  | PostgreSQL 18; Alembic; metadata, versi, original bytes/checksum, chunk, saved questions, GuardResult, dan AuditEvent |
 | Retrieval | Interface `Retriever`; adapter keyword/concept deterministik, filter akses/domain/sumber/versi, bobot authority       |
-| Jawaban   | Interface `AnswerProvider`; extractive demo provider tanpa kredensial AI eksternal                                    |
+| Jawaban   | Interface `AnswerProvider`; extractive default atau sintesis lokal Ollama dengan structured output                    |
 | Guard     | Evaluasi extractive deterministik, evidence requirements, konflik eksplisit, lima status dan audit                    |
+| Analytics | QCD dari state operasional; controlled generative UI bertipe dan simulasi kapasitas yang diberi disclosure            |
 | Pengujian | pytest/API, Node frontend unit tests, Playwright browser/E2E pada database terpisah                                   |
 
-Pertanyaan dikirim ke API dengan identitas demo. Retrieval hanya membaca chunk dari sumber yang diizinkan. Provider mengembalikan excerpt beserta citation sebenarnya, lalu SuperFlow Guard mengevaluasi reliability sebelum output. API memeriksa akses dan hasil Guard lagi saat saved answer atau source dibuka. Frontend merender teks dan komponen terkontrol, tanpa HTML dari model.
+Pertanyaan dikirim ke API dengan identitas demo. Retrieval hanya membaca chunk dari sumber yang diizinkan. Provider default mengembalikan excerpt; provider Ollama opsional menyintesis jawaban terstruktur hanya dari excerpt authorized dan citation ID yang valid. SuperFlow Guard mengevaluasi reliability sebelum output dan selalu meminta human review untuk sintesis AI. API memeriksa akses dan hasil Guard lagi saat saved answer atau source dibuka. Frontend merender teks dan komponen terkontrol, tanpa HTML dari model.
 
-Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), [Regulation-to-Action](docs/REGULATION_TO_ACTION.md), [Investment Intelligence](docs/INVESTMENT_INTELLIGENCE.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
+Lihat [PRD aktif](SuperFlow_PRD_v2.md), [AGENTS.md](AGENTS.md), [rencana implementasi](IMPLEMENTATION_PLAN.md), [status aktual](IMPLEMENTATION_STATUS.md), [inference AI lokal](docs/LOCAL_INFERENCE.md), [Regulation-to-Action](docs/REGULATION_TO_ACTION.md), [Investment Intelligence](docs/INVESTMENT_INTELLIGENCE.md), [Impact Analytics](docs/IMPACT_ANALYTICS.md), dan [referensi UI/21st.dev](docs/UI_REFERENCES.md).
 
 ## Struktur proyek
 
@@ -40,15 +41,15 @@ SuperFlow/
 ├── package-lock.json
 ├── apps/
 │   ├── web/
-│   │   ├── app/                 Home, Ask, Knowledge, Regulatory Review, Investment Analysis, My Work, Reviews; stylesheet/token
-│   │   ├── components/          Shell, composer, answer, source, editor, primitive UI
+│   │   ├── app/                 Home, Ask, Knowledge, domain experiences, Impact, My Work, Reviews; stylesheet/token
+│   │   ├── components/          Shell, controlled workspace, composer, answer, source, editor, primitive UI
 │   │   └── lib/                 API client dan kontrak bertipe
 │   └── api/
 │       ├── superflow/           Model, route, parsing, retrieval, provider, seed
 │       ├── migrations/          Alembic
 │       └── tests/               Unit dan API tests
 ├── data/seed/                   Dokumen sintetis dan manifest versi
-├── docs/UI_REFERENCES.md        Catatan desain dan provenance 21st.dev
+├── docs/                        Arsitektur fitur, metode Impact, dan provenance UI/21st.dev
 ├── scripts/                    Launcher Python/PostgreSQL dan persiapan E2E
 └── tests/                      Browser journeys dan frontend unit tests
 ```
@@ -61,6 +62,8 @@ SuperFlow/
 - Tidak memerlukan API key AI berbayar.
 
 Di workspace Windows ini tersedia runtime Python terisolasi `.runtime/python`, dependencies npm, Chromium, dan cluster PostgreSQL lokal. Berkas runtime diabaikan Git. Untuk checkout baru, ikuti setup berikut.
+
+Inference nyata bersifat opsional. Ollama dapat dijalankan melalui profile Docker dengan GPU NVIDIA dan API host-only `127.0.0.1:11434`; lihat [panduan inference lokal](docs/LOCAL_INFERENCE.md). Tanpa Ollama, provider extractive deterministik tetap digunakan.
 
 ## Setup
 
@@ -99,6 +102,11 @@ Launcher Python mencari `PYTHON`, lalu `.runtime/python/python.exe`, lalu `pytho
 | `TEST_DATABASE_URL`        | URL yang sama dengan database `superflow_test`                           | Database test terpisah; nama harus berakhiran `_test`  |
 | `CORS_ORIGINS`             | `http://localhost:3000,http://127.0.0.1:3000`                            | Origin frontend yang diizinkan API                     |
 | `NEXT_PUBLIC_API_URL`      | `http://127.0.0.1:8000`                                                  | URL API yang diketahui browser; tetapkan sebelum build |
+| `LLM_PROVIDER`             | `deterministic`                                                          | `ollama` mengaktifkan inference lokal nyata untuk Ask  |
+| `OLLAMA_BASE_URL`          | `http://127.0.0.1:11434`                                                 | Endpoint Ollama dari proses FastAPI                    |
+| `OLLAMA_MODEL`             | `qwen3.5:9b`                                                             | Model lokal                                            |
+| `OLLAMA_NUM_CTX`           | `8192`                                                                   | Batas context runtime                                  |
+| `OLLAMA_NUM_PREDICT`       | `512`                                                                    | Batas token keluaran untuk respons terkontrol          |
 | `PYTHON`                   | Opsional; path interpreter                                               | Mengganti interpreter launcher                         |
 | `PLAYWRIGHT_BROWSERS_PATH` | Opsional; `.runtime/playwright`                                          | Lokasi Chromium lokal                                  |
 
@@ -120,7 +128,7 @@ Compose membuat `superflow` dan `superflow_test`, bind `127.0.0.1:5432`, dan vol
 docker compose exec postgres psql -U superflow -d superflow -c "CREATE DATABASE superflow_test OWNER superflow;"
 ```
 
-Jalankan perintah pembuatan hanya bila database test belum ada. `docker compose down` menghentikan server tanpa menghapus volume. Docker belum tersedia di mesin pemeriksaan ini; Compose belum diuji eksekusinya.
+Jalankan perintah pembuatan hanya bila database test belum ada. `docker compose down` menghentikan server tanpa menghapus volume. Compose PostgreSQL dan profile Ollama sudah diverifikasi pada Docker Desktop/WSL 2.
 
 ### Runner lokal tanpa Docker
 
@@ -147,7 +155,7 @@ API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. See
 
 Satu dokumen hanya boleh memiliki satu versi active. Publikasi versi mengambil lock dokumen dan menandai versi active sebelumnya sebagai outdated dalam transaksi yang sama. Versi bertanggal efektif di masa depan harus draft.
 
-### Reset demo Fase 0–5
+### Reset demo Fase 0–6
 
 Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target lalu mengembalikan seed awal. Schema/migration tetap dipertahankan. Hanya PostgreSQL lokal dengan nama `superflow` atau `superflow_test` yang diterima; diperlukan flag eksplisit:
 
@@ -155,7 +163,7 @@ Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target 
 npm.cmd run db:reset -- --confirm-synthetic-data
 ```
 
-`DATABASE_URL` menentukan target. Tanpa flag tersebut atau untuk target lain, CLI menolak reset. Setelah reset, buka Home; URL saved answer/versi sebelum reset dapat menjadi tidak tersedia. Reset mencakup Knowledge Core, GuardResult, AuditEvent, Case, evidence requirements, workflow, task, approval, attempt, receipt, serta regulatory review/finding dan investment analysis sintetis Fase 0–5. Untuk tiga demo workflow awal, jalankan `npm.cmd run demo:workflow` setelah reset. Playwright mereset database test sebelum suite agar demo browser dapat diulang.
+`DATABASE_URL` menentukan target. Tanpa flag tersebut atau untuk target lain, CLI menolak reset. Setelah reset, buka Home; URL saved answer/versi sebelum reset dapat menjadi tidak tersedia. Reset mencakup Knowledge Core, GuardResult, AuditEvent, Case, evidence requirements, workflow, task, approval, attempt, receipt, serta regulatory review/finding dan investment analysis sintetis. Impact tidak mempunyai tabel baru dan otomatis membaca ulang state operasional hasil reset. Untuk tiga demo workflow awal, jalankan `npm.cmd run demo:workflow` setelah reset. Playwright mereset database test sebelum suite agar demo browser dapat diulang.
 
 ## Menjalankan backend
 
@@ -193,7 +201,7 @@ npm.cmd start
 | SME / `sme`               | Nadia Rahman  | Membaca dan memelihara sumber yang dapat diakses                      |
 | Compliance / `compliance` | Raka Wijaya   | Menjalankan Regulatory Review, memutuskan gap, menugaskan remediation |
 | Finance / `finance`       | Dina Sari     | Menyiapkan Investment Analysis, memilih nilai sumber, submit approval |
-| Governance / `governance` | Alex Pratama  | Membaca/memelihara semua sumber demo; modul Governance belum tersedia |
+| Governance / `governance` | Alex Pratama  | Membaca/memelihara semua sumber demo dan melihat Impact platform      |
 
 Role switcher menyimpan ID pilihan di browser. Header `X-User-Id` diterima API dan dipakai untuk pemeriksaan akses. Pergantian role mengosongkan workspace yang sedang tampil. Ini mock identity, bukan login/SSO atau autentikasi produksi.
 
@@ -217,6 +225,8 @@ Endpoint knowledge/Ask memerlukan `X-User-Id`. Health dan daftar identitas sinte
 | `GET /api/ask/{id}`, `GET /api/ask/{id}/sources`                | Saved answer/filter/reliability dan source yang diotorisasi ulang              |
 
 Endpoint Fase 2: `GET /api/ask/{id}/reliability` dan `GET /api/audit?run_id=...`. Audit hanya milik identitas aktif, maksimal 200 event; tidak ada modul Governance UI atau endpoint mutasi audit. Kontrak check/status dapat dilihat di OpenAPI.
+
+Endpoint Fase 6: `GET /api/impact` mengembalikan overview QCD, sedangkan `POST /api/impact` menerima pertanyaan dampak dan mengomposisikan hanya komponen controlled generative UI yang disetujui. Keduanya role-gated dan tidak mengirim konten sumber milik role lain.
 
 ## Pengujian
 
@@ -270,13 +280,13 @@ Arsitektur, kontrak, precedence status, aturan coverage, model audit, generator 
 
 ## Keterbatasan prototype
 
-- Jawaban berupa extract source deterministik, bukan reasoning/synthesis LLM. `Source-grounded` menunjukkan retrieval; VERIFIED berasal dari check Guard yang eksplisit dan tidak berarti izin melakukan tindakan bisnis.
+- Provider default berupa extract source deterministik. Provider Ollama opsional menghasilkan sintesis AI nyata, tetapi retrieval masih keyword/concept dan Guard belum membuktikan semantic entailment; karena itu sintesis AI selalu REVIEW_REQUIRED. `Source-grounded` menunjukkan evidence/citation yang lolos validasi, bukan izin melakukan tindakan bisnis.
 - Belum ada OCR atau semantic/vector retrieval. Parser mendukung UTF-8 TXT/Markdown, PDF berbasis teks, DOCX hingga 10 MB. File kosong, rusak, encrypted, atau textless ditolak dengan error yang jelas.
 - Guard memakai aturan extractive dan evidence/conflict terbatas pada skenario yang dikonfigurasi. Belum ada semantic conflict detection, ambiguity detection menyeluruh, atau confidence score. Calculation check hanya berlaku pada Investment Analysis; konteks lain menandainya tidak applicable.
-- Analytics, full Governance, AML/FIU, dan pengukuran penghematan belum diimplementasikan. Workflow memakai definisi code-defined (generic review, regulatory remediation, investment approval/committee), satu run per Case, mock authority, dan evidence source chunk; belum scheduler/notifications/tool runtime.
-- AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, dan WorkflowTimeline fungsional. ComparisonTable (Fase 4) dan FinancialAnalysis (Fase 5) juga fungsional; belum ada engine Generative UI dinamis.
+- Impact Analytics sudah menghitung QCD dari data operasional yang tersedia, tetapi belum mempunyai filter periode, baseline organisasi yang dapat dikonfigurasi, snapshot warehouse, drill-down BI, export, atau alert. Capacity memakai asumsi prototype transparan dan selalu bertanda **Illustrative simulation**; bukan realized profit. Full Governance dan AML/FIU belum diimplementasikan. Workflow masih code-defined, satu run per Case, mock authority, dan belum mempunyai scheduler/notifications/tool runtime.
+- AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, WorkflowTimeline, ComparisonTable, dan FinancialAnalysis fungsional. Impact memakai controlled generative UI: provider deterministik hanya dapat memilih komponen registry bertipe; tidak ada arbitrary HTML atau executable UI dari model. LLM structured-output saat ini hanya aktif untuk sintesis Ask dan tidak memilih komponen Impact.
 - Pass frontend memakai MCP 21st.dev untuk pencarian dan inspeksi source tabel. Kuota gratis dua retrieval membatasi pemeriksaan source kandidat lain; komponen yang belum diperiksa tidak dipasang. Adopsi pola dan hasil pass dicatat di [FRONTEND_REFINEMENT.md](docs/FRONTEND_REFINEMENT.md).
-- Docker tidak tersedia pada mesin pemeriksaan; PostgreSQL lokal nyata digunakan untuk verifikasi. Keyboard/browser diuji; audit screen reader lengkap belum dilakukan.
+- Docker Ollama dengan GPU NVIDIA dan API host-only sudah diverifikasi. PostgreSQL lokal nyata tetap dipakai oleh proses aplikasi saat verifikasi ini. Keyboard/browser diuji; audit screen reader lengkap belum dilakukan.
 - Dokumen seed berbahasa Inggris dipertahankan sebagai fixture retrieval sintetis. Panduan proyek menggunakan Bahasa Indonesia; AGENTS/PRD dan file instruksi Next.js mengikuti bahasa sumbernya.
 
 Audit PostgreSQL memiliki trigger append-only untuk UPDATE/DELETE/TRUNCATE, dengan pengecualian DELETE pada reset demo eksplisit. Database owner dapat mengubah trigger; audit ini bukan WORM produksi. Role masih mock identity.
@@ -317,14 +327,14 @@ Rincian state machine, permission/Guard, retry/fallback, audit, API, demo, dan b
 
 ## Pengalaman pengguna menurut PRD v2
 
-| Role                  | Navigasi yang tersedia sekarang                                                   |
-| --------------------- | --------------------------------------------------------------------------------- |
-| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                           |
-| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals                      |
-| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews                                  |
-| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals   |
-| Finance               | Home, Ask SuperFlow, Knowledge, Investment Analysis, My Work, Reviews / Approvals |
-| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals                                     |
+| Role                  | Navigasi yang tersedia sekarang                                                           |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                                   |
+| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals, Impact                      |
+| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews, Impact                                  |
+| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals, Impact   |
+| Finance               | Home, Ask SuperFlow, Knowledge, Investment Analysis, My Work, Reviews / Approvals, Impact |
+| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals, Impact                                     |
 
 Modul yang belum tersedia tidak menjadi navigasi utama. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas control/review. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
 
@@ -385,3 +395,15 @@ npm run db:seed      # memasang template investment approval (idempotent)
 7. Kembali ke Finance: analisis berstatus **Approved**, dan Activity mencatat pilihan, edit memo, submit, dan keputusan.
 
 Proposal B tidak memiliki konflik, jadi langsung **Ready to submit**. Dari Ask, pertanyaan Finance tentang proposal/asumsi (mis. "What assumptions are in proposal A?") menawarkan **Prepare Analysis**.
+
+## Impact Analytics — Fase 6
+
+**Impact** mengubah state operasional menjadi gambaran Quality, Cost / Capacity, dan Delivery (QCD). Backend menghitung metrik dari QuestionRun, GuardResult, Case, Approval, dan AuditEvent yang lolos permission. Pengguna dapat bertanya tentang reliability, capacity, atau delivery; composer deterministik memilih dan mengurutkan hanya `ImpactBrief`, `MetricGroup`, `DistributionChart`, `CapacitySimulation`, dan `NextActions`. Payload Pydantic/TypeScript divalidasi sebelum dirender dan unknown component gagal secara aman. Rincian metode, permission, asumsi, API, dan batasan: [IMPACT_ANALYTICS.md](docs/IMPACT_ANALYTICS.md).
+
+### Demo Impact
+
+1. Buat beberapa hasil Ask dan pekerjaan/review agar state operasional mempunyai observasi nyata.
+2. Pilih **Governance — Alex Pratama**, lalu buka **Impact** untuk agregat platform sintetis. Manager, SME, Compliance, dan Finance melihat scope data yang dapat mereka akses; Employee tidak melihat menu maupun agregat Impact.
+3. Periksa overview Quality, Cost / Capacity, dan Delivery. Metrik yang belum mempunyai observasi tampil sebagai **Not yet measured**, bukan nol rekaan.
+4. Tanyakan **Where does reliability need attention?** untuk komposisi Quality, **How much capacity could be released?** untuk capacity, atau **What is slowing delivery?** untuk Delivery.
+5. Pada Capacity, periksa semua asumsi dan label **Illustrative simulation**. Hours released dan illustrative cost avoidance adalah skenario soft-dollar, bukan penghematan terealisasi.
