@@ -5,6 +5,8 @@
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
+Ask SuperFlow kini memakai **CopilotKit V2 + AG-UI** sebagai lapisan intent: permintaan bahasa alami membuka workspace Knowledge, Regulatory Review, Investment Analysis, Investigation Review, Impact, My Work, atau Reviews sesuai role. Komponen dan API domain yang sudah ada tetap menjadi sumber data dan kontrol. Mode deterministik tidak memerlukan Ollama.
+
 Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi fondasi prototype sintetis. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Regulatory Review, Investment Analysis, Impact, dan **Investigation Review Fase 7** tersedia di atas fondasi yang sama. Governance penuh dan Fase 8 belum tersedia.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
@@ -20,6 +22,7 @@ Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Contr
 | Jawaban   | Interface `AnswerProvider`; extractive default atau sintesis lokal Ollama dengan structured output                    |
 | Guard     | Evaluasi extractive deterministik, evidence requirements, konflik eksplisit, lima status dan audit                    |
 | Analytics | QCD dari state operasional; controlled generative UI bertipe dan simulasi kapasitas yang diberi disclosure            |
+| Workspace intent | CopilotKit V2/AG-UI headless di Next.js; FastAPI memilih intent dan mengotorisasi; registry workspace bertipe merender komponen existing |
 | Pengujian | pytest/API, Node frontend unit tests, Playwright browser/E2E pada database terpisah                                   |
 
 Pertanyaan dikirim ke API dengan identitas demo. Retrieval hanya membaca chunk dari sumber yang diizinkan. Provider default mengembalikan excerpt; provider Ollama opsional menyintesis jawaban terstruktur hanya dari excerpt authorized dan citation ID yang valid. SuperFlow Guard mengevaluasi reliability sebelum output dan selalu meminta human review untuk sintesis AI. API memeriksa akses dan hasil Guard lagi saat saved answer atau source dibuka. Frontend merender teks dan komponen terkontrol, tanpa HTML dari model.
@@ -102,6 +105,7 @@ Launcher Python mencari `PYTHON`, lalu `.runtime/python/python.exe`, lalu `pytho
 | `TEST_DATABASE_URL`        | URL yang sama dengan database `superflow_test`                           | Database test terpisah; nama harus berakhiran `_test`  |
 | `CORS_ORIGINS`             | `http://localhost:3000,http://127.0.0.1:3000`                            | Origin frontend yang diizinkan API                     |
 | `NEXT_PUBLIC_API_URL`      | `http://127.0.0.1:8000`                                                  | URL API yang diketahui browser; tetapkan sebelum build |
+| `SUPERFLOW_API_URL`        | Opsional; memakai `NEXT_PUBLIC_API_URL` bila kosong                      | URL FastAPI dari runtime Next.js untuk agent workspace |
 | `LLM_PROVIDER`             | `deterministic`                                                          | `ollama` mengaktifkan inference lokal Ask dan usulan tindakan investigasi yang tetap divalidasi backend |
 | `OLLAMA_BASE_URL`          | `http://127.0.0.1:11434`                                                 | Endpoint Ollama dari proses FastAPI                    |
 | `OLLAMA_MODEL`             | `qwen3.5:9b`                                                             | Model lokal                                            |
@@ -111,6 +115,10 @@ Launcher Python mencari `PYTHON`, lalu `.runtime/python/python.exe`, lalu `pytho
 | `PLAYWRIGHT_BROWSERS_PATH` | Opsional; `.runtime/playwright`                                          | Lokasi Chromium lokal                                  |
 
 Password di atas khusus demo sintetis lokal. Jangan memasukkan kredensial produksi. Environment berawalan `NEXT_PUBLIC_` akan tersedia di browser.
+
+CopilotKit memakai versi `1.75.2` dan AG-UI `0.0.59` dari lockfile. Aplikasi menonaktifkan telemetry CopilotKit. Runtime Next.js tersedia di `/api/copilotkit`; endpoint klasifikasi FastAPI ada di `POST /api/workspace-intent`. Saat runtime agent/Ollama tidak tersedia, intent deterministik dan navigasi domain langsung tetap dapat dipakai. Panduan: [Generative Workspace](docs/GENERATIVE_WORKSPACE.md).
+
+Demo singkat: jalankan frontend/backend, buka `/ask`, lalu ketik `How many annual leave days do I get?` sebagai Employee. Coba `What changed in the latest regulation?` sebagai Compliance, `Analyze proposal A.` sebagai Finance, `Investigate alert AML-2026-001.` sebagai Compliance, `Where does reliability need attention?` sebagai Manager, `What do I need to do?`, dan `What needs my approval?` sebagai Manager. Hasilnya memakai state dan izin backend; tindakan material tetap meminta klik/konfirmasi manusia. PNG browser ada di `artifacts/screenshots/generative-workspace/`.
 
 ## PostgreSQL
 
@@ -155,7 +163,7 @@ API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. See
 
 Satu dokumen hanya boleh memiliki satu versi active. Publikasi versi mengambil lock dokumen dan menandai versi active sebelumnya sebagai outdated dalam transaksi yang sama. Versi bertanggal efektif di masa depan harus draft.
 
-### Reset demo Fase 0–6
+### Reset demo Fase 0–7
 
 Reset menghapus upload, perubahan metadata, dan pertanyaan pada database target lalu mengembalikan seed awal. Schema/migration tetap dipertahankan. Hanya PostgreSQL lokal dengan nama `superflow` atau `superflow_test` yang diterima; diperlukan flag eksplisit:
 

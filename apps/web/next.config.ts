@@ -8,5 +8,6 @@ const config: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
   distDir: process.env.SUPERFLOW_E2E ? ".next-e2e" : ".next",
+  env: { COPILOTKIT_TELEMETRY_DISABLED: "true" },
 };
 export default config;

@@ -399,6 +399,16 @@ Unknown component types must fail safely.
 
 Do not let model output directly become DOM, HTML, JavaScript, permission logic, or workflow transitions.
 
+### CopilotKit V2 / AG-UI integration
+
+- Use current CopilotKit V2 APIs for new integration code. Do not add deprecated V1 hooks such as `useCopilotAction` or `useCopilotReadable`.
+- Keep the headless/custom SuperFlow UI. Reuse the existing controlled domain catalog; do not build a competing unrestricted component registry.
+- Validate workspace intent, views, and identifiers with typed schemas. Prefer IDs and view intent over model-generated business facts.
+- FastAPI remains authoritative for authorization, retrieval, Guard, workflow, approval, audit, finance calculations, and bounded domain agents.
+- Material mutations require explicit human interaction in controlled domain UI. CopilotKit must never auto-approve or bypass expected revisions and idempotency.
+- Direct domain routes and deterministic Ask must remain usable if the workspace runtime or Ollama is unavailable.
+- The generative workspace integration follows completed Phase 7; Phase 8 has not started.
+
 ---
 
 ## 12. Ask SuperFlow UX

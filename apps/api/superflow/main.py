@@ -35,6 +35,7 @@ from .reliability_contracts import GuardResult, ReliabilityStatus
 from .retrieval import KeywordConceptRetriever, Retriever
 from .schemas import AskInput, AskOutput, Metadata, VersionInput, VersionStatus
 from .workflow_api import router as workflow_router
+from .workspace_intent import router as workspace_intent_router
 
 app = FastAPI(
     title="SuperFlow Knowledge API",
@@ -46,6 +47,7 @@ app.include_router(regulatory_router)
 app.include_router(investment_router)
 app.include_router(investigation_router)
 app.include_router(analytics_router)
+app.include_router(workspace_intent_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),

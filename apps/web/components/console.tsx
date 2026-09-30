@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { CopilotKitProvider } from "@copilotkit/react-core/v2";
 import { ArrowRight, BookOpen, Plus, Search, X } from "lucide-react";
 import { DOMAINS } from "@/lib/api";
 import { displayVersion } from "@/lib/knowledge-view";
@@ -22,6 +23,7 @@ import { DocumentDetail } from "./document-detail";
 import { DocumentEditor } from "./document-editor";
 import { HomeAttention } from "./home-attention";
 import { roleLabel } from "@/lib/product-view";
+import { AskGenerativeArea } from "./ask-generative-area";
 import {
   ErrorState,
   LoadingState,
@@ -42,7 +44,19 @@ export function Console({ view }: { view: View }) {
   const { user } = useSession();
   return (
     <ApplicationShell view={view}>
-      <Workspace key={`${user.id}:${view}`} view={view} />
+      {view === "ask" ? (
+        <CopilotKitProvider
+          key={user.id}
+          runtimeUrl="/api/copilotkit"
+          agentId="workspace"
+          enableInspector={false}
+          headers={{ "X-User-Id": user.id }}
+        >
+          <Workspace key={`${user.id}:${view}`} view={view} />
+        </CopilotKitProvider>
+      ) : (
+        <Workspace key={`${user.id}:${view}`} view={view} />
+      )}
     </ApplicationShell>
   );
 }
@@ -319,51 +333,7 @@ function Workspace({ view }: { view: View }) {
           </div>
         </>
       )}
-      {view === "ask" && (
-        <div
-          className={`ask-layout ${w.history.length || w.loading ? "has-history" : ""}`}
-        >
-          <section className="ask-main">
-            <div className="compose-heading">
-              <span>Question</span>
-              <Link className="text-link" href="/knowledge">
-                View sources <ArrowRight size={13} />
-              </Link>
-            </div>
-            {composer}
-            <div
-              className="query-scope"
-              role="group"
-              aria-label="Retrieval scope"
-            >
-              {filters}
-            </div>
-            {suggestions}
-            {result}
-            {!w.answer && !w.asking && !w.loading && (
-              <p className="ask-guidance">
-                Current answers use active source versions. Open the cited
-                source to inspect the exact section.
-              </p>
-            )}
-          </section>
-          {(w.history.length > 0 || w.loading) && (
-            <aside className="question-history">
-              <SectionHeader title="Recent questions" />
-              <QuestionHistory
-                items={w.history}
-                open={w.openQuestion}
-                selectedId={w.answer?.id}
-                loading={w.loading}
-                disabled={w.asking}
-              />
-              <p className="history-note">
-                Saved for {w.user.name}. Access is checked when reopened.
-              </p>
-            </aside>
-          )}
-        </div>
-      )}
+      {view === "ask" && <AskGenerativeArea w={w} filters={filters} />}
       {view === "knowledge" && (
         <>
           <div className="knowledge-summary">

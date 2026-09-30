@@ -1,12 +1,42 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 30 September 2026
+**Diperbarui:** 1 Oktober 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
 **Ruang lingkup:** Fase 0–7 dan rekonsiliasi Product Experience sudah diimplementasikan untuk scope prototype sintetis. Fase 7 adalah proof point AML/FIU di atas fondasi bersama. Fase 8 belum dimulai.
 
 **Status:** UI mockup Investigation Review dari commit `4c88fb0` dipertahankan dan dihubungkan ke investigasi persisten, adapter sintetis, Guard, workflow checker, serta audit. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+
+# Pass Integrasi Generative Workspace — CopilotKit V2 / AG-UI
+
+## Selesai
+
+- CopilotKit V2 `1.75.2`, AG-UI `0.0.59`, dan RxJS `7.8.1` terpasang. Provider headless dan runtime Next.js `/api/copilotkit` dipakai oleh Ask SuperFlow; satu agent per identitas demo menjaga thread sementara terpisah.
+- Endpoint `POST /api/workspace-intent` membatasi tujuh jenis workspace. Klasifikasi deterministik mencakup prompt demo; Ollama opsional hanya mengusulkan intent dan view melalui schema ketat. Role dan ID investigasi diperiksa ulang di FastAPI. Penolakan tidak membawa judul, ID investigasi, sumber, atau jumlah data terlarang.
+- AskComposer dan komponen domain yang sudah ada merender Knowledge, Regulatory Review, Investment Analysis, Investigation Review, Impact, My Work, dan Reviews / Approvals. Knowledge tetap melewati Ask, citation, source panel, dan SuperFlow Guard. Agent tidak mengubah keputusan bisnis.
+- Saat AG-UI gagal, Ask memakai rute intent deterministik backend. Pergantian role mereset workspace dan mengharuskan otorisasi ulang. Inspector pengembang disembunyikan dan telemetry CopilotKit dinonaktifkan pada aplikasi demo.
+- Uji backend baru mencakup intent, batas schema, role, referensi investigasi, dan output Ollama tidak valid. Uji browser mencakup tujuh pengalaman, denial, fallback, pergantian role, keamanan aksi material, mobile, dan screenshot PNG asli.
+
+## Sebagian Selesai / Batasan
+
+- Routing proposal demo saat ini mengenali Proposal A yang disediakan seed. Pemilihan proposal lain tetap dilakukan di halaman Investment Analysis existing.
+- Thread AG-UI bersifat sementara di memori runtime; keputusan, evidence, dan state domain tetap persisten di PostgreSQL. Ini bukan autentikasi atau percakapan produksi.
+- Ollama tidak berjalan pada port lokal `11434`/`11435` saat pass ini; structured output serta fallback divalidasi dengan mock transport, sedangkan mode deterministik diverifikasi lewat browser.
+- Komposisi Impact memakai data operasional yang diizinkan. Jika belum ada observasi pada role/test database, metrik yang tampil memang kosong atau nol sesuai kontrak existing.
+
+## Belum Diimplementasikan
+
+- Fase 8, SSO, integrasi sistem nyata, model yang dapat membuat tools baru, serta UI arbitrer.
+
+## Hasil Pengujian
+
+- PostgreSQL dan FastAPI berjalan; health API melaporkan PostgreSQL serta tujuh pengguna seed. Aplikasi produksi menyajikan `/ask` dan metadata agent CopilotKit dengan HTTP 200.
+- Backend pytest: **153 lulus**, satu peringatan deprecation `httpx` dari dependency Starlette/FastAPI. Frontend unit: **38 lulus**. Playwright full suite: **50 lulus**; uji Impact tambahan sesudah satu pertanyaan terukur juga lulus.
+- Ruff format/check, ESLint, TypeScript, dan Prettier pada berkas yang berubah lulus. Build produksi lulus; bundler mengeluarkan peringatan dynamic dependency dari `@ai-sdk/google-vertex` yang dibawa CopilotKit, tanpa kegagalan runtime.
+- `npm run format:check` untuk seluruh repository masih menemukan 45 berkas legacy yang belum mengikuti Prettier; berkas itu tidak diformat massal dalam pass integrasi ini. Berkas baru/diubah diperiksa terpisah dan lulus.
+
+Lihat [GENERATIVE_WORKSPACE.md](docs/GENERATIVE_WORKSPACE.md) untuk kontrak, alur, fallback, dan prompt demo.
 
 # Fase 7 — AML/FIU Investigation Review
 

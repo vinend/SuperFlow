@@ -66,49 +66,82 @@ function EvidenceRow({
   );
 }
 
-export function InvestigationConsole() {
+export function InvestigationConsole({
+  embedded = false,
+  selectedId,
+  initialTab = "overview",
+}: {
+  embedded?: boolean;
+  selectedId?: string | null;
+  initialTab?: "overview" | "evidence";
+} = {}) {
   const { user } = useSession();
-  return (
-    <ApplicationShell view="investigation">
-      {user.role_id === "compliance" ? (
-        <InvestigationReview />
-      ) : (
-        <main
-          className="main-content"
-          id="workspace-main"
-          tabIndex={-1}
-          aria-labelledby="page-title"
-        >
-          <PageHeader
-            eyebrow="Compliance workspace"
-            title="Investigation Review"
-            description="Review transaction-monitoring alerts with controlled evidence collection and independent checker review."
-          />
-          <EmptyState
-            title="Investigation Review is available to Compliance."
-            description="Switch the demo role to Compliance to try the synthetic investigation flow."
-          />
-        </main>
-      )}
-    </ApplicationShell>
+  const content =
+    user.role_id === "compliance" ? (
+      <InvestigationReview
+        embedded={embedded}
+        selectedId={selectedId}
+        initialTab={initialTab}
+      />
+    ) : (
+      <div
+        className="main-content"
+        id={embedded ? undefined : "workspace-main"}
+        tabIndex={-1}
+        aria-labelledby="page-title"
+      >
+        <PageHeader
+          eyebrow="Compliance workspace"
+          title="Investigation Review"
+          description="Review transaction-monitoring alerts with controlled evidence collection and independent checker review."
+        />
+        <EmptyState
+          title="Investigation Review is available to Compliance."
+          description="Switch the demo role to Compliance to try the synthetic investigation flow."
+        />
+      </div>
+    );
+  return embedded ? (
+    content
+  ) : (
+    <ApplicationShell view="investigation">{content}</ApplicationShell>
   );
 }
 
-function InvestigationReview() {
+function InvestigationReview({
+  embedded,
+  selectedId,
+  initialTab,
+}: {
+  embedded: boolean;
+  selectedId?: string | null;
+  initialTab: "overview" | "evidence";
+}) {
   const { user } = useSession();
   const params = useSearchParams();
-  const selected = params.get("investigation");
+  const selected =
+    selectedId === undefined ? params.get("investigation") : selectedId;
   return (
     <InvestigationReviewState
       key={`${user.id}:${selected || "default"}`}
       selected={selected}
+      embedded={embedded}
+      initialTab={initialTab}
     />
   );
 }
 
-function InvestigationReviewState({ selected }: { selected: string | null }) {
+function InvestigationReviewState({
+  selected,
+  embedded,
+  initialTab,
+}: {
+  selected: string | null;
+  embedded: boolean;
+  initialTab: "overview" | "evidence";
+}) {
   const { user } = useSession();
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [items, setItems] = useState<InvestigationView[]>([]);
   const [current, setCurrent] = useState<InvestigationView | null>(null);
   const [busy, setBusy] = useState(false);
@@ -180,13 +213,19 @@ function InvestigationReviewState({ selected }: { selected: string | null }) {
   }
   if (loading)
     return (
-      <main className="main-content" id="workspace-main">
+      <div
+        className="main-content"
+        id={embedded ? undefined : "workspace-main"}
+      >
         <LoadingState label="Loading investigation…" />
-      </main>
+      </div>
     );
   if (!current)
     return (
-      <main className="main-content" id="workspace-main">
+      <div
+        className="main-content"
+        id={embedded ? undefined : "workspace-main"}
+      >
         <PageHeader
           eyebrow="Compliance workspace"
           title="Investigation Review"
@@ -200,7 +239,7 @@ function InvestigationReviewState({ selected }: { selected: string | null }) {
             description="Only assigned Compliance staff can inspect these records."
           />
         )}
-      </main>
+      </div>
     );
   const evidence = Object.fromEntries(
     current.evidence.map((item) => [item.key, item]),
@@ -251,9 +290,9 @@ function InvestigationReviewState({ selected }: { selected: string | null }) {
   ];
 
   return (
-    <main
+    <div
       className={`main-content ${styles.workspace}`}
-      id="workspace-main"
+      id={embedded ? undefined : "workspace-main"}
       tabIndex={-1}
       aria-labelledby="page-title"
     >
@@ -751,7 +790,7 @@ function InvestigationReviewState({ selected }: { selected: string | null }) {
           </section>
         </aside>
       </div>
-    </main>
+    </div>
   );
 }
 

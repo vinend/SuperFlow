@@ -592,6 +592,16 @@ The AI must not generate arbitrary HTML for workflow-critical UI.
 
 ---
 
+## Generative UI Runtime
+
+The prototype uses **CopilotKit V2 and AG-UI** as a headless interaction layer for Chat Plus. Ask SuperFlow sends natural-language intent to a bounded workspace agent. The agent returns one validated entry from the approved workspace catalog: Knowledge answer, Regulatory Review, Investment Analysis, Investigation Review, Impact, My Work, or Reviews / Approvals. Existing React experiences render the result and fetch authoritative state from FastAPI.
+
+The workspace agent selects an experience and a permitted view or identifier. It cannot generate arbitrary HTML, JavaScript, component names, routes, financial values, reliability states, or business decisions. The backend reauthorizes requests, controls source access and SuperFlow Guard, and owns Case, workflow, approval, investigation, analytics, and audit state. Material decisions require an explicit human action in the existing controlled UI.
+
+Deterministic intent routing works without a model. Optional Ollama/Qwen classification uses strict structured output and falls back safely when unavailable or invalid. Direct domain routes remain usable if the AG-UI runtime fails. Conversation state is transient; business state remains in PostgreSQL. This integration pass follows Phase 7 and does not start Phase 8.
+
+---
+
 # 11. Controlled Component Catalog
 
 Approved controlled components:

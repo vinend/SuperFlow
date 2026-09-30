@@ -55,6 +55,152 @@
   --header-height: 64px;
   --panel-width: 368px;
 }
+
+/* Headless AG-UI selects the domain surface; SuperFlow owns its layout and tokens. */
+.generative-layout {
+  display: grid;
+  grid-template-columns: minmax(250px, 290px) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.intent-rail {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-4));
+  min-width: 0;
+  padding-right: var(--space-5);
+  border-right: 1px solid var(--line);
+}
+.intent-rail .question-form {
+  margin: var(--space-3) 0;
+}
+.intent-rail .query-scope {
+  margin-top: var(--space-4);
+}
+.intent-rail .filter-row {
+  display: grid;
+  grid-template-columns: 1fr;
+}
+.intent-suggestions {
+  display: grid;
+  gap: 0;
+  margin-top: var(--space-6);
+}
+.intent-suggestions .suggestion-label {
+  margin-bottom: var(--space-2);
+}
+.intent-suggestions button {
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  padding: var(--space-3) var(--space-1);
+  line-height: 1.4;
+}
+.intent-suggestions button:hover {
+  color: var(--accent);
+  background: var(--surface-muted);
+}
+.intent-suggestions button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.intent-history {
+  margin-top: var(--space-8);
+}
+.generated-column {
+  min-width: 0;
+}
+.generated-surface {
+  min-width: 0;
+}
+.generated-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+.generated-heading h2 {
+  font-size: var(--text-xl);
+  margin: var(--space-1) 0;
+}
+.generated-heading p {
+  color: var(--muted);
+  margin: 0;
+}
+.generated-heading .text-link {
+  flex-shrink: 0;
+}
+.generated-body {
+  min-width: 0;
+}
+.generated-body > .main-content {
+  padding: 0;
+  max-width: none;
+}
+.generated-empty {
+  padding: var(--space-8) var(--space-5);
+  border-top: 2px solid var(--accent);
+  background: var(--surface);
+}
+.generated-empty h2 {
+  margin: var(--space-3) 0;
+  font-size: var(--text-xl);
+}
+.generated-empty p {
+  max-width: 55ch;
+  color: var(--muted);
+}
+.generated-loading {
+  margin: 0 0 var(--space-4);
+  color: var(--muted);
+}
+@media (max-width: 1000px) {
+  .generative-layout {
+    grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+  .intent-rail {
+    padding-right: var(--space-4);
+  }
+}
+@media (max-width: 740px) {
+  .generative-layout {
+    display: block;
+  }
+  .intent-rail {
+    position: static;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 0 0 var(--space-5);
+    margin-bottom: var(--space-5);
+  }
+  .intent-suggestions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: var(--space-3);
+  }
+  .intent-suggestions .suggestion-label {
+    grid-column: 1 / -1;
+  }
+  .intent-history {
+    display: none;
+  }
+  .generated-heading {
+    display: block;
+  }
+  .generated-heading .text-link {
+    display: inline-flex;
+    margin-top: var(--space-2);
+  }
+}
+@media (max-width: 470px) {
+  .intent-suggestions {
+    grid-template-columns: 1fr;
+  }
+}
 * {
   box-sizing: border-box;
 }

@@ -6,6 +6,12 @@ SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace int
 
 Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi baseline prototype sintetis. Fase 7 memakai fondasi Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency untuk Investigation Review. Fase 8 belum dimulai.
 
+## Pass integrasi Generative Workspace
+
+Tujuan: satu permintaan bahasa alami di Ask memilih workspace yang sudah ada tanpa menyalin logika domain. CopilotKit V2 dan AG-UI mengirim intent ke adapter Next.js/FastAPI; kontrak bertipe membatasi tujuh workspace, view, dan identifier. FastAPI melakukan klasifikasi deterministik atau memakai Ollama opsional, lalu memeriksa role dan akses investigation. Komponen domain existing mengambil ulang data dari API. Keputusan material tetap memerlukan interaksi manusia.
+
+Deliverable: runtime `/api/copilotkit`, endpoint `/api/workspace-intent`, AskComposer terintegrasi, GenerativeWorkspace, fallback deterministik, invalidasi saat role berubah, uji unit/API/E2E, PNG di `artifacts/screenshots/generative-workspace/`, serta [dokumentasi teknis](docs/GENERATIVE_WORKSPACE.md). Dependency: Fase 0–7 selesai, database/seed tersedia, paket CopilotKit V2. Status: selesai untuk scope prototype sintetis; Fase 8 belum dimulai.
+
 ## Rekonsiliasi Product Experience
 
 1. Baca PRD v2 dan audit shell, Home, Ask, Knowledge, workspace, serta kontrak/API existing.
@@ -29,7 +35,7 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 | 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization, controlled generative UI                    | Data eksekusi dan definisi metrik    | Selesai; functional gate dan format file Fase 6 lulus, baseline format dicatat     |
-| 7 — AML/FIU Proof Point     | Investigation Review sintetis terkendali  | UI existing, Investigation/ToolRun persisten, template, alat allowlist, agent terbatas, Guard, analyst/checker, audit | Fase 0–6 | Implementasi backend dan integrasi UI berlangsung; verifikasi akhir dicatat di status |
+| 7 — AML/FIU Proof Point     | Investigation Review sintetis terkendali  | UI existing, Investigation/ToolRun persisten, template, alat allowlist, agent terbatas, Guard, analyst/checker, audit | Fase 0–6 | Selesai untuk prototype sintetis; verifikasi dicatat di status |
 | 8 — Polish                  | Stabilitas demo seluruh platform           | Journey lengkap, reset lintas modul, presentasi                                                    | Modul yang diotorisasi telah selesai | Ditunda; reset lokal dan aksesibilitas Fase 0/1 tersedia sebagai kebutuhan fondasi |
 
 ## Deliverable Fase 0
