@@ -51,6 +51,11 @@ export function navigationFor(role: string) {
             href: "/regulatory",
             view: "regulatory",
           },
+          {
+            title: "Investigation Review",
+            href: "/investigations",
+            view: "investigation",
+          },
         ]
       : []),
     ...(role === "finance"

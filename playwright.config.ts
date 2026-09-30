@@ -37,7 +37,8 @@ export default defineConfig({
       env: { DATABASE_URL: database, CORS_ORIGINS: "http://127.0.0.1:3001" },
     },
     {
-      command: "npm run dev --workspace @superflow/web -- --port 3001",
+      command:
+        "node node_modules/next/dist/bin/next dev apps/web --hostname 127.0.0.1 --port 3001",
       url: "http://127.0.0.1:3001",
       reuseExistingServer: false,
       timeout: 90_000,

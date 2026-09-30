@@ -244,7 +244,7 @@ test("people and activity use readable names without exposing event schema", () 
     "Request activity recorded",
   );
 });
-test("Compliance alone gets Regulatory Review before My Work", () => {
+test("Compliance alone gets regulatory and investigation workspaces", () => {
   assert.deepEqual(
     navigationFor("compliance").map((n) => n.title),
     [
@@ -252,6 +252,7 @@ test("Compliance alone gets Regulatory Review before My Work", () => {
       "Ask SuperFlow",
       "Knowledge",
       "Regulatory Review",
+      "Investigation Review",
       "My Work",
       "Reviews / Approvals",
       "Impact",
@@ -260,6 +261,10 @@ test("Compliance alone gets Regulatory Review before My Work", () => {
   for (const role of ["employee", "manager", "sme", "finance", "governance"])
     assert.ok(
       !navigationFor(role).some((n) => n.title === "Regulatory Review"),
+    );
+  for (const role of ["employee", "manager", "sme", "finance", "governance"])
+    assert.ok(
+      !navigationFor(role).some((n) => n.title === "Investigation Review"),
     );
 });
 test("regulatory reviews open their own workspace; remediation uses step titles", () => {

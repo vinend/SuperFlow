@@ -13,6 +13,7 @@ import {
   Layers3,
   Menu,
   Scale,
+  ShieldCheck,
   Sparkles,
   X,
 } from "lucide-react";
@@ -28,6 +29,7 @@ export type View =
   | "workflows"
   | "decisions"
   | "regulatory"
+  | "investigation"
   | "investment"
   | "impact";
 export const TITLES = {
@@ -38,6 +40,7 @@ export const TITLES = {
   workflows: "My Work",
   decisions: "Reviews / Approvals",
   regulatory: "Regulatory Review",
+  investigation: "Investigation Review",
   investment: "Investment Analysis",
   impact: "Impact",
 };
@@ -48,6 +51,7 @@ const ICONS = {
   cases: FolderKanban,
   decisions: Check,
   regulatory: Scale,
+  investigation: ShieldCheck,
   investment: Calculator,
   impact: ChartNoAxesCombined,
 };

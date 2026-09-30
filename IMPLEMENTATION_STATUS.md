@@ -1,12 +1,27 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 28 September 2026
+**Diperbarui:** 30 September 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** Fase 6 — Impact Analytics, di atas Fase 4 — Regulation-to-Action, Fase 5 — Investment Intelligence, fondasi Fase 0–3, dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran.
+**Ruang lingkup:** Mockup web Fase 7 — AML/FIU Investigation Review, Fase 6 — Impact Analytics, Fase 4 — Regulation-to-Action, Fase 5 — Investment Intelligence, fondasi Fase 0–3, dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran untuk fitur yang sudah terintegrasi.
 
-**Status:** Fase 6 selesai untuk scope prototype. Backend/unit/E2E PostgreSQL, lint, typecheck, generated contract, dan production build lulus. Pemeriksaan Prettier terarah untuk seluruh file Fase 6 lulus; pemeriksaan repository penuh masih melaporkan drift format/line-ending lama di 81 file yang tidak diubah agar pass ini tidak memformat massal pekerjaan sebelumnya.
+**Status:** Fase 6 selesai untuk scope prototype. Fase 7 dimulai sebagai mockup frontend interaktif dengan data sintetis; belum terhubung ke Transaction Monitoring, screening, pencarian berita, Getcontact, workflow, atau penyimpanan backend.
+
+# Fase 7 — Mockup AML/FIU Investigation Review
+
+## Selesai untuk validasi UX awal
+
+- Route `/investigations` dan navigasi **Investigation Review** khusus role Compliance memakai shell, token warna, tipografi, spacing, button, serta pola responsive SuperFlow existing.
+- Skenario sintetis satu alert menampilkan profil nasabah, field source of funds wajib, transaksi, indikator tipologi, triage risk, status evidence, activity, dan rekomendasi analis.
+- Simulasi evidence collection mengubah watchlist screening dan adverse-news search secara bertahap dari pending menjadi collected. Customer profile screenshot sudah mencakup source of funds; supporting documents bersifat opsional dan akan digabungkan saat evidence document dibuat.
+- Aksi material diubah menjadi **Escalate to checker** dan baru aktif setelah lima pemeriksaan evidence wajib selesai. Keputusan dan aktivitas pada tahap mockup hanya disimpan di state browser.
+
+## Batasan mockup
+
+- Seluruh identitas, transaksi, hasil screening, adverse news, rating, dan activity bersifat sintetis.
+- Belum ada API, database, permission backend khusus FIU, screenshot automation, hash/checksum nyata, document generation, audit persistence, atau checker queue nyata.
+- Rating 82/100 adalah tampilan triage mockup, bukan probabilitas pencucian uang atau keputusan pelaporan.
 
 # Inference AI Lokal — Ollama Docker
 
