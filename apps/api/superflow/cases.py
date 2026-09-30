@@ -18,6 +18,7 @@ from .models import (
     Document,
     DocumentChunk,
     DocumentVersion,
+    Investigation,
     InvestmentAnalysis,
     QuestionRun,
     RegulatoryReview,
@@ -54,7 +55,11 @@ def references_allowed(db: Session, user: User, run: QuestionRun) -> bool:
 
 
 def can_access_case(db, user, case):
-    participant = user.role_id == "governance" or user.id in {case.owner_id, case.created_by}
+    if case.type == "aml_investigation" and user.role_id != "compliance":
+        return False
+    participant = (
+        user.role_id == "governance" and case.type != "aml_investigation"
+    ) or user.id in {case.owner_id, case.created_by}
     if not participant:
         participant = (
             db.scalar(
@@ -100,6 +105,12 @@ def get_case(db, user, case_id, *, lock=False):
 
 
 def require_edit(user, case):
+    if case.type == "aml_investigation" and (
+        user.role_id != "compliance" or user.id not in {case.owner_id, case.created_by}
+    ):
+        raise HTTPException(
+            403, "Only the assigned Compliance analyst may change this investigation."
+        )
     if user.id not in {case.owner_id, case.created_by} and user.role_id != "governance":
         raise HTTPException(
             403, "Only the case owner, requester, or Governance may change execution."
@@ -142,6 +153,10 @@ def begin_mutation(db, user, case, value: Mutation, action: str) -> bool:
 
 
 def context(db, user, case):
+    if case.type == "aml_investigation":
+        from .investigations import evaluate_investigation_case
+
+        return evaluate_investigation_case(db, user, case), []
     run = db.get(QuestionRun, case.context_run_id)
     if not references_allowed(db, user, run):
         raise HTTPException(404, "Case source context is unavailable to your role.")
@@ -178,10 +193,14 @@ def domain_kind(db, case) -> str | None:
         return "regulatory"
     if db.get(InvestmentAnalysis, case.id) is not None:
         return "investment"
+    if db.get(Investigation, case.id) is not None:
+        return "investigation"
     return None
 
 
 def new_case(db, user, value: CaseCreate, *, may_assign=False):
+    if value.type == "aml_investigation" and (user.role_id != "compliance" or not may_assign):
+        raise HTTPException(403, "Create investigations through the Compliance workspace.")
     # may_assign: a domain service (e.g. Compliance assigning remediation) has already
     # checked assignment authority; owner source access is still enforced below.
     owner = db.get(User, value.owner_id or user.id)

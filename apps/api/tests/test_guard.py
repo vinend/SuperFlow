@@ -282,8 +282,19 @@ def test_audit_append_only_and_owner_scoped(client, db, employee):
 def test_guard_reset_is_repeatable(client, db):
     ask(client, "access review interval")
     assert reset_synthetic(db) == 13
-    assert db.scalar(select(func.count()).select_from(GuardEvaluation)) == 0
-    assert db.scalar(select(func.count()).select_from(AuditEvent)) == 0
+    from superflow.models import Investigation
+
+    assert db.scalar(select(func.count()).select_from(Investigation)) == 3
+    assert db.scalar(select(func.count()).select_from(GuardEvaluation)) >= 3
+    assert db.scalar(select(func.count()).select_from(AuditEvent)) >= 3
+    assert (
+        db.scalar(
+            select(func.count())
+            .select_from(QuestionRun)
+            .where(QuestionRun.question == "access review interval")
+        )
+        == 0
+    )
     assert ask(client, "access review interval")["reliability"]["status"] == "REVIEW_REQUIRED"
 
 

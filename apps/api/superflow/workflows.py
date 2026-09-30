@@ -59,7 +59,12 @@ def step_row(db, run):
 
 def select_reviewer(db, case, role):
     run = db.get(QuestionRun, case.context_run_id)
-    for requested_role in dict.fromkeys([role, "governance"]):
+    roles = (
+        ["compliance"]
+        if case.type == "aml_investigation"
+        else list(dict.fromkeys([role, "governance"]))
+    )
+    for requested_role in roles:
         for candidate in db.scalars(
             select(User)
             .where(User.role_id == requested_role, User.active.is_(True))
@@ -348,6 +353,12 @@ def cancel(db, user, case):
 
 
 def decision_allowed(user, case, approval):
+    if case.type == "aml_investigation":
+        return (
+            user.role_id == "compliance"
+            and user.id == approval.requested_from
+            and user.id not in {case.created_by, case.owner_id}
+        )
     return (
         (user.id == approval.requested_from or user.role_id == "governance")
         and user.id not in {case.created_by, case.owner_id}
@@ -356,6 +367,10 @@ def decision_allowed(user, case, approval):
 
 
 def escalate(db, user, case, run, reason, approval=None):
+    if case.type == "aml_investigation":
+        raise HTTPException(
+            409, "Escalation requires an assigned independent Compliance authority."
+        )
     if not reason.strip():
         raise HTTPException(422, "Escalation requires a reason.")
     if run.status in {WS.COMPLETED, WS.CANCELLED}:
@@ -419,6 +434,16 @@ def decide(db, user, case, approval, action, value):
     if action == "escalate":
         escalate(db, user, case, run, value.reason, approval)
         return
+    if case.type == "aml_investigation":
+        log(
+            db,
+            user,
+            case,
+            "checker_decision_recorded",
+            action=action,
+            approval_id=approval.id,
+            reason=value.reason,
+        )
     approval.decision_reason, approval.decided_by, approval.decided_at = (
         value.reason,
         user.id,
@@ -476,6 +501,12 @@ def decide(db, user, case, approval, action, value):
         if step.type == ST.APPROVAL:
             finish_step(db, user, case, run, step)
             enter(db, user, case, run, step_config(run).next)
+            if case.type == "aml_investigation" and run.status == WS.COMPLETED:
+                from .models import Investigation
+
+                investigation = db.get(Investigation, case.id)
+                investigation.completed_at = now()
+                log(db, user, case, "investigation_completed", approval_id=approval.id)
         else:
             # Escalated TASK/GUARD must still satisfy the normal progression.
             run.status = WS.WAITING_FOR_EVIDENCE if step.type == ST.GUARD else WS.RUNNING

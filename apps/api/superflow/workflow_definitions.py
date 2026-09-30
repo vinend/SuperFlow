@@ -130,7 +130,39 @@ INVESTMENT_APPROVAL = _investment(
 INVESTMENT_COMMITTEE = _investment(
     "investment-committee-v1", "Investment committee approval", "governance", "Committee approval"
 )
-DEFINITIONS = [GENERIC_REVIEW, REGULATORY_REMEDIATION, INVESTMENT_APPROVAL, INVESTMENT_COMMITTEE]
+AML_INVESTIGATION = {
+    "id": "aml-investigation-v1",
+    "name": "Investigation analyst and checker review",
+    "version": "1.0",
+    "domain": "Compliance",
+    "config": {
+        "steps": [
+            {
+                "id": "verify_evidence",
+                "title": "Evidence verified",
+                "type": "GUARD",
+                "next": "checker_review",
+                "max_retries": 2,
+                "fallback": "checker_review",
+            },
+            {
+                "id": "checker_review",
+                "title": "Independent checker review",
+                "type": "APPROVAL",
+                "reviewer_role": "compliance",
+                "next": "investigation_complete",
+            },
+            {"id": "investigation_complete", "title": "Review complete", "type": "TERMINAL"},
+        ]
+    },
+}
+DEFINITIONS = [
+    GENERIC_REVIEW,
+    REGULATORY_REMEDIATION,
+    INVESTMENT_APPROVAL,
+    INVESTMENT_COMMITTEE,
+    AML_INVESTIGATION,
+]
 for _definition in DEFINITIONS:
     _definition["config"] = DefinitionConfig.model_validate(_definition["config"]).model_dump(
         mode="json"

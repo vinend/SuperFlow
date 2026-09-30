@@ -40,6 +40,13 @@ def evaluate_run(
             calculation=calculation,
         ),
     )
+    return persist_guard_result(db, user, run, result)
+
+
+def persist_guard_result(
+    db: Session, user: User, run: QuestionRun, result: GuardResult
+) -> GuardResult:
+    """Single persistence and audit path for knowledge and investigation Guard results."""
     payload = result.model_dump(mode="json", exclude={"id", "evaluated_at"})
     fingerprint = digest(json.dumps(payload, sort_keys=True))
     previous = db.scalar(

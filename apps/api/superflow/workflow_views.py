@@ -23,11 +23,11 @@ def approval_view(db, user, case, approval, guard):
         and decision_allowed(user, case, approval)
     ):
         actions = ["reject", "request-evidence"]
-        if approval.requested_role != "governance":
+        if approval.requested_role != "governance" and case.type != "aml_investigation":
             actions.append("escalate")
         if guard.status in {ReliabilityStatus.VERIFIED, ReliabilityStatus.REVIEW_REQUIRED}:
             actions.insert(0, "approve")
-            if user.role_id == "governance":
+            if user.role_id == "governance" and case.type != "aml_investigation":
                 actions.append("override")
     return {
         key: getattr(approval, key)
@@ -81,7 +81,9 @@ def task_view(user, case, task, run):
 def workflow_view(db, user, case, run):
     definition = db.get(WorkflowDefinition, run.definition_id)
     cfg, current = step_config(run), step_row(db, run)
-    editor = user.id in {case.owner_id, case.created_by} or user.role_id == "governance"
+    editor = user.id in {case.owner_id, case.created_by} or (
+        user.role_id == "governance" and case.type != "aml_investigation"
+    )
     actions = []
     if editor and run.status not in {WS.COMPLETED, WS.CANCELLED}:
         if cfg.type == ST.GUARD and run.status == WS.WAITING_FOR_EVIDENCE:
@@ -92,7 +94,7 @@ def workflow_view(db, user, case, run):
             and current.retry_count < cfg.max_retries
         ):
             actions.append("retry")
-        if run.status != WS.ESCALATED:
+        if run.status != WS.ESCALATED and case.type != "aml_investigation":
             actions.append("escalate")
     steps = []
     for cfg in config(run).steps:
@@ -166,14 +168,18 @@ def workflow_view(db, user, case, run):
 def case_view(db, user, case):
     guard, sources = context(db, user, case)
     workflow = db.scalar(select(WorkflowRun).where(WorkflowRun.case_id == case.id))
-    editor = user.id in {case.owner_id, case.created_by} or user.role_id == "governance"
+    editor = user.id in {case.owner_id, case.created_by} or (
+        user.role_id == "governance" and case.type != "aml_investigation"
+    )
     actions = []
     if editor and case.status not in {CS.COMPLETED, CS.CANCELLED}:
         domain = domain_kind(db, case)
-        actions = ["edit", "cancel"]
+        actions = [] if case.type == "aml_investigation" else ["edit", "cancel"]
         # Investment evidence can still be supplied when a reviewer requests information.
-        if domain != "regulatory":
-            actions.insert(1, "attach_evidence")
+        if domain != "regulatory" and (
+            case.type != "aml_investigation" or case.status == CS.WAITING_FOR_EVIDENCE
+        ):
+            actions.append("attach_evidence")
         if not workflow and not domain and guard.status != ReliabilityStatus.ACCESS_RESTRICTED:
             actions.append("start_workflow")
     return summary(db, case) | {

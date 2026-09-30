@@ -330,9 +330,9 @@ Do not position the whole product around AML/FIU.
 
 Follow the active PRD phases.
 
-Current implementation baseline includes Phase 0–3 foundations.
+Current prototype baseline includes implemented Phases 0–7 and completed Product Experience Reconciliation. Phase 7 Investigation Review began as a frontend mockup and now uses persistent synthetic backend state, a bounded agent, SuperFlow Guard, and an independent human checker. Phase 8 has not started.
 
-Before Phase 4, perform product-experience reconciliation if not already completed.
+Phase 7 guardrails: AML/FIU is only a proof point on the shared platform. Use synthetic data and allowlisted tools only. Persist provenance for every collected result. Bound agent steps and retries; reject unknown actions. SuperFlow Guard remains the reliability authority. AI cannot make a final AML/FIU or regulatory-reporting decision. A separate human Compliance checker decides after analyst submission. Do not browse external systems or connect to real customer, transaction-monitoring, watchlist, adverse-news, or FIU services.
 
 Default progression:
 

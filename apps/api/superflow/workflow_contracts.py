@@ -65,7 +65,13 @@ class ApprovalStatus(StrEnum):
 
 
 CaseType = Literal[
-    "general", "regulatory_review", "remediation", "investment", "audit", "operations"
+    "general",
+    "regulatory_review",
+    "remediation",
+    "investment",
+    "audit",
+    "operations",
+    "aml_investigation",
 ]
 DecisionAction = Literal["approve", "reject", "request-evidence", "escalate", "override"]
 

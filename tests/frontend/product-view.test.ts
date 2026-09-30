@@ -119,6 +119,74 @@ test("navigation exposes only implemented jobs appropriate to each role", () => 
   assert.equal(canViewImpact("employee"), false);
   assert.equal(canViewImpact("manager"), true);
 });
+test("synthetic FIU work opens the investigation and checker review from shared state", () => {
+  const investigation = {
+    ...item,
+    id: "fiu-1",
+    type: "aml_investigation" as const,
+    title: "Investigation Review — Alert AML-2026-001",
+    status: "IN_PROGRESS" as const,
+    owner_id: "compliance",
+    created_by: "compliance",
+    reliability_status: "BLOCKED" as const,
+  };
+  const analyst = { id: "compliance", role_id: "compliance" } as User;
+  const checker = { id: "compliance_checker", role_id: "compliance" } as User;
+  const initial = workItemsFor([investigation], [], [], analyst)[0];
+  assert.equal(initial.href, "/investigations?investigation=fiu-1");
+  assert.equal(initial.nextAction, "Continue investigation");
+  assert.equal(initial.reliability, "More information required");
+  assert.equal(workItemsFor([investigation], [], [], checker).length, 0);
+  const fiuRun = {
+    ...run,
+    case_id: investigation.id,
+    definition_id: "aml-investigation-v1",
+    current_step: "checker_review",
+    steps: [
+      {
+        id: "check",
+        key: "verify_evidence",
+        type: "GUARD",
+        title: "Evidence verified",
+        status: "COMPLETED",
+        attempts: [],
+      },
+      {
+        id: "review",
+        key: "checker_review",
+        type: "APPROVAL",
+        title: "Independent checker review",
+        status: "WAITING",
+        attempts: [],
+      },
+      {
+        id: "done",
+        key: "investigation_complete",
+        type: "TERMINAL",
+        title: "Review complete",
+        status: "PENDING",
+        attempts: [],
+      },
+    ],
+  } as WorkflowView;
+  const request = {
+    ...approval,
+    case_id: investigation.id,
+    requested_from: checker.id,
+  };
+  const assigned = workItemsFor(
+    [investigation],
+    [fiuRun],
+    [request],
+    checker,
+  )[0];
+  assert.equal(assigned.href, "/decisions?case=fiu-1");
+  assert.equal(assigned.nextAction, "Review recommendation");
+  assert.deepEqual(
+    assigned.progress.map((step) => step.label),
+    ["Evidence verified", "Independent checker review", "Review complete"],
+  );
+});
 test("My Work joins execution and review state without changing canonical data", () => {
   const before = JSON.stringify([item, run, approval]);
   const work = workItemsFor([item], [run], [approval], employee)[0];

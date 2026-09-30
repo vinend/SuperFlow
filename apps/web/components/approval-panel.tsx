@@ -113,7 +113,12 @@ export function ApprovalPanel({
             >
               {approval.allowed_actions.map((item) => (
                 <option value={item} key={item}>
-                  {DECISION_LABELS[item]}
+                  {context.type === "aml_investigation" && item === "approve"
+                    ? "Approve recommendation"
+                    : context.type === "aml_investigation" &&
+                        item === "request-evidence"
+                      ? "Return for more information"
+                      : DECISION_LABELS[item]}
                 </option>
               ))}
             </select>
@@ -151,11 +156,19 @@ export function ApprovalPanel({
           )}
           {error && <ErrorState message={error} />}
           <button className="button primary" disabled={busy} type="submit">
-            {busy ? "Recording decision…" : DECISION_LABELS[action]}
+            {busy
+              ? "Recording decision…"
+              : context.type === "aml_investigation" && action === "approve"
+                ? "Approve recommendation"
+                : context.type === "aml_investigation" &&
+                    action === "request-evidence"
+                  ? "Return for more information"
+                  : DECISION_LABELS[action]}
           </button>
           <p className="muted small">
-            Decisions are recorded with your identity. Overrides preserve
-            reliability and require Governance Admin authority.
+            {context.type === "aml_investigation"
+              ? "Your decision is recorded independently from the analyst. This is not a regulatory filing decision."
+              : "Decisions are recorded with your identity. Overrides preserve reliability and require Governance Admin authority."}
           </p>
         </form>
       ) : (

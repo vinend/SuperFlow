@@ -166,7 +166,10 @@ export function ApplicationShell({
               >
                 {users.map((person) => (
                   <option key={person.id} value={person.id}>
-                    {roleLabel(person.role_id)} — {person.name}
+                    {person.id === "compliance_checker"
+                      ? "Compliance Checker"
+                      : roleLabel(person.role_id)}{" "}
+                    — {person.name}
                   </option>
                 ))}
               </select>

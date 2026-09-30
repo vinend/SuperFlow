@@ -1,45 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { api } from "@/lib/api";
+import type { InvestigationView } from "@/lib/investigation";
+import { businessStatus, activityLabel } from "@/lib/product-view";
 import {
   AlertTriangle,
   ArrowUpRight,
   Check,
   CheckCircle2,
   Clock3,
-  Database,
   FileCheck2,
   Globe2,
-  MapPin,
   Newspaper,
   Paperclip,
-  ReceiptText,
   ScanLine,
   ShieldCheck,
-  UserRound,
-  Users,
   type LucideIcon,
 } from "lucide-react";
 import { ApplicationShell } from "./application-shell";
 import { useSession } from "./session";
-import { EmptyState, PageHeader } from "./ui/primitives";
+import {
+  EmptyState,
+  ErrorState,
+  LoadingState,
+  PageHeader,
+} from "./ui/primitives";
 import styles from "./investigation-review.module.css";
 
 type Tab = "overview" | "transactions" | "screening" | "evidence";
-type CollectionState = "pending" | "collecting" | "done";
 type Tone = "neutral" | "good" | "review" | "high" | "info";
-
-const transactions = [
-  ["15 Sep · 08:42", "Inbound transfer", "+ IDR 98.0M", "New sender"],
-  ["15 Sep · 10:06", "Outbound transfer", "− IDR 74.5M", "New beneficiary"],
-  ["15 Sep · 11:18", "Merchant payment", "− IDR 41.0M", "Gaming merchant"],
-  ["15 Sep · 13:29", "Outbound transfer", "− IDR 82.5M", "New beneficiary"],
-  ["16 Sep · 17:04", "Outbound transfer", "− IDR 67.0M", "New beneficiary"],
-];
-
-function wait(milliseconds: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
-}
 
 function Badge({ tone, children }: { tone: Tone; children: React.ReactNode }) {
   return (
@@ -74,13 +66,6 @@ function EvidenceRow({
   );
 }
 
-function stateCopy(state: CollectionState) {
-  if (state === "done") return { status: "Collected", tone: "good" as Tone };
-  if (state === "collecting")
-    return { status: "Collecting…", tone: "info" as Tone };
-  return { status: "Pending", tone: "review" as Tone };
-}
-
 export function InvestigationConsole() {
   const { user } = useSession();
   return (
@@ -110,52 +95,153 @@ export function InvestigationConsole() {
 }
 
 function InvestigationReview() {
+  const { user } = useSession();
+  const params = useSearchParams();
+  const selected = params.get("investigation");
+  return (
+    <InvestigationReviewState
+      key={`${user.id}:${selected || "default"}`}
+      selected={selected}
+    />
+  );
+}
+
+function InvestigationReviewState({ selected }: { selected: string | null }) {
+  const { user } = useSession();
   const [activeTab, setActiveTab] = useState<Tab>("overview");
-  const [watchlist, setWatchlist] = useState<CollectionState>("pending");
-  const [news, setNews] = useState<CollectionState>("pending");
-  const [decision, setDecision] = useState<string | null>(null);
-  const [activity, setActivity] = useState([
-    ["Investigation opened", "Raka Wijaya · 15 Sep 2026, 09:16"],
-    [
-      "Authorized records retrieved",
-      "Customer profile and 18 alert transactions added as evidence.",
-    ],
-    [
-      "Typology analysis prepared",
-      "Rapid movement and multiple-beneficiary patterns require analyst review.",
-    ],
-  ]);
-  const collecting = watchlist === "collecting" || news === "collecting";
-  const collectionComplete = watchlist === "done" && news === "done";
-  const requiredComplete =
-    3 + Number(watchlist === "done") + Number(news === "done");
-
-  async function collectEvidence() {
-    if (collecting || collectionComplete) return;
-    setActiveTab("screening");
-    setWatchlist("collecting");
-    await wait(650);
-    setWatchlist("done");
-    setNews("collecting");
-    await wait(650);
-    setNews("done");
-    setActivity((items) => [
-      ...items,
-      [
-        "External context collected",
-        "Watchlist result and two adverse-news candidates captured for human verification.",
-      ],
-    ]);
+  const [items, setItems] = useState<InvestigationView[]>([]);
+  const [current, setCurrent] = useState<InvestigationView | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [notes, setNotes] = useState("");
+  const [recommendation, setRecommendation] = useState("");
+  const [showAllActivity, setShowAllActivity] = useState(false);
+  useEffect(() => {
+    let live = true;
+    api<InvestigationView[]>("/api/investigations", user)
+      .then((result) => {
+        if (!live) return;
+        setItems(result);
+        const item =
+          result.find((entry) => entry.id === selected) ||
+          (selected ? null : result[0]) ||
+          null;
+        setCurrent(item);
+        setNotes(item?.analyst_notes || "");
+        setRecommendation(item?.analyst_recommendation || "");
+        setError("");
+      })
+      .catch((reason: Error) => live && setError(reason.message))
+      .finally(() => live && setLoading(false));
+    return () => {
+      live = false;
+    };
+  }, [user, selected]);
+  async function refresh() {
+    if (!current) return;
+    const updated = await api<InvestigationView>(
+      `/api/investigations/${current.id}`,
+      user,
+    );
+    setCurrent(updated);
+    setItems((previous) =>
+      previous.map((entry) => (entry.id === updated.id ? updated : entry)),
+    );
+    setNotes(updated.analyst_notes);
+    setRecommendation(updated.analyst_recommendation);
   }
-
-  function recordDecision(label: string) {
-    if (decision) return;
-    setDecision(label);
-    setActivity((items) => [
-      ...items,
-      [label, "Analyst recommendation recorded with the evidence snapshot."],
-    ]);
+  async function mutate(path: string, body: Record<string, unknown> = {}) {
+    if (!current) return;
+    setBusy(true);
+    setError("");
+    try {
+      const updated = await api<InvestigationView>(
+        `/api/investigations/${current.id}${path}`,
+        user,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            expected_revision: current.revision,
+            ...body,
+          }),
+        },
+      );
+      setCurrent(updated);
+      setItems((previous) =>
+        previous.map((entry) => (entry.id === updated.id ? updated : entry)),
+      );
+    } catch (reason) {
+      setError((reason as Error).message);
+      await refresh().catch(() => undefined);
+    } finally {
+      setBusy(false);
+    }
   }
+  if (loading)
+    return (
+      <main className="main-content" id="workspace-main">
+        <LoadingState label="Loading investigation…" />
+      </main>
+    );
+  if (!current)
+    return (
+      <main className="main-content" id="workspace-main">
+        <PageHeader
+          eyebrow="Compliance workspace"
+          title="Investigation Review"
+          description="Synthetic Compliance investigation workspace."
+        />
+        {error ? (
+          <ErrorState message={error} retry={() => window.location.reload()} />
+        ) : (
+          <EmptyState
+            title="No investigation available"
+            description="Only assigned Compliance staff can inspect these records."
+          />
+        )}
+      </main>
+    );
+  const evidence = Object.fromEntries(
+    current.evidence.map((item) => [item.key, item]),
+  );
+  const requiredComplete = current.evidence.filter(
+    (item) => item.required && item.status === "available",
+  ).length;
+  const requiredTotal = current.evidence.filter((item) => item.required).length;
+  const collectionComplete = requiredComplete === requiredTotal;
+  const watchlist =
+    evidence.watchlist_screening?.status === "available" ? "done" : "pending";
+  const news =
+    evidence.adverse_news?.status === "available" ? "done" : "pending";
+  const analyst = user.id === current.owner_id && !current.submitted_at;
+  const transactionRun = current.tool_runs.find(
+    (run) =>
+      run.tool_name === "summarize_transactions" && run.status === "completed",
+  );
+  const watchlistRun = current.tool_runs.find(
+    (run) =>
+      run.tool_name === "run_watchlist_screening" && run.status === "completed",
+  );
+  const newsRun = current.tool_runs.find(
+    (run) =>
+      run.tool_name === "search_adverse_news" && run.status === "completed",
+  );
+  const transactions = Array.isArray(transactionRun?.result.sample)
+    ? (transactionRun.result.sample as {
+        time: string;
+        type: string;
+        amount: number;
+        context: string;
+      }[])
+    : [];
+  const stateCopy = (state: string) =>
+    state === "done"
+      ? { status: "Collected", tone: "good" as Tone }
+      : { status: "Pending", tone: "review" as Tone };
+  const activityEvents = current.activity.filter(
+    (event) => event.event_type !== "case_created",
+  );
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "overview", label: "Overview" },
@@ -172,27 +258,48 @@ function InvestigationReview() {
       aria-labelledby="page-title"
     >
       <PageHeader
-        eyebrow="Transaction monitoring alert"
-        title="Unusual outbound transfer review"
-        description="Review customer context, transaction patterns, screening results, and typology indicators before sending a recommendation to the checker."
+        eyebrow="Synthetic investigation alert"
+        title={`Investigation Review — Alert ${current.alert_reference}`}
+        description="Review collected evidence and record an analyst recommendation before independent checker review."
         action={
-          <Badge tone={decision === "Escalated to checker" ? "info" : "review"}>
-            {decision === "Escalated to checker"
-              ? "Waiting for checker"
-              : decision || "Analyst review"}
+          <Badge tone={current.submitted_at ? "info" : "review"}>
+            {current.completed_at
+              ? "Completed"
+              : current.submitted_at
+                ? "Waiting for checker"
+                : "Analyst review"}
           </Badge>
         }
       />
+      {error && <ErrorState message={error} retry={refresh} />}
+      <nav aria-label="Synthetic investigations" className={styles.scenarioNav}>
+        {items.map((item) => (
+          <Link
+            key={item.id}
+            href={`/investigations?investigation=${encodeURIComponent(item.id)}`}
+            aria-current={item.id === current.id ? "page" : undefined}
+          >
+            {item.alert_reference}
+          </Link>
+        ))}
+      </nav>
 
       <section
         className={styles.summary}
         aria-label="Alert and customer summary"
       >
-        <Fact label="Alert" value="ALT-2026-1047" />
-        <Fact label="Customer" value="Rizky Pratama" />
-        <Fact label="Occupation" value="Logistics staff" />
-        <Fact label="Declared source of funds" value="Monthly salary" />
-        <Fact label="Alerted value" value="IDR 487.5M" />
+        <Fact label="Alert" value={current.alert_reference} />
+        <Fact label="Customer" value={current.context.customer_name} />
+        <Fact label="Subject reference" value={current.subject_reference} />
+        <Fact
+          label="Declared source of funds"
+          value={String(
+            current.tool_runs.find(
+              (run) => run.tool_name === "get_customer_profile",
+            )?.result.declared_source_of_funds || "Not collected",
+          )}
+        />
+        <Fact label="Alerted value" value="IDR 487.5M · synthetic" />
         <Fact label="Transactions" value="18 in 36 hours" />
         <Fact label="New beneficiaries" value="7 counterparties" />
         <Fact label="Profile baseline" value="IDR 18–35M / month" />
@@ -229,41 +336,32 @@ function InvestigationReview() {
                 aria-labelledby="investigation-tab-overview"
               >
                 <PanelHeading
-                  title="Grounded alert summary"
-                  detail="Drafted from authorized customer, alert, and transaction records."
-                  badge={<Badge tone="review">Review required</Badge>}
+                  title="Investigation draft summary"
+                  detail="Generated deterministically from persisted synthetic transaction evidence."
+                  badge={
+                    <Badge
+                      tone={
+                        current.reliability.status === "VERIFIED"
+                          ? "good"
+                          : "review"
+                      }
+                    >
+                      {businessStatus(current.reliability.status)}
+                    </Badge>
+                  }
                 />
-                <p className={styles.summaryText}>
-                  In a 36-hour period, the customer received five inbound
-                  transfers and sent funds to seven newly observed
-                  beneficiaries. Aggregate outbound value is approximately 14×
-                  the upper monthly baseline. Four transfers reference
-                  entertainment and gaming-related merchants, while the profile
-                  records monthly salary as the source of funds and no declared
-                  cross-border business activity.
-                </p>
+                <p className={styles.summaryText}>{current.draft_summary}</p>
                 <div className={styles.findings}>
-                  <Finding
-                    icon={ArrowUpRight}
-                    title="Rapid movement / pass-through pattern"
-                    detail="82% of incoming funds were transferred onward within six hours."
-                    badge="Strong match"
-                    tone="high"
-                  />
-                  <Finding
-                    icon={Users}
-                    title="Multiple unrelated beneficiaries"
-                    detail="Seven first-seen counterparties received similarly sized transfers."
-                    badge="Supporting"
-                    tone="review"
-                  />
-                  <Finding
-                    icon={MapPin}
-                    title="Geographic and merchant risk"
-                    detail="Two locations match the bank's enhanced-review list; geography is a risk factor, not a conclusion."
-                    badge="Supporting"
-                    tone="review"
-                  />
+                  {current.context.indicators.map((reason) => (
+                    <Finding
+                      key={reason}
+                      icon={ArrowUpRight}
+                      title={reason}
+                      detail="Deterministic synthetic triage indicator."
+                      badge="Indicator"
+                      tone="review"
+                    />
+                  ))}
                 </div>
               </div>
             )}
@@ -291,10 +389,17 @@ function InvestigationReview() {
                     </thead>
                     <tbody>
                       {transactions.map((row) => (
-                        <tr key={`${row[0]}-${row[1]}`}>
-                          {row.map((cell) => (
-                            <td key={cell}>{cell}</td>
-                          ))}
+                        <tr key={`${row.time}-${row.type}`}>
+                          <td>{row.time}</td>
+                          <td>{row.type}</td>
+                          <td>
+                            {new Intl.NumberFormat("en-US", {
+                              style: "currency",
+                              currency: "IDR",
+                              maximumFractionDigits: 0,
+                            }).format(row.amount)}
+                          </td>
+                          <td>{row.context}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -312,18 +417,16 @@ function InvestigationReview() {
               >
                 <PanelHeading
                   title="Screening and external context"
-                  detail="External information remains unverified until an analyst inspects the original source."
+                  detail="Synthetic adapter results remain unverified until a human inspects the recorded result."
                 />
                 <div className={styles.evidenceList} aria-live="polite">
                   <EvidenceRow
                     icon={ShieldCheck}
                     title="Internal watchlist screening"
                     detail={
-                      watchlist === "done"
-                        ? "No exact match · one low-confidence name similarity · screenshot captured"
-                        : watchlist === "collecting"
-                          ? "Opening ad hoc screening and capturing the result"
-                          : "Not collected"
+                      watchlistRun
+                        ? `${watchlistRun.result.exact_match ? "Exact match recorded" : "No exact match"} · ${watchlistRun.result.possible_name_similarity ? "possible name similarity" : "no name similarity"} · synthetic result`
+                        : "Not collected"
                     }
                     {...stateCopy(watchlist)}
                   />
@@ -331,18 +434,16 @@ function InvestigationReview() {
                     icon={Newspaper}
                     title="Adverse news search"
                     detail={
-                      news === "done"
-                        ? "Two possible articles captured · identity not yet confirmed"
-                        : news === "collecting"
-                          ? "Searching and recording candidate sources"
-                          : "Not collected"
+                      newsRun
+                        ? `${String(newsRun.result.candidate_articles)} synthetic candidate articles · identity ${newsRun.result.identity_confirmed ? "confirmed" : "not confirmed"}`
+                        : "Not collected"
                     }
                     {...stateCopy(news)}
                   />
                   <EvidenceRow
                     icon={Globe2}
                     title="Phone intelligence"
-                    detail="Manual lookup only · unverified third-party information"
+                    detail="No external phone-intelligence integration"
                     tone="neutral"
                     status="Optional"
                   />
@@ -358,55 +459,63 @@ function InvestigationReview() {
                 aria-labelledby="investigation-tab-evidence"
               >
                 <PanelHeading
-                  title="Evidence document package"
-                  detail="Structured records are primary; screenshots are timestamped secondary evidence."
+                  title="Evidence and provenance"
+                  detail="Every collected item refers to a persisted synthetic tool attempt."
                 />
                 <div className={styles.evidenceList}>
-                  <EvidenceRow
-                    icon={Database}
-                    title="TM alert payload"
-                    detail="Captured 15 Sep 2026 · checksum verified"
-                    tone="good"
-                    status="Available"
-                  />
-                  <EvidenceRow
-                    icon={UserRound}
-                    title="Customer profile snapshot"
-                    detail="Profile, expected activity, and mandatory source-of-funds field"
-                    tone="good"
-                    status="Available"
-                  />
-                  <EvidenceRow
-                    icon={ReceiptText}
-                    title="Transaction export"
-                    detail="18 records · totals independently recalculated"
-                    tone="good"
-                    status="Available"
-                  />
-                  <EvidenceRow
-                    icon={FileCheck2}
-                    title="Screening results"
-                    detail={
-                      collectionComplete
-                        ? "Watchlist and adverse-news captures ready for analyst verification"
-                        : "Run evidence collection to add external context"
-                    }
-                    tone={collectionComplete ? "good" : "review"}
-                    status={collectionComplete ? "Available" : "Pending"}
-                  />
-                  <EvidenceRow
-                    icon={Paperclip}
-                    title="Supporting documents"
-                    detail="Optional attachments are appended when the evidence document is generated"
-                    tone="info"
-                    status="Optional"
-                  />
+                  {current.reliability.evidence.map((item) => (
+                    <EvidenceRow
+                      key={item.key}
+                      icon={
+                        item.status === "available" ? FileCheck2 : Paperclip
+                      }
+                      title={item.label}
+                      detail={
+                        item.status === "available"
+                          ? `Synthetic ${current.provenance[item.key]?.tool_name || "authorized source"} · ${current.provenance[item.key]?.collected_at || "recorded"} · fingerprint ${current.provenance[item.key]?.fingerprint.slice(0, 12) || "unavailable"}`
+                          : item.details
+                      }
+                      tone={
+                        item.status === "available"
+                          ? "good"
+                          : item.status === "conflicting" || item.required
+                            ? "review"
+                            : "neutral"
+                      }
+                      status={
+                        item.status === "available"
+                          ? "Available"
+                          : item.status === "conflicting"
+                            ? "Conflicting"
+                            : item.required
+                              ? "Missing"
+                              : "Optional"
+                      }
+                    />
+                  ))}
                 </div>
                 <p className={styles.note}>
-                  Generating the final evidence document will combine all
-                  required records with any optional supporting documents
-                  supplied by the analyst.
+                  Tool results and fingerprints are synthetic and remain
+                  available in the investigation history.
                 </p>
+                <h3>Tool attempts</h3>
+                <ol className={styles.timeline}>
+                  {current.tool_runs.map((run) => (
+                    <li key={run.id}>
+                      <span aria-hidden="true" />
+                      <div>
+                        <strong>
+                          {run.tool_name.replaceAll("_", " ")} · attempt{" "}
+                          {run.attempt_number} · {run.status}
+                        </strong>
+                        <p>
+                          {run.error_summary ||
+                            `Synthetic result recorded ${new Date(run.completed_at || run.started_at).toLocaleString("en-GB")}`}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
               </div>
             )}
           </section>
@@ -414,158 +523,215 @@ function InvestigationReview() {
           <section className={styles.panel} aria-label="Activity">
             <PanelHeading
               title="Activity"
-              detail="Human-readable audit history for this prototype."
+              detail="Persisted events from evidence collection and human review."
             />
             <ol className={styles.timeline}>
-              {activity.map(([title, detail], index) => (
-                <li key={`${title}-${index}`}>
-                  <span aria-hidden="true" />
-                  <div>
-                    <strong>{title}</strong>
-                    <p>{detail}</p>
-                  </div>
-                </li>
-              ))}
+              {[
+                ...(showAllActivity
+                  ? activityEvents
+                  : activityEvents.slice(-8)),
+              ]
+                .reverse()
+                .map((event) => (
+                  <li key={event.id}>
+                    <span aria-hidden="true" />
+                    <div>
+                      <strong>
+                        {activityLabel(event)}
+                        {typeof event.payload.tool_name === "string"
+                          ? `: ${event.payload.tool_name.replaceAll("_", " ")}`
+                          : typeof event.payload.key === "string"
+                            ? `: ${event.payload.key.replaceAll("_", " ")}`
+                            : ""}
+                      </strong>
+                      <p>
+                        {new Date(event.created_at).toLocaleString("en-GB")} ·{" "}
+                        {event.actor_id === "compliance"
+                          ? "Raka Wijaya"
+                          : event.actor_id === "compliance_checker"
+                            ? "Sinta Mahardika"
+                            : "SuperFlow"}
+                      </p>
+                    </div>
+                  </li>
+                ))}
             </ol>
+            {activityEvents.length > 8 && (
+              <button
+                className="button secondary"
+                type="button"
+                onClick={() => setShowAllActivity((value) => !value)}
+              >
+                {showAllActivity
+                  ? "Show recent activity"
+                  : `View full history (${activityEvents.length})`}
+              </button>
+            )}
           </section>
         </div>
 
         <aside className={styles.sideColumn}>
           <section className={styles.panel} aria-label="Investigation risk">
             <PanelHeading
-              title="Investigation risk"
-              detail="Triage rating, not a finding of money laundering."
+              title="Triage priority"
+              detail="Derived from explicit synthetic indicators; not an AML finding."
+              badge={
+                <Badge
+                  tone={
+                    current.reliability.status === "VERIFIED"
+                      ? "good"
+                      : "review"
+                  }
+                >
+                  {businessStatus(current.reliability.status)}
+                </Badge>
+              }
             />
             <div className={styles.risk}>
-              <div
-                className={styles.score}
-                aria-label="Risk score 82 out of 100"
-              >
-                82
-              </div>
+              <Badge tone="high">{current.context.triage_level} PRIORITY</Badge>
               <div>
-                <strong>Enhanced review recommended</strong>
-                <p>
-                  Transaction-profile mismatch, rapid movement, new
-                  counterparties, and geographic context outweigh the available
-                  mitigating evidence.
-                </p>
+                <strong>Human investigation required</strong>
+                <p>{current.context.indicators.join("; ")}.</p>
               </div>
             </div>
+            <p className={styles.note}>{current.reliability.summary}</p>
+            {current.reliability.reasons.map((reason) => (
+              <p className={styles.note} key={reason}>
+                {reason}
+              </p>
+            ))}
           </section>
 
           <section className={styles.panel} aria-label="Evidence collection">
             <PanelHeading
               title="Evidence status"
-              detail={`${requiredComplete} of 5 required checks completed. Supporting documents are optional.`}
+              detail={`${requiredComplete} of ${requiredTotal} configured checks completed. Supporting documents are optional.`}
               badge={
                 <Badge tone={collectionComplete ? "good" : "review"}>
-                  {requiredComplete} / 5
+                  {requiredComplete} / {requiredTotal}
                 </Badge>
               }
             />
             <div className={styles.checklist}>
-              <CheckItem
-                label="TM alert and transactions"
-                detail="Available"
-                done
-              />
-              <CheckItem
-                label="Customer profile"
-                detail="Source of funds included"
-                done
-              />
-              <CheckItem
-                label="Transaction aggregation"
-                detail="Profile variance recalculated"
-                done
-              />
-              <CheckItem
-                label="Watchlist screening"
-                detail={
-                  watchlist === "done"
-                    ? "Result captured"
-                    : watchlist === "collecting"
-                      ? "Collecting…"
-                      : "Pending"
-                }
-                done={watchlist === "done"}
-                active={watchlist === "collecting"}
-              />
-              <CheckItem
-                label="Adverse news"
-                detail={
-                  news === "done"
-                    ? "Sources captured"
-                    : news === "collecting"
-                      ? "Collecting…"
-                      : "Pending"
-                }
-                done={news === "done"}
-                active={news === "collecting"}
-              />
-              <CheckItem
-                label="Supporting documents"
-                detail="Included when available"
-                optional
-              />
+              {current.reliability.evidence.map((item) => (
+                <CheckItem
+                  key={item.key}
+                  label={item.label}
+                  detail={
+                    item.status === "available"
+                      ? "Collected from synthetic source"
+                      : item.status === "conflicting"
+                        ? "Conflicting evidence"
+                        : item.required
+                          ? "Missing"
+                          : "Optional"
+                  }
+                  done={item.status === "available"}
+                  optional={!item.required && item.status !== "conflicting"}
+                />
+              ))}
             </div>
             <button
               className="button primary full"
               type="button"
-              onClick={collectEvidence}
-              disabled={collecting || collectionComplete}
+              onClick={() => {
+                setActiveTab("screening");
+                void mutate("/agent/run");
+              }}
+              disabled={
+                busy ||
+                collectionComplete ||
+                !analyst ||
+                Boolean(current.next_action?.stop)
+              }
             >
               {collectionComplete ? (
                 <Check size={16} />
               ) : (
                 <ScanLine size={16} />
               )}
-              {collecting
+              {busy
                 ? "Collecting evidence…"
                 : collectionComplete
                   ? "Evidence collected"
-                  : "Simulate evidence collection"}
+                  : "Collect permitted evidence"}
             </button>
             <p className={styles.liveMessage} aria-live="polite">
-              {collectionComplete
-                ? "Required checks are complete. Optional supporting documents can still be attached before document generation."
-                : collecting
-                  ? "SuperFlow is collecting permitted screening and public-source context."
-                  : "Run the simulation to collect screening and adverse-news evidence."}
+              {current.next_action?.reason ||
+                "Required evidence collection is complete."}
             </p>
+            {current.tool_runs
+              .filter((run) => run.status === "failed")
+              .map((run) => (
+                <div key={run.id}>
+                  <p className={styles.note}>
+                    {run.tool_name}: {run.error_summary}
+                  </p>
+                  {analyst &&
+                    current.tool_runs.filter(
+                      (item) => item.tool_name === run.tool_name,
+                    ).length < 2 && (
+                      <button
+                        className="button secondary"
+                        disabled={busy}
+                        onClick={() =>
+                          void mutate(`/tools/${run.tool_name}/retry`)
+                        }
+                      >
+                        Retry {run.tool_name.replaceAll("_", " ")}
+                      </button>
+                    )}
+                </div>
+              ))}
           </section>
 
           <section className={styles.panel} aria-label="Analyst recommendation">
             <PanelHeading
               title="Analyst recommendation"
-              detail="Evidence remains visible before any recommendation is recorded."
+              detail="AI assistance is a draft. The analyst records the recommendation; the checker decides independently."
+            />
+            <label htmlFor="investigation-notes">Analyst notes</label>
+            <textarea
+              id="investigation-notes"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              disabled={!analyst || busy}
+              rows={3}
+            />
+            <label htmlFor="investigation-recommendation">
+              Recommendation for checker
+            </label>
+            <textarea
+              id="investigation-recommendation"
+              value={recommendation}
+              onChange={(event) => setRecommendation(event.target.value)}
+              disabled={!analyst || busy}
+              rows={4}
             />
             <div className={styles.actions}>
               <button
                 className="button secondary"
                 type="button"
-                disabled={Boolean(decision)}
-                onClick={() => recordDecision("Information requested")}
+                disabled={!analyst || busy || recommendation.trim().length < 10}
+                onClick={() =>
+                  void mutate("/recommendation", { notes, recommendation })
+                }
               >
-                Request information
-              </button>
-              <button
-                className="button secondary"
-                type="button"
-                disabled={Boolean(decision)}
-                onClick={() => recordDecision("No further action drafted")}
-              >
-                Recommend no further action
+                Save recommendation
               </button>
               <button
                 className="button primary"
                 type="button"
-                disabled={!collectionComplete || Boolean(decision)}
-                onClick={() => recordDecision("Escalated to checker")}
+                disabled={
+                  !collectionComplete ||
+                  !analyst ||
+                  busy ||
+                  !current.analyst_recommendation
+                }
+                onClick={() => void mutate("/submit")}
               >
                 <ArrowUpRight size={16} />
-                Escalate to checker
+                Submit to independent checker
               </button>
             </div>
             {!collectionComplete && (
@@ -574,10 +740,13 @@ function InvestigationReview() {
                 checker.
               </p>
             )}
-            {decision && (
-              <p className={styles.liveMessage} aria-live="polite">
-                {decision} and added to the activity history.
-              </p>
+            {current.approval_id && (
+              <Link
+                className="button secondary"
+                href={`/decisions?case=${encodeURIComponent(current.id)}`}
+              >
+                Open checker review
+              </Link>
             )}
           </section>
         </aside>

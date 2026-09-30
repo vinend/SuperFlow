@@ -18,6 +18,7 @@ import { ApprovalPanel } from "./approval-panel";
 import { EvidenceChecklist } from "./evidence-checklist";
 import { SourcePanel } from "./source-panel";
 import { InvestmentContext } from "./investment-context";
+import { InvestigationContext } from "./investigation-context";
 import { SectionHeader, StatusBadge } from "./ui/primitives";
 
 export function CaseWorkspace({
@@ -63,6 +64,9 @@ export function CaseWorkspace({
           )}
           {current.type === "investment" && (
             <InvestmentContext caseId={current.id} user={user} />
+          )}
+          {current.type === "aml_investigation" && (
+            <InvestigationContext caseId={current.id} user={user} />
           )}
           {current.allowed_actions.includes("edit") && (
             <details

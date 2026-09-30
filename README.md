@@ -5,7 +5,7 @@
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fondasi backend Fase 0–3 tetap digunakan. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. **Fase 4 — Regulation-to-Action** tersedia sebagai **Regulatory Review** untuk Compliance, **Fase 5 — Investment Intelligence** sebagai **Investment Analysis** untuk Finance, dan **Fase 6 — Impact Analytics** sebagai **Impact** untuk role yang berwenang. Governance penuh belum tersedia.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi fondasi prototype sintetis. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Regulatory Review, Investment Analysis, Impact, dan **Investigation Review Fase 7** tersedia di atas fondasi yang sama. Governance penuh dan Fase 8 belum tersedia.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -102,7 +102,7 @@ Launcher Python mencari `PYTHON`, lalu `.runtime/python/python.exe`, lalu `pytho
 | `TEST_DATABASE_URL`        | URL yang sama dengan database `superflow_test`                           | Database test terpisah; nama harus berakhiran `_test`  |
 | `CORS_ORIGINS`             | `http://localhost:3000,http://127.0.0.1:3000`                            | Origin frontend yang diizinkan API                     |
 | `NEXT_PUBLIC_API_URL`      | `http://127.0.0.1:8000`                                                  | URL API yang diketahui browser; tetapkan sebelum build |
-| `LLM_PROVIDER`             | `deterministic`                                                          | `ollama` mengaktifkan inference lokal nyata untuk Ask  |
+| `LLM_PROVIDER`             | `deterministic`                                                          | `ollama` mengaktifkan inference lokal Ask dan usulan tindakan investigasi yang tetap divalidasi backend |
 | `OLLAMA_BASE_URL`          | `http://127.0.0.1:11434`                                                 | Endpoint Ollama dari proses FastAPI                    |
 | `OLLAMA_MODEL`             | `qwen3.5:9b`                                                             | Model lokal                                            |
 | `OLLAMA_NUM_CTX`           | `8192`                                                                   | Batas context runtime                                  |
@@ -151,7 +151,7 @@ npm.cmd run db:migrate
 npm.cmd run db:seed
 ```
 
-API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. Seed menyediakan enam identitas, 13 dokumen/15 versi, serta template workflow generic review dan regulatory remediation. Seed berulang tidak menghapus upload, perubahan metadata, atau pertanyaan yang sudah tersimpan.
+API tidak membuat schema otomatis. Migrasi harus dijalankan terlebih dahulu. Seed menyediakan tujuh identitas (termasuk Compliance Checker), 13 dokumen/15 versi, template workflow, dan tiga investigasi sintetis. Seed berulang tidak menghapus upload, perubahan metadata, atau pertanyaan yang sudah tersimpan.
 
 Satu dokumen hanya boleh memiliki satu versi active. Publikasi versi mengambil lock dokumen dan menandai versi active sebelumnya sebagai outdated dalam transaksi yang sama. Versi bertanggal efektif di masa depan harus draft.
 
@@ -283,8 +283,8 @@ Arsitektur, kontrak, precedence status, aturan coverage, model audit, generator 
 - Provider default berupa extract source deterministik. Provider Ollama opsional menghasilkan sintesis AI nyata, tetapi retrieval masih keyword/concept dan Guard belum membuktikan semantic entailment; karena itu sintesis AI selalu REVIEW_REQUIRED. `Source-grounded` menunjukkan evidence/citation yang lolos validasi, bukan izin melakukan tindakan bisnis.
 - Belum ada OCR atau semantic/vector retrieval. Parser mendukung UTF-8 TXT/Markdown, PDF berbasis teks, DOCX hingga 10 MB. File kosong, rusak, encrypted, atau textless ditolak dengan error yang jelas.
 - Guard memakai aturan extractive dan evidence/conflict terbatas pada skenario yang dikonfigurasi. Belum ada semantic conflict detection, ambiguity detection menyeluruh, atau confidence score. Calculation check hanya berlaku pada Investment Analysis; konteks lain menandainya tidak applicable.
-- Impact Analytics sudah menghitung QCD dari data operasional yang tersedia, tetapi belum mempunyai filter periode, baseline organisasi yang dapat dikonfigurasi, snapshot warehouse, drill-down BI, export, atau alert. Capacity memakai asumsi prototype transparan dan selalu bertanda **Illustrative simulation**; bukan realized profit. Full Governance dan AML/FIU belum diimplementasikan. Workflow masih code-defined, satu run per Case, mock authority, dan belum mempunyai scheduler/notifications/tool runtime.
-- AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, WorkflowTimeline, ComparisonTable, dan FinancialAnalysis fungsional. Impact memakai controlled generative UI: provider deterministik hanya dapat memilih komponen registry bertipe; tidak ada arbitrary HTML atau executable UI dari model. LLM structured-output saat ini hanya aktif untuk sintesis Ask dan tidak memilih komponen Impact.
+- Impact Analytics sudah menghitung QCD dari data operasional yang tersedia, tetapi belum mempunyai filter periode, baseline organisasi yang dapat dikonfigurasi, snapshot warehouse, drill-down BI, export, atau alert. Capacity memakai asumsi prototype transparan dan selalu bertanda **Illustrative simulation**; bukan realized profit. Full Governance belum diimplementasikan. Investigation Review Fase 7 bersifat sintetis; tidak ada sistem nasabah/FIU nyata, filing, atau keputusan AML otomatis. Workflow masih code-defined, satu run per Case, mock authority, dan belum mempunyai scheduler/notifications produksi.
+- AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, WorkflowTimeline, ComparisonTable, dan FinancialAnalysis fungsional. Impact memakai controlled generative UI: provider deterministik hanya dapat memilih komponen registry bertipe; tidak ada arbitrary HTML atau executable UI dari model. LLM structured-output dipakai untuk sintesis Ask dan opsional untuk usulan satu tindakan investigasi yang divalidasi allowlist backend; model tidak memilih komponen Impact.
 - Pass frontend memakai MCP 21st.dev untuk pencarian dan inspeksi source tabel. Kuota gratis dua retrieval membatasi pemeriksaan source kandidat lain; komponen yang belum diperiksa tidak dipasang. Adopsi pola dan hasil pass dicatat di [FRONTEND_REFINEMENT.md](docs/FRONTEND_REFINEMENT.md).
 - Docker Ollama dengan GPU NVIDIA dan API host-only sudah diverifikasi. PostgreSQL lokal nyata tetap dipakai oleh proses aplikasi saat verifikasi ini. Keyboard/browser diuji; audit screen reader lengkap belum dilakukan.
 - Dokumen seed berbahasa Inggris dipertahankan sebagai fixture retrieval sintetis. Panduan proyek menggunakan Bahasa Indonesia; AGENTS/PRD dan file instruksi Next.js mengikuti bahasa sumbernya.
@@ -407,3 +407,16 @@ Proposal B tidak memiliki konflik, jadi langsung **Ready to submit**. Dari Ask, 
 3. Periksa overview Quality, Cost / Capacity, dan Delivery. Metrik yang belum mempunyai observasi tampil sebagai **Not yet measured**, bukan nol rekaan.
 4. Tanyakan **Where does reliability need attention?** untuk komposisi Quality, **How much capacity could be released?** untuk capacity, atau **What is slowing delivery?** untuk Delivery.
 5. Pada Capacity, periksa semua asumsi dan label **Illustrative simulation**. Hours released dan illustrative cost avoidance adalah skenario soft-dollar, bukan penghematan terealisasi.
+
+## Investigation Review — Fase 7
+
+**Investigation Review** adalah proof point AML/FIU sintetis, bukan identitas produk atau koneksi sistem FIU nyata. Layar existing kini membaca `Investigation`, `CaseEvidence`, `ToolRun`, GuardResult, workflow, Approval, dan AuditEvent dari backend. Template demo mendefinisikan lima bukti wajib. Alat `get_customer_profile`, `summarize_transactions`, `run_watchlist_screening`, dan `search_adverse_news` hanya membaca fixture sintetis. Agent memilih tindakan dari allowlist dengan batas delapan langkah dan dua upaya per alat. Ollama boleh mengusulkan tindakan terstruktur yang divalidasi backend; planner deterministik tetap berjalan tanpa Ollama. Analis mencatat rekomendasi, kemudian checker Compliance yang berbeda memutuskan melalui Reviews / Approvals. Rincian arsitektur: [AML_FIU_INVESTIGATION.md](docs/AML_FIU_INVESTIGATION.md).
+
+```bash
+npm.cmd run db:migrate
+npm.cmd run db:seed
+# Reset eksplisit data sintetis lokal saja:
+npm.cmd run db:reset -- --confirm-synthetic-data
+```
+
+Demo: pilih **Compliance — Raka Wijaya**, buka `/investigations`, lalu pilih alert `AML-2026-001` (lengkap), `AML-2026-002` (alat watchlist gagal), atau `AML-2026-003` (konflik). Jalankan pengumpulan bukti. Pada alert pertama, simpan rekomendasi dan kirim ke checker. Ganti ke **Compliance Checker — Sinta Mahardika**, buka Reviews / Approvals, inspeksi konteks sintetis, lalu putuskan. My Work dan Activity memakai state yang sama setelah refresh. Status Guard VERIFIED hanya berarti bukti wajib lulus; tidak ada kesimpulan AML atau keputusan pelaporan otomatis.

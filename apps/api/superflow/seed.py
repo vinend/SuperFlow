@@ -23,7 +23,7 @@ ROLES = [
 ]
 
 
-def seed(db, *, commit=True):
+def seed(db, *, commit=True, include_investigations=False):
     for role_id, name, department, user_name in ROLES:
         if db.get(Role, role_id) is None:
             permissions = ["knowledge:read", "knowledge:ask"]
@@ -43,6 +43,18 @@ def seed(db, *, commit=True):
                     active=True,
                 )
             )
+    db.flush()
+    if db.get(User, "compliance_checker") is None:
+        db.add(
+            User(
+                id="compliance_checker",
+                name="Sinta Mahardika",
+                email="compliance-checker@superflow.example",
+                department="Compliance",
+                role_id="compliance",
+                active=True,
+            )
+        )
     db.flush()
     for definition in DEFINITIONS:
         install(db, definition)
@@ -70,6 +82,12 @@ def seed(db, *, commit=True):
                 source.read_bytes(),
             )
         created += 1
+    if include_investigations:
+        from .investigations import create_investigation
+
+        analyst = db.get(User, "compliance")
+        for scenario in ("complete", "failed_evidence", "conflict"):
+            create_investigation(db, analyst, scenario, seed=True)
     if commit:
         db.commit()
     return created
@@ -92,13 +110,13 @@ def validate_reset_target(url: str, confirmed: bool) -> None:
 
 
 def reset_synthetic(db):
-    """Reset Phase 0–5 synthetic tables atomically; preserve the schema."""
+    """Reset synthetic tables including Phase 7 atomically; preserve the schema."""
     try:
         demo_reset_mode(db, True)
         for table in reversed(Base.metadata.sorted_tables):
             db.execute(delete(table))
         db.expunge_all()
-        count = seed(db, commit=False)
+        count = seed(db, commit=False, include_investigations=True)
         demo_reset_mode(db, False)
         db.commit()
         return count
@@ -108,7 +126,7 @@ def reset_synthetic(db):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Seed synthetic Phase 0–5 knowledge data.")
+    parser = argparse.ArgumentParser(description="Seed synthetic SuperFlow demo data.")
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--confirm-synthetic-data", action="store_true")
     args = parser.parse_args()
@@ -118,7 +136,9 @@ def main():
         except ValueError as error:
             parser.error(str(error))
     with SessionLocal() as session:
-        count = reset_synthetic(session) if args.reset else seed(session)
+        count = (
+            reset_synthetic(session) if args.reset else seed(session, include_investigations=True)
+        )
         print(f"{'Reset' if args.reset else 'Seed'} complete: {count} synthetic documents created.")
 
 

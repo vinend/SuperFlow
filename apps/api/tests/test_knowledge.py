@@ -47,7 +47,7 @@ def ask(client, headers, question="How many annual leave days do employees recei
 def test_authentication_required(client):
     assert client.get("/api/documents").status_code == 401
     assert client.get("/api/documents", headers={"X-User-Id": "unknown"}).status_code == 401
-    assert len(client.get("/api/users").json()) == 6
+    assert len(client.get("/api/users").json()) == 7
 
 
 def test_role_inventory_and_direct_read_non_leakage(client, employee, admin):

@@ -1395,6 +1395,17 @@ Use the shared foundation.
 
 Do not reposition product around AML/FIU.
 
+Prototype requirements for Investigation Review:
+
+- Use a Case and the existing workflow, evidence, Guard, approval, permission, and audit infrastructure.
+- Use deterministic synthetic alert, customer, transaction, watchlist, and adverse-news fixtures only. No real integration or unrestricted browsing.
+- Define required and optional evidence in a versioned investigation template. Every collected item has a tool attempt and provenance.
+- A bounded tool-using agent may select only allowlisted actions through strict structured output. Backend validation, step limits, retry limits, and deterministic fallback govern execution. The model cannot mutate state directly.
+- Show transparent triage indicators rather than an unexplained laundering probability. Guard reports VERIFIED, REVIEW_REQUIRED, or BLOCKED for evidence reliability, not customer disposition.
+- An analyst inspects evidence and edits the recommendation. A different human Compliance checker decides through Reviews / Approvals. The analyst cannot self-approve.
+- My Work shows progress, and append-only audit records tool, Guard, analyst, and checker events. Refresh and local synthetic reset preserve and restore the scenario respectively.
+- The agent cannot decide regulatory reporting, close an investigation independently, or make an autonomous suspicious/not-suspicious finding.
+
 ---
 
 # 37. Phase 8 — Demo Polish

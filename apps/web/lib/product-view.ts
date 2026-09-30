@@ -114,6 +114,7 @@ export const WORK_TYPES: Record<CaseView["type"], string> = {
   regulatory_review: "Regulatory review",
   remediation: "Remediation",
   investment: "Investment analysis",
+  aml_investigation: "Investigation review",
 };
 export function workTitle(title: string) {
   if (/^Demo A — Annual leave review(?: inspection \d+)?$/.test(title))
@@ -246,6 +247,41 @@ export function workItemsFor(
         };
       }
       const analysisHref = `/investment?analysis=${encodeURIComponent(item.id)}`;
+      if (item.type === "aml_investigation") {
+        const terminal = ["COMPLETED", "CANCELLED"].includes(item.status);
+        return {
+          id: item.id,
+          href: review?.allowed_actions.length
+            ? `/decisions?case=${encodeURIComponent(item.id)}`
+            : `/investigations?investigation=${encodeURIComponent(item.id)}`,
+          title: workTitle(item.title),
+          type: WORK_TYPES[item.type],
+          status: businessStatus(item.status),
+          currentStep: terminal
+            ? "Review complete"
+            : run
+              ? "Independent checker review"
+              : "Evidence collection and analyst review",
+          nextAction: terminal
+            ? "View outcome"
+            : review?.allowed_actions.length
+              ? "Review recommendation"
+              : own
+                ? run
+                  ? "View checker progress"
+                  : "Continue investigation"
+                : "View progress",
+          ownerId: item.owner_id,
+          reviewerId: review?.requested_from || null,
+          dueAt: null,
+          reliability: businessStatus(item.reliability_status),
+          updatedAt: item.updated_at,
+          progress: progressFor(run, review?.requested_role),
+          needsAttention:
+            !terminal &&
+            Boolean(review?.allowed_actions.length || (own && !run)),
+        };
+      }
       if (item.type === "investment" && !run) {
         // Analyses are prepared in Investment Analysis until they are submitted.
         const terminal = ["COMPLETED", "CANCELLED"].includes(item.status);
@@ -434,6 +470,19 @@ const EVENTS: Record<string, string> = {
   assumption_selected: "Source value selected",
   memo_updated: "Memo edited",
   investment_submitted: "Submitted for approval",
+  investigation_created: "Investigation opened",
+  agent_run_started: "Evidence collection started",
+  agent_action_planned: "Next permitted evidence action selected",
+  agent_step_limit_reached: "Automated collection stopped for manual attention",
+  tool_requested: "Synthetic evidence tool requested",
+  tool_completed: "Synthetic evidence collected",
+  tool_failed: "Synthetic evidence collection failed",
+  tool_retried: "Evidence collection retried",
+  evidence_collected: "Evidence provenance recorded",
+  analyst_recommendation_updated: "Analyst recommendation updated",
+  investigation_submitted_to_checker: "Sent to independent checker",
+  checker_decision_recorded: "Checker decision recorded",
+  investigation_completed: "Investigation review completed",
 };
 export function activityLabel(event: ActivityView) {
   if (event.event_type === "workflow_advanced") {

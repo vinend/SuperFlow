@@ -340,6 +340,42 @@ class InvestmentAnalysis(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class Investigation(Base):
+    """Synthetic FIU context; Case owns authority, revision and workflow state."""
+
+    __tablename__ = "investigations"
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"), primary_key=True)
+    alert_reference: Mapped[str] = mapped_column(String(80), unique=True)
+    template_id: Mapped[str] = mapped_column(String(80))
+    scenario: Mapped[str] = mapped_column(String(30))
+    subject_reference: Mapped[str] = mapped_column(String(80))
+    context_data: Mapped[dict] = mapped_column(JSON)
+    provenance: Mapped[dict] = mapped_column(JSON, default=dict)
+    analyst_notes: Mapped[str] = mapped_column(Text, default="")
+    analyst_recommendation: Mapped[str] = mapped_column(Text, default="")
+    submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ToolRun(Base):
+    """One immutable attempt at an allowlisted synthetic evidence tool."""
+
+    __tablename__ = "investigation_tool_runs"
+    __table_args__ = (UniqueConstraint("investigation_id", "tool_name", "attempt_number"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    investigation_id: Mapped[str] = mapped_column(ForeignKey("investigations.case_id"), index=True)
+    tool_name: Mapped[str] = mapped_column(String(80))
+    status: Mapped[str] = mapped_column(String(20))
+    attempt_number: Mapped[int]
+    request_metadata: Mapped[dict] = mapped_column(JSON)
+    result_metadata: Mapped[dict] = mapped_column(JSON, default=dict)
+    error_code: Mapped[str | None] = mapped_column(String(80))
+    error_summary: Mapped[str | None] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 class ActionReceipt(Base):
     __tablename__ = "action_receipts"
     __table_args__ = (UniqueConstraint("case_id", "actor_id", "key"),)

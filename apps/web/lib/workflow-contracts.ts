@@ -63,7 +63,8 @@ export type CaseView = {
     | "remediation"
     | "investment"
     | "audit"
-    | "operations";
+    | "operations"
+    | "aml_investigation";
   title: string;
   description: string;
   status: CaseStatus;

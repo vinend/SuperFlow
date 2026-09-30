@@ -113,6 +113,156 @@ class SuperFlowGuard:
     def __init__(self, conflict_detector: ConflictDetector | None = None):
         self.conflicts = conflict_detector or ExplicitConflictDetector()
 
+    def evaluate_investigation(
+        self,
+        *,
+        authorized: bool,
+        evidence: list[EvidenceItem],
+        provenance_valid: bool,
+        conflict: str | None,
+        failed_tools: list[str],
+        template_valid: bool = True,
+    ) -> GuardResult:
+        """Use canonical Guard controls for synthetic tool evidence, without document citations.
+
+        VERIFIED means evidence passed configured checks, never an AML disposition.
+        """
+        names = [
+            "citation_coverage",
+            "source_validity",
+            "source_authority",
+            "version_validity",
+            "permission_validity",
+            "evidence_completeness",
+            "conflict_detection",
+            "calculation_validity",
+            "human_review_requirement",
+        ]
+        if not authorized:
+            checks = {
+                name: GuardCheckResult(
+                    passed=False if name == "permission_validity" else None,
+                    applicable=name == "permission_validity",
+                    details="Investigation evidence is unavailable to this role."
+                    if name == "permission_validity"
+                    else "Not returned because access is restricted.",
+                )
+                for name in names
+            }
+            return GuardResult(
+                status=ReliabilityStatus.ACCESS_RESTRICTED,
+                checks=checks,
+                reasons=["Investigation evidence is unavailable to this role."],
+                evidence=[],
+                source_refs=[],
+                active_replacements=[],
+                allowed_actions=["consult_owner"],
+                summary="Investigation evidence is unavailable to this role.",
+                next_step="Contact the assigned Compliance analyst.",
+                policy_version="guard-investigation-v1",
+            )
+        missing = [item.label for item in evidence if item.required and item.status == "missing"]
+        conflicting = [item.details for item in evidence if item.status == "conflicting"]
+        if conflict:
+            conflicting.append(conflict)
+            evidence = [
+                *evidence,
+                EvidenceItem(
+                    key="funds_pattern_conflict",
+                    label="Source of funds versus transaction narrative",
+                    required=False,
+                    status="conflicting",
+                    details=conflict,
+                ),
+            ]
+        complete = not missing
+        checks = {
+            "citation_coverage": GuardCheckResult(
+                passed=provenance_valid,
+                details="Every collected tool result has a persisted attempt and fingerprint."
+                if provenance_valid
+                else "Collected evidence has incomplete provenance.",
+            ),
+            "source_validity": GuardCheckResult(
+                passed=not failed_tools,
+                details="Synthetic tool results are available."
+                if not failed_tools
+                else "Evidence collection failed: " + ", ".join(failed_tools),
+            ),
+            "source_authority": GuardCheckResult(
+                passed=True,
+                details="Only configured synthetic investigation adapters supply evidence.",
+            ),
+            "version_validity": GuardCheckResult(
+                passed=template_valid,
+                details="The configured investigation template and fixture version are recorded."
+                if template_valid
+                else "Investigation template version is unknown.",
+            ),
+            "permission_validity": GuardCheckResult(
+                passed=True, details="Actor is an assigned Compliance participant."
+            ),
+            "evidence_completeness": GuardCheckResult(
+                passed=complete,
+                details="Required evidence is available."
+                if complete
+                else "Missing required evidence: " + ", ".join(missing),
+            ),
+            "conflict_detection": GuardCheckResult(
+                passed=not conflicting,
+                details="No configured material conflict."
+                if not conflicting
+                else "; ".join(conflicting),
+            ),
+            "calculation_validity": GuardCheckResult(
+                passed=None, applicable=False, details="No financial calculation applies."
+            ),
+            "human_review_requirement": GuardCheckResult(
+                passed=False,
+                details="An analyst and independent checker must make the human decision.",
+            ),
+        }
+        status = (
+            ReliabilityStatus.BLOCKED
+            if not complete or not provenance_valid or failed_tools or not template_valid
+            else ReliabilityStatus.REVIEW_REQUIRED
+            if conflicting
+            else ReliabilityStatus.VERIFIED
+        )
+        summary = {
+            ReliabilityStatus.BLOCKED: "Required investigation evidence is missing or unavailable.",
+            ReliabilityStatus.REVIEW_REQUIRED: "Material evidence conflict needs human judgment.",
+            ReliabilityStatus.VERIFIED: (
+                "Configured evidence checks passed; human review is still required."
+            ),
+        }[status]
+        reasons = [
+            checks[name].details
+            for name in (
+                "citation_coverage",
+                "source_validity",
+                "version_validity",
+                "evidence_completeness",
+                "conflict_detection",
+            )
+            if checks[name].passed is False
+        ]
+        return GuardResult(
+            status=status,
+            checks=checks,
+            reasons=reasons,
+            evidence=evidence,
+            source_refs=[],
+            active_replacements=[],
+            allowed_actions=[],
+            summary=summary,
+            next_step="Inspect provenance, record an analyst recommendation, then request "
+            "independent checker review."
+            if status != ReliabilityStatus.BLOCKED
+            else "Collect or repair the missing evidence before submission.",
+            policy_version="guard-investigation-v1",
+        )
+
     def evaluate(self, db: Session, value: GuardInput) -> GuardResult:
         checks = {}
         reasons = []

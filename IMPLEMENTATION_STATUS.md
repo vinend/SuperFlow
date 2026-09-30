@@ -4,24 +4,27 @@
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** Mockup web Fase 7 — AML/FIU Investigation Review, Fase 6 — Impact Analytics, Fase 4 — Regulation-to-Action, Fase 5 — Investment Intelligence, fondasi Fase 0–3, dan rekonsiliasi Product Experience. Backend tetap menjadi sumber kebenaran untuk fitur yang sudah terintegrasi.
+**Ruang lingkup:** Fase 0–7 dan rekonsiliasi Product Experience sudah diimplementasikan untuk scope prototype sintetis. Fase 7 adalah proof point AML/FIU di atas fondasi bersama. Fase 8 belum dimulai.
 
-**Status:** Fase 6 selesai untuk scope prototype. Fase 7 dimulai sebagai mockup frontend interaktif dengan data sintetis; belum terhubung ke Transaction Monitoring, screening, pencarian berita, Getcontact, workflow, atau penyimpanan backend.
+**Status:** UI mockup Investigation Review dari commit `4c88fb0` dipertahankan dan dihubungkan ke investigasi persisten, adapter sintetis, Guard, workflow checker, serta audit. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
 
-# Fase 7 — Mockup AML/FIU Investigation Review
+# Fase 7 — AML/FIU Investigation Review
 
-## Selesai untuk validasi UX awal
+## Selesai untuk prototype sintetis
 
 - Route `/investigations` dan navigasi **Investigation Review** khusus role Compliance memakai shell, token warna, tipografi, spacing, button, serta pola responsive SuperFlow existing.
-- Skenario sintetis satu alert menampilkan profil nasabah, field source of funds wajib, transaksi, indikator tipologi, triage risk, status evidence, activity, dan rekomendasi analis.
-- Simulasi evidence collection mengubah watchlist screening dan adverse-news search secara bertahap dari pending menjadi collected. Customer profile screenshot sudah mencakup source of funds; supporting documents bersifat opsional dan akan digabungkan saat evidence document dibuat.
-- Aksi material diubah menjadi **Escalate to checker** dan baru aktif setelah lima pemeriksaan evidence wajib selesai. Keputusan dan aktivitas pada tahap mockup hanya disimpan di state browser.
+- Tiga alert sintetis menampilkan profil subjek, source of funds, transaksi, indikator triage, status evidence, activity, dan rekomendasi analis.
+- Evidence collection kini dieksekusi API melalui empat adapter sintetis allowlist; `ToolRun`, provenance, CaseEvidence, GuardResult, dan AuditEvent tersimpan di PostgreSQL. Lima syarat bukti berasal dari template demo, bukan aturan AML universal.
+- UI menggunakan label prioritas triage HIGH dengan indikator eksplisit; angka 82/100 mockup dihapus.
+- Analis menyimpan rekomendasi, kemudian mengirim ke workflow `aml-investigation-v1`. Compliance Checker sintetis yang berbeda menerima Approval existing di Reviews / Approvals. My Work membuka investigasi dan menampilkan progres.
+- Skenario lengkap, alat gagal/retry, dan konflik dapat di-reset secara deterministik. Agent dibatasi delapan langkah dan dua upaya per alat, dengan planner deterministik serta planner Ollama opsional yang hanya boleh mengusulkan tindakan yang diizinkan backend.
 
-## Batasan mockup
+## Batasan saat ini
 
 - Seluruh identitas, transaksi, hasil screening, adverse news, rating, dan activity bersifat sintetis.
-- Belum ada API, database, permission backend khusus FIU, screenshot automation, hash/checksum nyata, document generation, audit persistence, atau checker queue nyata.
-- Rating 82/100 adalah tampilan triage mockup, bukan probabilitas pencucian uang atau keputusan pelaporan.
+- Tidak ada integrasi eksternal, screenshot dari sistem nyata, pembuatan berkas regulator, atau keputusan STR/SAR. Tool result hanya fixture sintetis dengan fingerprint SHA-256 dari payload JSON tersimpan.
+- Triage HIGH adalah kategori deterministik dari empat indikator fixture, bukan probabilitas pencucian uang. Guard VERIFIED hanya berarti persyaratan bukti yang dikonfigurasi lulus.
+- Alur FIU memakai mock role switcher; bukan autentikasi atau entitlement produksi. Checker hanya bisa membaca investigasi yang ditugaskan.
 
 # Inference AI Lokal — Ollama Docker
 
@@ -37,7 +40,7 @@
 
 ## Batasan
 
-- Inference nyata saat ini hanya untuk sintesis Ask. Retrieval, ImpactComposer, Regulatory Review, dan Investment Analysis tetap deterministik.
+- Inference nyata dipakai untuk sintesis Ask dan opsional untuk usulan satu tindakan investigasi yang divalidasi allowlist backend. Retrieval, ImpactComposer, Regulatory Review, dan Investment Analysis tetap deterministik.
 - Cold start model pertama lebih lambat. Qwen `9b` dengan context 8192 memakai sebagian CPU/GPU pada perangkat 8 GB VRAM; batas output mencegah generasi panjang yang tidak terukur.
 - Konfigurasi aktif workstation memakai port `11435` untuk menghindari konflik dengan Ollama WSL di `11434`; default repository tetap `11434` dan dapat dioverride lewat environment.
 
@@ -113,7 +116,7 @@
 
 # Selesai
 
-- Fondasi Next.js/FastAPI/PostgreSQL, migrasi Alembic, seed/reset, enam identitas demo, upload/parsing, metadata, versi immutable, publikasi, re-index dan download tetap tersedia.
+- Fondasi Next.js/FastAPI/PostgreSQL, migrasi Alembic, seed/reset, tujuh identitas demo, upload/parsing, metadata, versi immutable, publikasi, re-index dan download tetap tersedia.
 - Ask, retrieval authorized, citation document/version/chunk nyata, SourcePanel, saved questions, lima status SuperFlow Guard, EvidenceItem dan AuditEvent dipertahankan.
 - Case, WorkflowDefinition/Run/Step, Task, Approval, retry/fallback/escalation, authority, row locks, expected_revision dan idempotency receipts tetap menggunakan implementasi Fase 3. Tidak ada migrasi atau engine baru dalam pass ini.
 - Navigasi berbasis role: Employee mendapat Home/Ask SuperFlow/Knowledge/My Work; Manager, SME, Compliance, Finance, dan Governance mendapat Impact sesuai scope datanya, di samping Reviews / Approvals dan pengalaman domain yang relevan.
@@ -129,7 +132,7 @@
 
 # Sebagian Selesai
 
-- Satu generic review definition, satu run per Case; belum scheduler, notification atau tool runtime.
+- Workflow tetap code-defined dengan satu run per Case. Tool runtime Fase 7 hanya empat adapter sintetis allowlist; belum scheduler, notification, atau konektor produksi.
 - Evidence attachment berupa source chunk yang authorized dan current. Kesesuaian makna evidence tetap memerlukan penilaian reviewer.
 - Guard memakai provider extractive dan aturan konflik eksplisit; belum pemeriksaan semantik menyeluruh, OCR atau vector retrieval.
 - Identitas demo belum SSO/entitlement produksi. Role switcher dipertahankan untuk demo.
@@ -138,7 +141,7 @@
 
 # Belum Diimplementasikan
 
-- AML/FIU (Fase 7), demo polish (Fase 8), dan full Governance.
+- Demo polish (Fase 8), integrasi FIU nyata, dan full Governance.
 - Autentikasi produksi, notifikasi/integrasi eksternal, dan visual workflow builder.
 
 # Masalah yang Diketahui
@@ -150,7 +153,7 @@
 - Data operasional/test lama tidak dihapus. Adapter menerjemahkan judul demo lama yang dikenal; judul pengguna tetap dipertahankan.
 - Higher-authority escalation tidak tersedia setelah Governance atau bila reviewer independen authorized tidak tersedia; API mengembalikan konflik yang jelas.
 - Reset mengganti ID sumber dan menghapus execution/audit sintetis; URL lama dapat tidak tersedia.
-- PostgreSQL proses aplikasi memakai runner lokal nyata pada port 55432. Profile Docker Ollama sudah diverifikasi terpisah dan tidak mengubah database tersebut.
+- PostgreSQL aplikasi Fase 7 dijalankan pada port 5432, dimigrasikan ke revisi `0007`, lalu diisi ulang dengan seed sintetis. Suite E2E memakai database test terpisah. Profile Docker Ollama diverifikasi pada pass sebelumnya.
 - MCP 21st.dev membatasi retrieval source harian. Komponen yang source/dependencies-nya tidak dapat diinspeksi tidak dipasang.
 - Sandbox Windows menghalangi beberapa proses worker/temp; pemeriksaan yang memerlukan subprocess dijalankan dengan izin yang sesuai. Warning HTTPX/Starlette dan NO_COLOR/FORCE_COLOR tidak menggagalkan tes.
 - `npm run format:check` repository penuh melaporkan 81 file lama dengan drift Prettier/line-ending Windows. Semua file yang diubah/ditambah pada Fase 6 lulus pemeriksaan Prettier terarah; file lama tidak diformat massal untuk menghindari diff yang tidak terkait.
@@ -178,18 +181,18 @@
 
 # Hasil Pengujian
 
-Hasil aktual pass Fase 6 pada Windows dengan SQLite terisolasi untuk suite API dan PostgreSQL embedded terisolasi di port 55432 untuk E2E:
+Hasil aktual pass Fase 7 pada Windows, dengan PostgreSQL aplikasi dan database test terpisah:
 
 | Pemeriksaan          | Hasil aktual                                                                                                                                                           |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Backend API          | **121 lulus**, termasuk permission, approved component registry, disclosure simulasi, observed Guard metric, intent composition, dan non-leakage lintas role           |
-| Frontend unit        | **33 lulus**, termasuk validasi/format analytics, penolakan arbitrary HTML component, disclosure simulasi, dan regresi navigasi role-aware                             |
-| E2E Chromium         | **34 lulus** pada PostgreSQL nyata: seluruh 32 regresi + journey QCD/composer/no backend nouns/mobile overflow + employee role-gating                                  |
-| Formatter/lint/types | Ruff format/check, ESLint, TypeScript, kelima generated-contract checks, dan Prettier terarah untuk file Fase 6 lulus; catatan baseline repository ada di known issues |
-| Production build     | Lulus, termasuk route `/impact`, `/investment`, dan `/regulatory`                                                                                                      |
-| Responsive           | E2E mobile 390 px membuktikan nol horizontal overflow dan tidak ada page error pada Impact                                                                             |
+| Backend API          | **135 lulus**, termasuk tool registry, provenance, retry, planner, Guard, checker independen, audit, idempotency, dan non-leakage lintas role                           |
+| Frontend unit        | **34 lulus**, termasuk adapter My Work dan akses checker, serta regresi Fase 0–6                                                                                       |
+| E2E Chromium         | **38 lulus** pada PostgreSQL nyata: perjalanan investigasi lengkap, gagal/retry, konflik, akses role, refresh, dan regresi Fase 0–6                                    |
+| Formatter/lint/types | Ruff format/check, ESLint, TypeScript, dan Prettier terarah untuk file Fase 7 lulus; catatan baseline repository ada di known issues                                    |
+| Production build     | Lulus, termasuk route `/investigations`, `/impact`, `/investment`, dan `/regulatory`                                                                                   |
+| Responsive           | Chromium produksi pada 1440 px dan 390 px: tidak ada horizontal overflow atau page error pada Investigation Review                                                     |
 
-PostgreSQL E2E berjalan pada cluster terisolasi dan sudah dihentikan setelah suite selesai. Database yang sudah ada di port 5432 tidak diubah. Setelah pass Fase 6, Compose/Ollama kemudian diverifikasi pada Docker Desktop dengan port host alternatif `11435`.
+Migrasi `0007` serta seed/reset lokal dijalankan pada PostgreSQL port 5432; API produksi kembali memberi health `ok` dengan tujuh pengguna sintetis dan tiga investigasi. Suite E2E memakai database `superflow_test`. Skenario desktop/mobile juga diperiksa langsung pada build produksi.
 
 # Langkah Berikutnya yang Direkomendasikan
 
@@ -197,4 +200,4 @@ PostgreSQL E2E berjalan pada cluster terisolasi dan sudah dihentikan setelah sui
 2. Tambahkan filter periode dan snapshot/trend hanya setelah definisi business calendar serta retention analytics disepakati.
 3. Tinjau bahasa memo/approval bersama Finance dan bahasa gap/remediation bersama Compliance.
 4. Lanjutkan audit screen reader dan normalisasi baseline Prettier di pass terpisah.
-5. Mulai Fase 7 — AML/FIU proof point hanya setelah instruksi eksplisit.
+5. Setelah Fase 7 stabil, rencanakan Fase 8 secara terpisah; jangan hubungkan FIU ke data nyata tanpa desain keamanan dan otorisasi produksi.

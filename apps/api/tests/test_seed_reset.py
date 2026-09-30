@@ -27,7 +27,11 @@ def test_reset_restores_seed_and_removes_question_runs(client, employee, db):
     db.expire_all()
     assert db.get(Document, "leave-policy").title == "Annual Leave Policy"
     assert db.scalar(select(func.count()).select_from(DocumentVersion)) == 15
-    assert db.scalar(select(func.count()).select_from(QuestionRun)) == 0
+    from superflow.models import Investigation, ToolRun
+
+    assert db.scalar(select(func.count()).select_from(Investigation)) == 3
+    assert db.scalar(select(func.count()).select_from(ToolRun)) == 6
+    assert db.scalar(select(func.count()).select_from(QuestionRun)) == 3
 
 
 @pytest.mark.parametrize(

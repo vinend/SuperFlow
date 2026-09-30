@@ -85,6 +85,8 @@ def read_case(case_id: str, db: Db, user: Actor):
 @router.patch("/cases/{case_id}", response_model=CaseView)
 def patch_case(case_id: str, value: CasePatch, db: Db, user: Actor):
     case = get_case(db, user, case_id, lock=True)
+    if case.type == "aml_investigation":
+        raise HTTPException(409, "Change this investigation in the Compliance workspace.")
     require_edit(user, case)
     if begin_mutation(db, user, case, value, "patch"):
         if value.owner_id and value.owner_id != case.owner_id:
@@ -112,6 +114,11 @@ def patch_case(case_id: str, value: CasePatch, db: Db, user: Actor):
 @router.post("/cases/{case_id}/evidence", response_model=CaseView)
 def attach_evidence(case_id: str, value: EvidenceAdd, db: Db, user: Actor):
     case = get_case(db, user, case_id, lock=True)
+    if case.type == "aml_investigation" and (
+        case.status != "WAITING_FOR_EVIDENCE"
+        or not (value.requirement_key or "").startswith("request-")
+    ):
+        raise HTTPException(409, "Only checker-requested information can be attached here.")
     require_edit(user, case)
     if domain_kind(db, case) == "regulatory":
         raise HTTPException(409, "Regulatory review sources are fixed by the comparison.")
@@ -168,6 +175,8 @@ def read_run(run_id: str, db: Db, user: Actor):
 def workflow_action(run_id: str, action: str, value: Mutation, db: Db, user: Actor):
     case, run = workflow_case(db, user, run_id, lock=True)
     require_edit(user, case)
+    if case.type == "aml_investigation" and action != "advance":
+        raise HTTPException(409, "Use the investigation evidence workflow.")
     if action not in {"advance", "retry", "escalate"}:
         raise HTTPException(404, "Workflow action not found.")
     if begin_mutation(db, user, case, value, action + ":" + run.id):

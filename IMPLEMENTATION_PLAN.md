@@ -4,7 +4,7 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Pekerjaan saat ini adalah **rekonsiliasi Product Experience** setelah Fase 0–3: navigasi berbasis role, My Work, Reviews / Approvals, Progress, Activity, serta Ask menuju tindakan kontekstual. Model/API Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency dipertahankan. Di atas fondasi tersebut telah dibangun **Fase 4 — Regulation-to-Action** (Regulatory Review), **Fase 5 — Investment Intelligence** (Investment Analysis), dan **Fase 6 — Impact Analytics** (Impact).
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi baseline prototype sintetis. Fase 7 memakai fondasi Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency untuk Investigation Review. Fase 8 belum dimulai.
 
 ## Rekonsiliasi Product Experience
 
@@ -29,7 +29,7 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 | 4 — Regulation-to-Action    | Perubahan regulasi menuju remediation      | Comparison, SOP mapping, gap, remediation                                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization, controlled generative UI                    | Data eksekusi dan definisi metrik    | Selesai; functional gate dan format file Fase 6 lulus, baseline format dicatat     |
-| 7 — AML/FIU Extension       | Contoh workflow opsional                   | Mock evidence, exception, human escalation                                                         | Fondasi bersama                      | Di luar ruang lingkup awal                                                         |
+| 7 — AML/FIU Proof Point     | Investigation Review sintetis terkendali  | UI existing, Investigation/ToolRun persisten, template, alat allowlist, agent terbatas, Guard, analyst/checker, audit | Fase 0–6 | Implementasi backend dan integrasi UI berlangsung; verifikasi akhir dicatat di status |
 | 8 — Polish                  | Stabilitas demo seluruh platform           | Journey lengkap, reset lintas modul, presentasi                                                    | Modul yang diotorisasi telah selesai | Ditunda; reset lokal dan aksesibilitas Fase 0/1 tersedia sebagai kebutuhan fondasi |
 
 ## Deliverable Fase 0
@@ -37,10 +37,10 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 - npm workspace `apps/web`; FastAPI/Pydantic/SQLAlchemy di `apps/api`.
 - PostgreSQL sebagai sumber data aplikasi. Docker Compose disediakan; runner lokal PostgreSQL tersedia jika Docker tidak ada. SQLite hanya untuk pengujian terisolasi.
 - Migrasi roles, users, documents, versions, chunks, dan saved questions. Original bytes/checksum disimpan bersama versi dokumen.
-- Enam identitas sintetis; 12 dokumen dengan 14 versi. Seed berulang tidak menimpa data pengguna.
+- Tujuh identitas sintetis (termasuk Compliance Checker); 13 dokumen dengan 15 versi. Seed berulang tidak menimpa data pengguna.
 - Role switcher mock yang tersimpan sebagai ID di browser; role sebenarnya dipahami API melalui `X-User-Id`.
 - Home, Ask SuperFlow, Knowledge tersedia. Navigasi execution sekarang memakai My Work/Reviews sesuai role; tidak ada placeholder modul masa depan sebagai navigasi utama.
-- Reset CLI lokal yang eksplisit, dibatasi database PostgreSQL `superflow`/`superflow_test`, mengembalikan tabel Fase 0/1 secara atomik. Tidak ada endpoint reset produksi atau reset fitur fase berikutnya.
+- Reset CLI lokal yang eksplisit, dibatasi database PostgreSQL `superflow`/`superflow_test`, mengembalikan seluruh data sintetis termasuk tiga investigasi Fase 7 secara atomik. Tidak ada endpoint reset produksi.
 
 ## Deliverable Fase 1
 
@@ -88,7 +88,20 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-AML/FIU (Fase 7), demo polish (Fase 8), autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan.
+Demo polish (Fase 8), autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan. FIU Fase 7 memakai data dan adapter sintetis; integrasi produksi berada di luar scope.
+
+## Deliverable Fase 7 — AML/FIU Investigation Review
+
+**Status:** Selesai untuk prototype sintetis; integrasi sistem nyata dan Fase 8 tetap di luar ruang lingkup.
+
+1. Pertahankan layar Investigation Review existing; ganti state browser dengan API dan PostgreSQL. Tambahkan migrasi `0007` untuk `Investigation` dan `ToolRun`, memakai Case dan CaseEvidence existing.
+2. Template `synthetic-alert-review-v1` menentukan lima bukti wajib dan satu opsional. Empat alat sintetis terdaftar dengan input/output terstruktur, upaya persisten, fingerprint, izin backend, dan audit.
+3. Agent memilih satu tindakan dari allowlist pada setiap langkah; maksimal delapan langkah, dua upaya per alat. Ollama opsional melalui output Pydantic ketat; fallback deterministik. Tidak ada akses internet atau sistem nasabah nyata.
+4. SuperFlow Guard mengevaluasi provenance, kelengkapan, konflik, kegagalan alat, dan izin dengan status kanonik. Triage HIGH berasal dari indikator eksplisit, bukan probabilitas AML.
+5. Analis menyimpan catatan/rekomendasi lalu mengirim ke workflow `aml-investigation-v1`; Compliance Checker sintetis yang berbeda memutuskan di Reviews / Approvals. My Work dan Activity memakai model platform existing.
+6. Seed/reset memberi tiga skenario: lengkap, alat gagal, konflik. Tes API/frontend/E2E, migrasi, format, lint, typecheck, build, desktop/mobile memverifikasi implementasi.
+
+Dependency: Fase 0–6, PostgreSQL/Alembic, Case/workflow/Guard/Audit existing. Batasan dan demo ada di [AML_FIU_INVESTIGATION.md](docs/AML_FIU_INVESTIGATION.md).
 
 ## Deliverable Fase 3
 
