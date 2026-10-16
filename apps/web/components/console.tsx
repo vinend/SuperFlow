@@ -21,6 +21,7 @@ import { DocumentTable } from "./document-table";
 import { SourcePanel } from "./source-panel";
 import { DocumentDetail } from "./document-detail";
 import { DocumentEditor } from "./document-editor";
+import { WebsiteImport } from "./website-import";
 import { HomeAttention } from "./home-attention";
 import { roleLabel } from "@/lib/product-view";
 import { AskGenerativeArea } from "./ask-generative-area";
@@ -66,6 +67,7 @@ function Workspace({ view }: { view: View }) {
   const w = useKnowledgeWorkspace();
   const [status, setStatus] = useState("");
   const [sort, setSort] = useState("title");
+  const [websiteImport, setWebsiteImport] = useState(false);
   const activeCount = w.documents.filter((doc) =>
     doc.versions.some((version) => version.status === "active"),
   ).length;
@@ -209,12 +211,17 @@ function Workspace({ view }: { view: View }) {
         }
         action={
           view === "knowledge" && w.canManage ? (
-            <button
-              className="button primary"
-              onClick={() => w.setEditor({ mode: "upload" })}
-            >
-              <Plus size={16} /> Add document
-            </button>
+            <div className="tag-row">
+              <button className="button" onClick={() => setWebsiteImport(true)}>
+                Import website
+              </button>
+              <button
+                className="button primary"
+                onClick={() => w.setEditor({ mode: "upload" })}
+              >
+                <Plus size={16} /> Add document
+              </button>
+            </div>
           ) : view === "home" ? (
             <Link href="/knowledge" className="text-link">
               Browse knowledge <ArrowRight size={15} />
@@ -455,6 +462,9 @@ function Workspace({ view }: { view: View }) {
             );
           }}
         />
+      )}
+      {websiteImport && (
+        <WebsiteImport close={() => setWebsiteImport(false)} saved={w.saved} />
       )}
       {w.editor && (
         <DocumentEditor

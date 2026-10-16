@@ -6,6 +6,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     LargeBinary,
@@ -97,6 +98,17 @@ class DocumentVersion(Base):
     )
 
 
+class WebsiteCapture(Base):
+    __tablename__ = "website_captures"
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    actor_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    payload: Mapped[dict] = mapped_column(JSON)
+    version_id: Mapped[str | None] = mapped_column(
+        ForeignKey("document_versions.id", ondelete="CASCADE"), unique=True
+    )
+
+
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"
     __table_args__ = (UniqueConstraint("version_id", "ordinal"),)
@@ -105,6 +117,20 @@ class DocumentChunk(Base):
     ordinal: Mapped[int]
     section_path: Mapped[str] = mapped_column(String(300))
     text: Mapped[str] = mapped_column(Text)
+    extraction_method: Mapped[str] = mapped_column(String(20), default="native")
+    page_number: Mapped[int | None]
+    ocr_confidence: Mapped[float | None] = mapped_column(Float)
+    embeddings: Mapped[list["ChunkEmbedding"]] = relationship(cascade="all, delete-orphan")
+
+
+class ChunkEmbedding(Base):
+    __tablename__ = "chunk_embeddings"
+    chunk_id: Mapped[str] = mapped_column(
+        ForeignKey("document_chunks.id", ondelete="CASCADE"), primary_key=True
+    )
+    model: Mapped[str] = mapped_column(String(200), primary_key=True)
+    content_hash: Mapped[str] = mapped_column(String(64))
+    vector: Mapped[list[float]] = mapped_column(JSON)
 
 
 class QuestionRun(Base):

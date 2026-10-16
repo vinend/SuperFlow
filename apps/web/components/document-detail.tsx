@@ -7,6 +7,7 @@ import { useSession } from "./session";
 import { EditorMode } from "./document-editor";
 import { Dialog } from "./ui/dialog";
 import { StatusBadge } from "./ui/primitives";
+import { WebsiteEvidence, type WebsiteCapture } from "./website-import";
 
 export function DocumentDetail({
   document,
@@ -37,10 +38,30 @@ export function DocumentDetail({
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [webEvidence, setWebEvidence] = useState<{
+    versionId: string;
+    capture: WebsiteCapture;
+  } | null>(null);
   const version =
     document.versions.find((item) => item.id === versionId) ||
     document.versions[0];
   const canManage = user.permissions.includes("knowledge:write");
+
+  async function inspectWebsite() {
+    setBusy(true);
+    setError("");
+    try {
+      const capture = await api<WebsiteCapture>(
+        `/api/documents/${document.id}/versions/${version.id}/web-capture`,
+        user,
+      );
+      setWebEvidence({ versionId: version.id, capture });
+    } catch (reason) {
+      setError((reason as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function inspectVersion(id: string) {
     setVersionId(id);
@@ -205,10 +226,38 @@ export function DocumentDetail({
             </div>
           )}
           <h3 className="source-content-heading">Source content</h3>
+          {version.chunks?.some(
+            (chunk) => chunk.extraction_method === "web_capture",
+          ) && (
+            <section>
+              <p className="notice">
+                This website snapshot includes vision observations. Check the
+                captured evidence before applying guidance.
+              </p>
+              {webEvidence?.versionId === version.id ? (
+                <WebsiteEvidence capture={webEvidence.capture} />
+              ) : (
+                <button
+                  className="button"
+                  disabled={busy}
+                  onClick={inspectWebsite}
+                >
+                  Inspect website capture
+                </button>
+              )}
+            </section>
+          )}
           <div className="document-excerpts">
             {version.chunks?.map((chunk) => (
               <section key={chunk.id}>
                 <h3>{chunk.section_path}</h3>
+                {(chunk.extraction_method === "ocr" ||
+                  chunk.extraction_method === "mixed") && (
+                  <p className="muted small">
+                    OCR text: check the original document, especially names and
+                    amounts.
+                  </p>
+                )}
                 <p>{chunk.text}</p>
               </section>
             ))}

@@ -9,6 +9,10 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.orm import Session
 from sqlalchemy.pool import StaticPool
 
+# Functional tests have deterministic provider fixtures, independent of the local
+# operator's RAG mode. Real-model checks opt in explicitly in test_rag_ocr.py.
+os.environ["RETRIEVAL_PROVIDER"] = "keyword"
+
 from superflow.audit import demo_reset_mode
 from superflow.config import ROOT
 from superflow.db import Base, get_db

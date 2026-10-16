@@ -233,16 +233,17 @@ export function DocumentEditor({
             <label className="file-upload">
               <UploadCloud size={25} />
               <strong>Choose a source file</strong>
-              <span>PDF, DOCX, TXT, or Markdown · up to 10 MB</span>
+              <span>PDF, DOCX, TXT, Markdown, PNG, or JPEG · up to 10 MB</span>
               <input
                 name="file"
                 type="file"
                 required
-                accept=".pdf,.docx,.txt,.md"
+                accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg"
               />
             </label>
             <p className="muted small">
-              Scanned PDFs need OCR before upload. Future-effective versions
+              Scanned PDFs and images use local OCR when enabled. OCR text
+              requires review against the original. Future-effective versions
               must remain draft.
             </p>
           </>

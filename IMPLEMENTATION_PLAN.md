@@ -8,6 +8,8 @@ Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0�
 
 ## Pass integrasi Generative Workspace
 
+Perluasan sumber atas permintaan pengguna: Puppeteer menangkap satu halaman publik dengan proxy DNS/IP terkontrol, lalu Ollama vision memindai screenshot. Knowledge menyediakan preview sebelum penyimpanan draft, bukti immutable, permission reader, provenance citation, dan human review wajib. Setup dan batasnya tercatat di `docs/WEBSITE_CAPTURE.md`; pengaktifan generator Ask/demo switch tetap pekerjaan terpisah yang dipause.
+
 Tujuan: satu permintaan bahasa alami di Ask memilih workspace yang sudah ada tanpa menyalin logika domain. CopilotKit V2 dan AG-UI mengirim intent ke adapter Next.js/FastAPI; kontrak bertipe membatasi tujuh workspace, view, dan identifier. FastAPI melakukan klasifikasi deterministik atau memakai Ollama opsional, lalu memeriksa role dan akses investigation. Komponen domain existing mengambil ulang data dari API. Keputusan material tetap memerlukan interaksi manusia.
 
 Deliverable: runtime `/api/copilotkit`, endpoint `/api/workspace-intent`, AskComposer terintegrasi, GenerativeWorkspace, fallback deterministik, invalidasi saat role berubah, uji unit/API/E2E, PNG di `artifacts/screenshots/generative-workspace/`, serta [dokumentasi teknis](docs/GENERATIVE_WORKSPACE.md). Dependency: Fase 0–7 selesai, database/seed tersedia, paket CopilotKit V2. Status: selesai untuk scope prototype sintetis.
@@ -94,7 +96,16 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-Autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan. FIU Fase 7 memakai data dan adapter sintetis; integrasi produksi berada di luar scope.
+Autentikasi produksi belum diimplementasikan. OCR lokal dan hybrid vector retrieval ditambahkan sebagai perluasan pasca-Fase 8 atas permintaan pengguna. FIU Fase 7 memakai data dan adapter sintetis; integrasi produksi berada di luar scope.
+
+## Perluasan RAG/OCR — prioritas sebelum sakelar AI
+
+1. Inspeksi `DAFFAsd/RPL-backend` dan `DAFFAsd/RPL-frontend`; adaptasi alur chunk overlap/BGE/persistensi ke source/version/permission SuperFlow, tanpa global unfiltered index atau cloud upload baru.
+2. Tambahkan RapidOCR ONNX lokal, rasterisasi PDF, PNG/JPEG, batas resource, dan provenance per halaman. Pertahankan original bytes dan wajibkan review hasil OCR.
+3. Tambahkan migrasi `0008`, adapter FastEmbed, model/hash-specific chunk embeddings, hybrid permission-first retrieval, backfill operator, dan re-index yang melindungi citation lama.
+4. Verifikasi model nyata, ingestion/query API, non-leakage, lifecycle migrasi, rollback, native/scan PDF, metadata frontend, browser/mobile, serta quality gate. Dokumentasikan batasan bahasa, tabel, corpus prototype, dan pekerjaan AI-mode yang tetap dipause.
+
+Dependency dan konfigurasi: [RAG_OCR.md](docs/RAG_OCR.md). Ini menjalankan model pretrained; tidak melatih LLM/OCR dari awal.
 
 ## Deliverable Fase 8 — Demo Polish
 

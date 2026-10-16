@@ -4,9 +4,32 @@
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** Fase 0–8 dan rekonsiliasi Product Experience untuk scope prototype sintetis. Fase 7 adalah proof point AML/FIU di atas fondasi bersama; Fase 8 menambahkan demo terintegrasi.
+**Ruang lingkup:** Fase 0–8, rekonsiliasi Product Experience, ingestion RAG/OCR lokal, dan import website dengan Puppeteer/vision. Fase 7 adalah proof point AML/FIU di atas fondasi bersama; Fase 8 menambahkan demo terintegrasi.
 
 **Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+
+# Perluasan RAG/OCR lokal — 16 Oktober 2026
+
+- Pekerjaan demo-mode switch dipause dan WIP disimpan terpisah di Git stash atas instruksi pengguna. Implementasi RAG/OCR berada di branch `rag-ocr-ingestion`, dari baseline Phase 8 yang sudah dipush. Generator tetap `deterministic-extractive-v1`; tidak ada pengaktifan LLM atau integrasi FIU nyata dalam pass ini.
+- Referensi: RPL-backend commit `516da41` (LlamaIndex/BGE/Groq) dan RPL-frontend commit `2885999` (Gemini File Search). Alur retrieval diadaptasi ke PostgreSQL dan permission/version SuperFlow. Tidak ada kode reference yang dieksekusi, dependency cloud baru, atau dokumen yang dikirim ke provider eksternal.
+- OCR native/scan/mixed PDF dan PNG/JPEG memakai RapidOCR PP-OCRv4 ONNX lokal serta PDFium. Original bytes dipertahankan. Metadata extraction, halaman, dan skor pengenalan ditambahkan pada citation dan Source Panel. Evidence OCR/mixed selalu REVIEW_REQUIRED dan detail dokumen memperingatkan pemeriksaan original.
+- Migrasi `0008` menyimpan extraction provenance dan tabel `chunk_embeddings`. FastEmbed BGE-small-en-v1.5 menghasilkan vektor CPU 384 dimensi. Backfill current corpus menghasilkan **25 vektor** untuk 13 dokumen/15 versi tanpa mengubah source text atau citation ID.
+- Hybrid retrieval memakai permission/domain/versi/effective date sebelum membaca chunk/vektor, cosine relevance floor, lalu reciprocal rank fusion dengan keyword ranking. Index hilang/stale/model gagal menghasilkan 503 eksplisit. Upload/publikasi embedding gagal rollback; parsing ulang yang mengubah teks ditolak meskipun jumlah chunk sama.
+- Konfigurasi workstation saat ini: `RETRIEVAL_PROVIDER=hybrid`, `OCR_ENABLED=true`, corpus existing dipertahankan. API `/api/health` mengonfirmasi provider/model yang aktif. Baseline test tetap keyword dengan mock provider; tes opt-in mengeksekusi OCR/embedding nyata.
+- Baseline RAG/OCR: **169 backend tests passed**, termasuk dua real-model checks; **38 frontend unit tests passed**, **53 browser tests passed**, termasuk upload scan nyata dan pemeriksaan citation/original bytes pada mobile. Ruff lint/format, ESLint, TypeScript, lima generated contract checks, dan production build lulus. Smoke produksi mengonfirmasi hybrid retrieval aktif dan permission Proposal A tetap terjaga.
+- Smoke aktual: PDF referensi empat halaman menghasilkan 11 chunk mixed. Paid-time-off query menempatkan Annual Leave Policy dan menghapus incidental Incident Reporting SOP yang muncul pada keyword-only; reimbursement menemukan SOP; query Mars/recipe menghasilkan nol sumber; Employee yang memfilter Proposal A mendapat nol hit tanpa inference.
+- Batasan: default embedding berbahasa Inggris; OCR dapat salah atau melewatkan teks/kolom/tabel/handwriting; vektor JSON/cosine linear cocok untuk corpus prototype. Teks dari gambar DOCX dan vector-only PDF tanpa teks/raster belum didukung. Tidak ada klaim benchmark akurasi, pelatihan model khusus, atau auth produksi.
+
+Setup, referensi, limits, dan operator commands tersedia di [RAG_OCR.md](docs/RAG_OCR.md).
+
+# Import website dan vision lokal — 16 Oktober 2026
+
+- Knowledge menyediakan **Import website** untuk maintainer: Puppeteer headless, ekstraksi DOM, maksimal dua screenshot, Ollama vision JSON tervalidasi, preview, metadata/readers, dan penyimpanan draft. Screenshot, hash, URL/waktu dan observasi tersimpan pada migration `0009`; akses bukti mengikuti permission dokumen. Source Panel/detail menandai website sebagai evidence yang membutuhkan review.
+- Proxy memvalidasi IP publik dan melakukan koneksi ke IP yang sudah diperiksa pada navigasi, redirect, serta subresource. Tidak ada login, cookie akun, recursive crawl, form submission, atau penggunaan alat ini oleh agent investigasi FIU.
+- Model **Qwen3.5 0.8B Q8_0** diunduh dan dijalankan lokal melalui **Ollama 0.40.5** pada workstation Windows ARM, tanpa API key cloud. API/browser production lokal telah direstart; semantic RAG dan OCR aktif. Generator Ask masih deterministic sesuai pekerjaan demo switch yang dipause.
+- Pengujian nyata satu halaman publik menyelesaikan capture → vision → preview desktop/mobile → draft → publication → citation REVIEW_REQUIRED dan restricted-reader 404. Model kecil menunjukkan kesalahan transkripsi multilingual; output vision disimpan sebagai review evidence dan **tidak diindeks menjadi fakta RAG**. Teks DOM menjadi sumber searchable. Scan awal memerlukan sekitar 3,9 menit pada dua thread CPU; konfigurasi default empat thread.
+- **177 backend tests passed**, **40 frontend unit tests passed**, **54 browser tests passed**, termasuk actual OCR/embedding/vision checks. Production build, lint/typecheck, migration lifecycle/schema match, lima generated-contract checks, dan smoke hybrid produksi lulus. Setelah pemisahan observasi dari indeks, sembilan targeted backend/migration checks dan tes browser real-model diulang dan lulus; scan empat thread memerlukan sekitar **2,1 menit**.
+- Setup dan batas cakupan/retention terdapat di [WEBSITE_CAPTURE.md](docs/WEBSITE_CAPTURE.md). Ini deployment lokal untuk pengujian; autentikasi masih mock dan worker belum memakai isolasi/egress firewall produksi.
 
 # Fase 8 — Demo Polish
 
@@ -140,7 +163,7 @@ Lihat [GENERATIVE_WORKSPACE.md](docs/GENERATIVE_WORKSPACE.md) untuk kontrak, alu
 
 ## Batasan Fase 5
 
-- Ekstraksi berbasis pola kalimat seed; belum ada OCR, spreadsheet, atau pemahaman semantik. Model cash flow memakai inflow tetap tanpa pajak, inflasi, nilai sisa, atau pembiayaan. Semua angka sintetis dan ilustratif.
+- Ekstraksi investasi berbasis pola kalimat; belum mendukung spreadsheet atau pemahaman semantik. Ingestion OCR tersedia sebagai perluasan terpisah dan hasilnya memerlukan review. Model cash flow memakai inflow tetap tanpa pajak, inflasi, nilai sisa, atau pembiayaan. Semua angka seed sintetis dan ilustratif.
 - Memo yang sudah diedit tidak ikut diperbarui saat input berubah (ditandai "edited"). Komite investasi disimulasikan oleh Governance.
 - Setelah submit, analisis dibekukan. Informasi tambahan diberikan lewat evidence existing, tanpa resubmit kalkulasi.
 
@@ -190,7 +213,7 @@ Lihat [GENERATIVE_WORKSPACE.md](docs/GENERATIVE_WORKSPACE.md) untuk kontrak, alu
 
 - Workflow tetap code-defined dengan satu run per Case. Tool runtime Fase 7 hanya empat adapter sintetis allowlist; belum scheduler, notification, atau konektor produksi.
 - Evidence attachment berupa source chunk yang authorized dan current. Kesesuaian makna evidence tetap memerlukan penilaian reviewer.
-- Guard memakai provider extractive dan aturan konflik eksplisit; belum pemeriksaan semantik menyeluruh, OCR atau vector retrieval.
+- Guard memakai provider extractive dan aturan konflik eksplisit; belum pemeriksaan semantik menyeluruh. OCR lokal dan hybrid vector retrieval tersedia sebagai perluasan ingestion; OCR source selalu memerlukan human review.
 - Identitas demo belum SSO/entitlement produksi. Role switcher dipertahankan untuk demo.
 - Audit append-only pada ORM/PostgreSQL belum WORM eksternal; database owner dapat mengubah trigger. Reset adalah maintenance exception eksplisit.
 - Keyboard, dialog dan responsive diperiksa; audit screen reader lengkap belum dilakukan.

@@ -52,6 +52,19 @@ export function SourcePanel({
             relying on it as current authority.
           </div>
         )}
+        {source.extraction_method === "web_capture" && (
+          <p className="notice">
+            Website capture and vision observations require human review.
+            Inspect the saved capture in the document.
+          </p>
+        )}
+        {(source.extraction_method === "ocr" ||
+          source.extraction_method === "mixed") && (
+          <div className="notice">
+            This source contains OCR text. Check names, amounts, dates, and
+            tables against the original document before relying on it.
+          </div>
+        )}
         <Metadata
           items={[
             { label: "Version", value: `v${source.version}` },
@@ -62,6 +75,31 @@ export function SourcePanel({
             { label: "Owner", value: source.owner },
             { label: "Authority", value: `${source.authority_level} / 5` },
             { label: "Section", value: source.section_path },
+            ...(source.extraction_method
+              ? [
+                  {
+                    label: "Extraction",
+                    value:
+                      source.extraction_method === "web_capture"
+                        ? "Website and vision capture"
+                        : source.extraction_method === "pdf_text"
+                          ? "PDF text"
+                          : source.extraction_method === "ocr"
+                            ? "OCR"
+                            : source.extraction_method === "mixed"
+                              ? "PDF text and OCR"
+                              : "Document text",
+                  },
+                ]
+              : []),
+            ...(source.ocr_confidence != null
+              ? [
+                  {
+                    label: "Lowest OCR recognition score",
+                    value: source.ocr_confidence.toFixed(2) + " / 1",
+                  },
+                ]
+              : []),
           ]}
         />
         <h3 className="context-label">Source excerpt</h3>

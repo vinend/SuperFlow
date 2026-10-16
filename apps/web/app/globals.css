@@ -3287,3 +3287,26 @@ select {
     grid-row: 2;
   }
 }
+.website-evidence {
+  display: grid;
+  gap: var(--space-3, 12px);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.website-evidence pre {
+  white-space: pre-wrap;
+  max-height: 320px;
+  overflow: auto;
+  font: inherit;
+}
+.website-evidence summary {
+  cursor: pointer;
+  padding-block: 10px;
+}
+.website-screenshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius, 8px);
+}

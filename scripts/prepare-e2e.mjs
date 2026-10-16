@@ -20,7 +20,11 @@ for (const args of [
 ]) {
   const result = spawnSync(process.execPath, ["scripts/python.mjs", ...args], {
     stdio: "inherit",
-    env: { ...process.env, DATABASE_URL: database },
+    env: {
+      ...process.env,
+      DATABASE_URL: database,
+      RETRIEVAL_PROVIDER: "keyword",
+    },
   });
   if (result.status !== 0) process.exit(result.status || 1);
 }

@@ -13,7 +13,13 @@ Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, mengg
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
+## RAG dan OCR dokumen
+
+Ingestion kini mendukung OCR lokal untuk halaman PDF bergambar dan upload PNG/JPEG, metadata halaman/extraction, serta pencarian hybrid keyword + vektor BGE. Migrasi `0008` menyimpan vektor bersama chunk di PostgreSQL; permission dan versi diperiksa sebelum retrieval. Evidence OCR selalu memerlukan human review. Setup dependency, backfill `npm run rag:reindex`, konfigurasi `RETRIEVAL_PROVIDER=hybrid`, referensi repository RPL, dan batasannya ada di [RAG_OCR.md](docs/RAG_OCR.md). Pekerjaan sakelar demo/AI tetap dipause sesuai permintaan pengguna; modul ini tidak mengaktifkan generator AI secara otomatis.
+
 ## Arsitektur
+
+**Import website:** Knowledge sekarang menyediakan Puppeteer headless + vision Ollama lokal, preview screenshot/DOM/observasi, dan penyimpanan draft dengan readers terkontrol. Bukti tersimpan mengikuti permission dokumen; jawaban dari website selalu membutuhkan human review. Setup model dan browser, batas coverage, serta pengujian ada di [WEBSITE_CAPTURE.md](docs/WEBSITE_CAPTURE.md).
 
 | Lapisan   | Implementasi                                                                                                          |
 | --------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -290,8 +296,8 @@ Arsitektur, kontrak, precedence status, aturan coverage, model audit, generator 
 
 ## Keterbatasan prototype
 
-- Provider default berupa extract source deterministik. Provider Ollama opsional menghasilkan sintesis AI nyata, tetapi retrieval masih keyword/concept dan Guard belum membuktikan semantic entailment; karena itu sintesis AI selalu REVIEW_REQUIRED. `Source-grounded` menunjukkan evidence/citation yang lolos validasi, bukan izin melakukan tindakan bisnis.
-- Belum ada OCR atau semantic/vector retrieval. Parser mendukung UTF-8 TXT/Markdown, PDF berbasis teks, DOCX hingga 10 MB. File kosong, rusak, encrypted, atau textless ditolak dengan error yang jelas.
+- Provider default berupa extract source deterministik. Provider Ollama opsional menghasilkan sintesis AI nyata. Retrieval dapat keyword/concept atau hybrid BGE lokal; Guard belum membuktikan semantic entailment, sehingga sintesis AI selalu REVIEW_REQUIRED. `Source-grounded` menunjukkan evidence/citation yang lolos validasi, bukan izin melakukan tindakan bisnis.
+- OCR lokal dan hybrid retrieval tersedia dengan dependency opsional. Parser mendukung UTF-8 TXT/Markdown, PDF native/scan, DOCX, PNG/JPEG hingga 10 MB; batas halaman/piksel diterapkan. Scan tidak terbaca, file rusak/encrypted, atau OCR yang gagal ditolak dengan error jelas. Model embedding default berbahasa Inggris; inference OCR dan source evidence masih memerlukan pemeriksaan manusia.
 - Guard memakai aturan extractive dan evidence/conflict terbatas pada skenario yang dikonfigurasi. Belum ada semantic conflict detection, ambiguity detection menyeluruh, atau confidence score. Calculation check hanya berlaku pada Investment Analysis; konteks lain menandainya tidak applicable.
 - Impact Analytics sudah menghitung QCD dari data operasional yang tersedia, tetapi belum mempunyai filter periode, baseline organisasi yang dapat dikonfigurasi, snapshot warehouse, drill-down BI, export, atau alert. Capacity memakai asumsi prototype transparan dan selalu bertanda **Illustrative simulation**; bukan realized profit. Full Governance belum diimplementasikan. Investigation Review Fase 7 bersifat sintetis; tidak ada sistem nasabah/FIU nyata, filing, atau keputusan AML otomatis. Workflow masih code-defined, satu run per Case, mock authority, dan belum mempunyai scheduler/notifications produksi.
 - AnswerCard, SourcePanel, EvidenceChecklist, ApprovalPanel, WorkflowTimeline, ComparisonTable, dan FinancialAnalysis fungsional. Impact memakai controlled generative UI: provider deterministik hanya dapat memilih komponen registry bertipe; tidak ada arbitrary HTML atau executable UI dari model. LLM structured-output dipakai untuk sintesis Ask dan opsional untuk usulan satu tindakan investigasi yang divalidasi allowlist backend; model tidak memilih komponen Impact.

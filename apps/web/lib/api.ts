@@ -12,7 +12,14 @@ export type User = {
   department: string;
   permissions: string[];
 };
-export type Chunk = { id: string; section_path: string; text: string };
+export type Chunk = {
+  id: string;
+  section_path: string;
+  text: string;
+  extraction_method?: "native" | "pdf_text" | "ocr" | "mixed" | "web_capture";
+  page_number?: number | null;
+  ocr_confidence?: number | null;
+};
 export type Version = {
   id: string;
   version: string;
@@ -52,6 +59,9 @@ export type Source = {
   section_path: string;
   excerpt: string;
   score: number;
+  extraction_method?: "native" | "pdf_text" | "ocr" | "mixed" | "web_capture";
+  page_number?: number | null;
+  ocr_confidence?: number | null;
 };
 export type Answer = {
   id: string;

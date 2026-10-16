@@ -10,12 +10,14 @@ from pydantic import ValidationError
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
+from starlette.concurrency import run_in_threadpool
 
 from .analytics_api import router as analytics_router
 from .audit import record
 from .auth import can_read, current_user, require_manage
 from .config import settings
 from .db import get_db
+from .embeddings import EmbeddingUnavailable, index_embeddings
 from .investigation_api import router as investigation_router
 from .investment_api import router as investment_router
 from .knowledge import (
@@ -32,8 +34,9 @@ from .providers import AnswerProvider, ProviderUnavailable, configured_answer_pr
 from .regulatory_api import router as regulatory_router
 from .reliability import digest, evaluate_run, presented_answer
 from .reliability_contracts import GuardResult, ReliabilityStatus
-from .retrieval import KeywordConceptRetriever, Retriever
+from .retrieval import Retriever, configured_retriever
 from .schemas import AskInput, AskOutput, Metadata, VersionInput, VersionStatus
+from .website_capture import router as website_capture_router
 from .workflow_api import router as workflow_router
 from .workspace_intent import router as workspace_intent_router
 
@@ -48,6 +51,7 @@ app.include_router(investment_router)
 app.include_router(investigation_router)
 app.include_router(analytics_router)
 app.include_router(workspace_intent_router)
+app.include_router(website_capture_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -56,13 +60,18 @@ app.add_middleware(
 )
 Db = Annotated[Session, Depends(get_db)]
 Actor = Annotated[User, Depends(current_user)]
-retriever: Retriever = KeywordConceptRetriever()
+retriever: Retriever = configured_retriever()
 provider: AnswerProvider = configured_answer_provider(settings)
 
 
 @app.exception_handler(ParseError)
 async def parse_error(_, error: ParseError):
     return JSONResponse(status_code=422, content={"detail": str(error)})
+
+
+@app.exception_handler(EmbeddingUnavailable)
+async def embedding_error(_, error: EmbeddingUnavailable):
+    return JSONResponse(status_code=503, content={"detail": str(error)})
 
 
 @app.exception_handler(IntegrityError)
@@ -90,6 +99,13 @@ def health(db: Db):
         "scope": "phase-0-7",
         "inference_provider": provider.name,
         "inference_model": settings.ollama_model if settings.llm_provider == "ollama" else None,
+        "retrieval_provider": settings.retrieval_provider,
+        "embedding_model": settings.embedding_model
+        if settings.retrieval_provider == "hybrid"
+        else None,
+        "ocr_enabled": settings.ocr_enabled,
+        "web_capture_enabled": settings.web_capture_enabled,
+        "vision_model": settings.vision_model,
     }
 
 
@@ -159,7 +175,7 @@ async def create_document(
     document = Document(**meta.model_dump())
     db.add(document)
     db.flush()
-    add_version(db, document, version_input, filename, data)
+    await run_in_threadpool(add_version, db, document, version_input, filename, data)
     db.commit()
     return document_payload(db, user, document, detail=True)
 
@@ -198,7 +214,14 @@ async def create_version(
     require_manage(user)
     document = accessible_document(db, user, document_id, lock=True)
     filename, data = await uploaded(file)
-    add_version(db, document, make_version_input(version, effective_date, status), filename, data)
+    await run_in_threadpool(
+        add_version,
+        db,
+        document,
+        make_version_input(version, effective_date, status),
+        filename,
+        data,
+    )
     db.commit()
     return document_payload(db, user, document, detail=True)
 
@@ -233,13 +256,32 @@ def reindex_document(document_id: str, db: Db, user: Actor):
     for version in document.versions:
         _, parsed = parse_file(version.filename, version.file_content)
         # Immutable file bytes + same parser => stable source IDs for saved citations.
-        if len(parsed) != len(version.chunks):
+        if len(parsed) != len(version.chunks) or any(
+            chunk.text != item.text or chunk.section_path != item.section
+            for chunk, item in zip(version.chunks, parsed)
+        ):
             raise HTTPException(
                 409, "Parser structure changed. Upload a new version to preserve citations."
             )
         for chunk, item in zip(version.chunks, parsed, strict=True):
-            chunk.section_path, chunk.text = item.section, item.text
+            if chunk.extraction_method != "web_capture":
+                chunk.extraction_method = item.extraction_method
+            chunk.page_number, chunk.ocr_confidence = item.page_number, item.ocr_confidence
+        if settings.retrieval_provider == "hybrid":
+            index_embeddings(version.chunks)
         total += len(parsed)
+    record(
+        db,
+        user,
+        document.id,
+        "document_reindexed",
+        entity_type="document",
+        indexed_chunks=total,
+        retrieval_provider=settings.retrieval_provider,
+        embedding_model=settings.embedding_model
+        if settings.retrieval_provider == "hybrid"
+        else None,
+    )
     db.commit()
     return {"document_id": document_id, "indexed_chunks": total}
 

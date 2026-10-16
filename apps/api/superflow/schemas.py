@@ -70,6 +70,9 @@ class Citation(BaseModel):
     section_path: str
     excerpt: str
     score: float
+    extraction_method: Literal["native", "pdf_text", "ocr", "mixed", "web_capture"] = "native"
+    page_number: int | None = Field(default=None, ge=1)
+    ocr_confidence: float | None = Field(default=None, ge=0, le=1)
 
 
 class AskOutput(BaseModel):

@@ -873,9 +873,12 @@ Document processing may support:
 - structure-aware chunking
 
 Future:
-- OCR
-- vector retrieval
 - semantic reranking
+
+Local PDF/image OCR and optional BGE hybrid retrieval are available after Phase 8.
+See `docs/RAG_OCR.md`. Preserve extraction/page provenance and require review of
+OCR-derived evidence. Authorization must run before vector lookup/ranking. Never
+silently skip stale or missing embeddings, or rewrite cited text during re-index.
 
 ---
 
@@ -1051,6 +1054,8 @@ Ordinary users may see a readable activity timeline rather than raw event schema
 ---
 
 ## 35. Demo Data
+
+User-authorized source ingestion extension: public website captures may be imported through Knowledge using Puppeteer and local vision. This is separate from the synthetic FIU proof point and must never be exposed as an investigation agent tool. Preserve capture URL/time, screenshots and model observations; validate public network destinations before connections, keep source permissions, save drafts first, and require human review for website-derived guidance. See `docs/WEBSITE_CAPTURE.md`.
 
 Use synthetic/mock data only.
 

@@ -8,8 +8,10 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from . import embeddings
 from .auth import can_read
-from .models import Document, DocumentChunk, DocumentVersion, User
+from .config import settings
+from .models import ChunkEmbedding, Document, DocumentChunk, DocumentVersion, User
 from .schemas import AskInput
 
 STOP_WORDS = set(
@@ -60,44 +62,52 @@ class Retriever(Protocol):
     def retrieve(self, db: Session, user: User, query: AskInput) -> list[Hit]: ...
 
 
+def authorized_chunks(db: Session, user: User, query: AskInput):
+    documents = db.scalars(select(Document)).all()
+    # Access is resolved BEFORE reading chunk content or ranking candidates.
+    allowed = [
+        document
+        for document in documents
+        if can_read(user, document)
+        and (not query.domain or document.domain == query.domain)
+        and (not query.document_ids or document.id in query.document_ids)
+    ]
+    if not allowed:
+        return []
+    versions = db.scalars(
+        select(DocumentVersion).where(
+            DocumentVersion.document_id.in_([document.id for document in allowed]),
+            DocumentVersion.status.in_(
+                ["active", "outdated"] if query.include_outdated else ["active"]
+            ),
+            DocumentVersion.effective_date <= date.today(),
+        )
+    ).all()
+    if not versions:
+        return []
+    docs = {document.id: document for document in allowed}
+    version_map = {version.id: version for version in versions}
+    chunks = db.scalars(
+        select(DocumentChunk).where(DocumentChunk.version_id.in_(version_map))
+    ).all()
+    return [
+        (docs[version_map[chunk.version_id].document_id], version_map[chunk.version_id], chunk)
+        for chunk in chunks
+    ]
+
+
 class KeywordConceptRetriever:
     """Local deterministic ranking adapter, not a semantic embedding model."""
 
     def retrieve(self, db: Session, user: User, query: AskInput) -> list[Hit]:
-        documents = db.scalars(select(Document)).all()
-        # Access is resolved BEFORE reading chunk content or ranking candidates.
-        allowed = [
-            document
-            for document in documents
-            if can_read(user, document)
-            and (not query.domain or document.domain == query.domain)
-            and (not query.document_ids or document.id in query.document_ids)
-        ]
-        if not allowed:
-            return []
-        versions = db.scalars(
-            select(DocumentVersion).where(
-                DocumentVersion.document_id.in_([document.id for document in allowed]),
-                DocumentVersion.status.in_(
-                    ["active", "outdated"] if query.include_outdated else ["active"]
-                ),
-                DocumentVersion.effective_date <= date.today(),
-            )
-        ).all()
-        if not versions:
-            return []
-        docs = {document.id: document for document in allowed}
-        version_map = {version.id: version for version in versions}
-        chunks = db.scalars(
-            select(DocumentChunk).where(DocumentChunk.version_id.in_(version_map))
-        ).all()
+        return self.rank(authorized_chunks(db, user, query), query)
+
+    def rank(self, candidates, query: AskInput) -> list[Hit]:
         query_terms = tokens(query.question)
         if not query_terms:
             return []
         ranked: list[Hit] = []
-        for chunk in chunks:
-            version = version_map[chunk.version_id]
-            document = docs[version.document_id]
+        for document, version, chunk in candidates:
             body = tokens(chunk.section_path + " " + chunk.text)
             title = tokens(document.title)
             overlap = set(query_terms) & set(body)
@@ -115,3 +125,70 @@ class KeywordConceptRetriever:
             if coverage >= 0.20:
                 ranked.append(Hit(chunk.id, score))
         return sorted(ranked, key=lambda hit: (-hit.score, hit.chunk_id))[:4]
+
+
+class HybridRetriever:
+    """Permission-first cosine retrieval fused with the existing keyword ranker.
+
+    Vectors live with source chunks in PostgreSQL. No global vector search is performed
+    before authorization, and no missing/stale index silently drops authorized sources.
+    """
+
+    def retrieve(self, db: Session, user: User, query: AskInput) -> list[Hit]:
+        candidates = authorized_chunks(db, user, query)
+        if not candidates:
+            return []  # Do not call the embedding model for an inaccessible source filter.
+        provider = embeddings.embedding_provider()
+        by_id = {chunk.id: chunk for _, _, chunk in candidates}
+        rows = {
+            row.chunk_id: row
+            for row in db.scalars(
+                select(ChunkEmbedding).where(
+                    ChunkEmbedding.chunk_id.in_(by_id),
+                    ChunkEmbedding.model == provider.model,
+                )
+            )
+        }
+        if any(
+            chunk_id not in rows or rows[chunk_id].content_hash != embeddings.content_hash(chunk)
+            for chunk_id, chunk in by_id.items()
+        ):
+            raise embeddings.EmbeddingUnavailable(
+                "The semantic index is missing or stale for available sources. "
+                "Ask a knowledge owner to re-index the documents."
+            )
+        query_vector = embeddings.normalized(provider.query(query.question))
+        semantic = []
+        for _, _, chunk in candidates:
+            vector = embeddings.normalized(rows[chunk.id].vector)
+            if len(vector) != len(query_vector):
+                raise embeddings.EmbeddingUnavailable(
+                    "Embedding dimensions changed. Re-index the documents."
+                )
+            score = sum(a * b for a, b in zip(query_vector, vector, strict=True))
+            if score >= settings.semantic_min_score:
+                semantic.append(Hit(chunk.id, score))
+        semantic.sort(key=lambda hit: (-hit.score, hit.chunk_id))
+        eligible = {hit.chunk_id for hit in semantic}
+        lexical = [
+            hit
+            for hit in KeywordConceptRetriever().rank(candidates, query)
+            if hit.chunk_id in eligible
+        ]
+        ranks: dict[str, float] = {}
+        # The semantic relevance floor also gates incidental keyword overlaps.
+        # Reciprocal rank fusion balances exact terms with semantic matches. The score
+        # is a retrieval ordering value, never a probability or answer confidence.
+        for ranked in (lexical, semantic[:12]):
+            for rank, hit in enumerate(ranked, 1):
+                ranks[hit.chunk_id] = ranks.get(hit.chunk_id, 0) + 1 / (60 + rank)
+        return [
+            Hit(key, score)
+            for key, score in sorted(ranks.items(), key=lambda item: (-item[1], item[0]))[:4]
+        ]
+
+
+def configured_retriever() -> Retriever:
+    return (
+        HybridRetriever() if settings.retrieval_provider == "hybrid" else KeywordConceptRetriever()
+    )

@@ -1,0 +1,4 @@
+# Optional local inference dependencies; core requirements remain independently usable.
+fastembed==0.9.0
+rapidocr-onnxruntime==1.4.4
+pypdfium2==5.14.0

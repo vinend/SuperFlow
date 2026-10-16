@@ -513,11 +513,23 @@ class SuperFlowGuard:
                 "Not applicable: this context involves no calculation.",
                 False,
             )
-        review = local_ai or bool(conflicts) or (bool(sources) and not authority)
+        ocr_source = any(source.get("extraction_method") in {"ocr", "mixed"} for source in sources)
+        web_source = any(source.get("extraction_method") == "web_capture" for source in sources)
+        review = (
+            local_ai
+            or ocr_source
+            or web_source
+            or bool(conflicts)
+            or (bool(sources) and not authority)
+        )
         check(
             "human_review_requirement",
             not review and value.action is None,
-            "Human review is required for local AI synthesis before applying this guidance."
+            "Website and vision observations must be checked against the captured evidence."
+            if web_source
+            else "OCR text must be checked against the original scan before applying this guidance."
+            if ocr_source
+            else "Human review is required for local AI synthesis before applying this guidance."
             if local_ai
             else "Human judgment is required before applying this guidance."
             if review
@@ -542,8 +554,8 @@ class SuperFlowGuard:
             status = ReliabilityStatus.VERIFIED
         summaries = {
             ReliabilityStatus.VERIFIED: "Supported by current approved sources.",
-            ReliabilityStatus.REVIEW_REQUIRED: "AI synthesis, conflicting guidance, or source "
-            "authority requires human review.",
+            ReliabilityStatus.REVIEW_REQUIRED: "Website captures, OCR text, AI synthesis, "
+            "conflicting guidance, or source authority requires human review.",
             ReliabilityStatus.BLOCKED: "Required evidence or a safety prerequisite is missing.",
             ReliabilityStatus.OUTDATED: "Historical source content; "
             "inspect the active replacement.",
@@ -611,5 +623,13 @@ class SuperFlowGuard:
             allowed_actions=actions,
             summary=summaries[status],
             next_step=next_steps[status],
-            policy_version=("guard-local-ai-grounding-v1" if local_ai else "guard-extractive-v1"),
+            policy_version=(
+                "guard-website-review-v1"
+                if web_source
+                else "guard-ocr-review-v1"
+                if ocr_source
+                else "guard-local-ai-grounding-v1"
+                if local_ai
+                else "guard-extractive-v1"
+            ),
         )

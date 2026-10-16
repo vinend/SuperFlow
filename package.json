@@ -14,6 +14,7 @@
     "db:seed": "node scripts/python.mjs -m superflow.seed",
     "demo:workflow": "node scripts/python.mjs -m superflow.workflow_demo",
     "demo:reset": "node scripts/python.mjs -m superflow.seed --reset --confirm-synthetic-data --presentation",
+    "rag:reindex": "node scripts/python.mjs -m superflow.rag_index",
     "db:reset": "node scripts/python.mjs -m superflow.seed --reset",
     "ai:up": "docker compose --profile ai up -d ollama",
     "ai:pull": "docker compose --profile ai --profile model run --rm ollama-model",
@@ -38,5 +39,9 @@
   "allowScripts": {
     "@embedded-postgres/windows-x64@18.4.0-beta.17": true,
     "unrs-resolver@1.12.2": true
+  },
+  "dependencies": {
+    "ipaddr.js": "2.3.0",
+    "puppeteer-core": "25.14.0"
   }
 }

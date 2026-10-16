@@ -7,6 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .auth import can_read
+from .config import settings
+from .embeddings import index_embeddings
 from .models import Document, DocumentChunk, DocumentVersion, User
 from .parsing import ParsedChunk, parse_file
 from .schemas import Metadata, VersionInput
@@ -77,7 +79,14 @@ def document_payload(db: Session, user: User, document: Document, detail=False) 
             {
                 **version_payload(version),
                 "chunks": [
-                    {"id": chunk.id, "section_path": chunk.section_path, "text": chunk.text}
+                    {
+                        "id": chunk.id,
+                        "section_path": chunk.section_path,
+                        "text": chunk.text,
+                        "extraction_method": chunk.extraction_method,
+                        "page_number": chunk.page_number,
+                        "ocr_confidence": chunk.ocr_confidence,
+                    }
                     for chunk in version.chunks
                 ],
             }
@@ -93,9 +102,14 @@ def index_chunks(version: DocumentVersion, chunks: list[ParsedChunk]) -> None:
             ordinal=number,
             section_path=chunk.section,
             text=chunk.text,
+            extraction_method=chunk.extraction_method,
+            page_number=chunk.page_number,
+            ocr_confidence=chunk.ocr_confidence,
         )
         for number, chunk in enumerate(chunks)
     ]
+    if settings.retrieval_provider == "hybrid":
+        index_embeddings(version.chunks)
 
 
 def activate(db: Session, document: Document, effective_date: date) -> None:
@@ -166,4 +180,7 @@ def citation_payload(
         "section_path": chunk.section_path,
         "excerpt": chunk.text,
         "score": round(score, 4),
+        "extraction_method": chunk.extraction_method,
+        "page_number": chunk.page_number,
+        "ocr_confidence": chunk.ocr_confidence,
     }
