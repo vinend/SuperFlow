@@ -1,5 +1,7 @@
 # Cara Menjalankan SuperFlow
 
+Untuk presentasi terintegrasi, jalankan migrasi lalu `npm run demo:reset` dan buka `/demo`. Perintah reset menghapus data aplikasi pada database demo lokal yang dikonfigurasi; lihat [panduan demo](docs/DEMO_PLAYBOOK.md) untuk setup produksi, urutan role, dan pemulihan.
+
 ## macOS / Linux
 
 Dependencies sudah dipasang pada mesin ini (`node_modules`, `.venv`, `.env` dengan `PYTHON`, Chromium untuk E2E). Untuk checkout baru ikuti setup macOS/Linux di [README.md](README.md).

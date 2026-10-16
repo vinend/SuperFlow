@@ -330,7 +330,7 @@ Do not position the whole product around AML/FIU.
 
 Follow the active PRD phases.
 
-Current prototype baseline includes implemented Phases 0–7 and completed Product Experience Reconciliation. Phase 7 Investigation Review began as a frontend mockup and now uses persistent synthetic backend state, a bounded agent, SuperFlow Guard, and an independent human checker. Phase 8 has not started.
+Current prototype baseline includes implemented Phases 0–7 and completed Product Experience Reconciliation. Phase 7 Investigation Review began as a frontend mockup and now uses persistent synthetic backend state, a bounded agent, SuperFlow Guard, and an independent human checker. Phase 8 adds a transactional presentation dataset and the integrated `/demo` walkthrough; see IMPLEMENTATION_STATUS.md for verification and limitations.
 
 Phase 7 guardrails: AML/FIU is only a proof point on the shared platform. Use synthetic data and allowlisted tools only. Persist provenance for every collected result. Bound agent steps and retries; reject unknown actions. SuperFlow Guard remains the reliability authority. AI cannot make a final AML/FIU or regulatory-reporting decision. A separate human Compliance checker decides after analyst submission. Do not browse external systems or connect to real customer, transaction-monitoring, watchlist, adverse-news, or FIU services.
 
@@ -407,7 +407,7 @@ Do not let model output directly become DOM, HTML, JavaScript, permission logic,
 - FastAPI remains authoritative for authorization, retrieval, Guard, workflow, approval, audit, finance calculations, and bounded domain agents.
 - Material mutations require explicit human interaction in controlled domain UI. CopilotKit must never auto-approve or bypass expected revisions and idempotency.
 - Direct domain routes and deterministic Ask must remain usable if the workspace runtime or Ollama is unavailable.
-- The generative workspace integration follows completed Phase 7; Phase 8 has not started.
+- The generative workspace integration follows completed Phase 7; Phase 8 reuses the domain workspaces and preserves the same controls.
 
 ---
 

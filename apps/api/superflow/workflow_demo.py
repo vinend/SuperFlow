@@ -15,7 +15,7 @@ SCENARIOS = [
 ]
 
 
-def seed_workflow_demo(db):
+def seed_workflow_demo(db, *, commit=True):
     user = db.get(User, "employee")
     definition = db.get(WorkflowDefinition, "generic-review-v1")
     if not user or not definition:
@@ -60,7 +60,8 @@ def seed_workflow_demo(db):
         case.revision += 1
         start_workflow(db, user, case, definition)
         created += 1
-    db.commit()
+    if commit:
+        db.commit()
     return created
 
 

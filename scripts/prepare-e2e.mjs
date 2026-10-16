@@ -10,7 +10,13 @@ if (!new URL(database).pathname.endsWith("_test"))
   throw new Error("E2E database must end with _test.");
 for (const args of [
   ["-m", "alembic", "-c", "apps/api/alembic.ini", "upgrade", "head"],
-  ["-m", "superflow.seed", "--reset", "--confirm-synthetic-data"],
+  [
+    "-m",
+    "superflow.seed",
+    "--reset",
+    "--confirm-synthetic-data",
+    ...(process.argv.includes("--presentation") ? ["--presentation"] : []),
+  ],
 ]) {
   const result = spawnSync(process.execPath, ["scripts/python.mjs", ...args], {
     stdio: "inherit",

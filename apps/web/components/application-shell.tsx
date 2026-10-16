@@ -31,6 +31,7 @@ export type View =
   | "regulatory"
   | "investigation"
   | "investment"
+  | "demo"
   | "impact";
 export const TITLES = {
   home: "Home",
@@ -43,6 +44,7 @@ export const TITLES = {
   investigation: "Investigation Review",
   investment: "Investment Analysis",
   impact: "Impact",
+  demo: "Demo walkthrough",
 };
 const ICONS = {
   home: Home,
@@ -179,6 +181,7 @@ export function ApplicationShell({
         {children}
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
+          <Link href="/demo">Demo walkthrough</Link>
           <span>Knowledge → Evidence → Decision → Action</span>
         </footer>
       </div>

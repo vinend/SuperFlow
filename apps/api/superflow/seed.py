@@ -109,7 +109,7 @@ def validate_reset_target(url: str, confirmed: bool) -> None:
         )
 
 
-def reset_synthetic(db):
+def reset_synthetic(db, *, presentation=False):
     """Reset synthetic tables including Phase 7 atomically; preserve the schema."""
     try:
         demo_reset_mode(db, True)
@@ -117,6 +117,10 @@ def reset_synthetic(db):
             db.execute(delete(table))
         db.expunge_all()
         count = seed(db, commit=False, include_investigations=True)
+        if presentation:
+            from .presentation_demo import prepare_presentation
+
+            prepare_presentation(db)
         demo_reset_mode(db, False)
         db.commit()
         return count
@@ -129,7 +133,12 @@ def main():
     parser = argparse.ArgumentParser(description="Seed synthetic SuperFlow demo data.")
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--confirm-synthetic-data", action="store_true")
+    parser.add_argument(
+        "--presentation", action="store_true", help="Prepare the integrated demo after reset."
+    )
     args = parser.parse_args()
+    if args.presentation and not args.reset:
+        parser.error("--presentation requires --reset and --confirm-synthetic-data.")
     if args.reset:
         try:
             validate_reset_target(settings.database_url, args.confirm_synthetic_data)
@@ -137,7 +146,9 @@ def main():
             parser.error(str(error))
     with SessionLocal() as session:
         count = (
-            reset_synthetic(session) if args.reset else seed(session, include_investigations=True)
+            reset_synthetic(session, presentation=args.presentation)
+            if args.reset
+            else seed(session, include_investigations=True)
         )
         print(f"{'Reset' if args.reset else 'Seed'} complete: {count} synthetic documents created.")
 

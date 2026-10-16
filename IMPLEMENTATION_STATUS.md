@@ -1,12 +1,38 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 1 Oktober 2026
+**Diperbarui:** 16 Oktober 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
-**Ruang lingkup:** Fase 0–7 dan rekonsiliasi Product Experience sudah diimplementasikan untuk scope prototype sintetis. Fase 7 adalah proof point AML/FIU di atas fondasi bersama. Fase 8 belum dimulai.
+**Ruang lingkup:** Fase 0–8 dan rekonsiliasi Product Experience untuk scope prototype sintetis. Fase 7 adalah proof point AML/FIU di atas fondasi bersama; Fase 8 menambahkan demo terintegrasi.
 
-**Status:** UI mockup Investigation Review dari commit `4c88fb0` dipertahankan dan dihubungkan ke investigasi persisten, adapter sintetis, Guard, workflow checker, serta audit. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+**Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+
+# Fase 8 — Demo Polish
+
+## Implementasi
+
+- Baseline terbaru diambil dari `vinend/SuperFlow` branch `main`, commit `fab25e3`, yang sudah mencakup Fase 6, Fase 7, dan integrasi generative workspace. Salinan lokal tanpa metadata Git dipertahankan; implementasi ini berada di checkout `SuperFlow-latest`, branch `phase-8-demo-polish`.
+- Route stabil `/demo` dan tautan footer membuka cerita enam langkah: Ask → My Work → Regulatory Review → Investment Analysis → human review → Impact. Link mengganti identitas demo yang ditunjukkan, dengan pemeriksaan permission tetap di API domain. Investigation Review ditempatkan sebagai proof point opsional.
+- `npm run demo:reset` memakai pembatas target reset existing dan menyiapkan seluruh dataset presentasi dalam satu transaksi. Tiga request, satu regulatory review, satu analisis investasi berkonflik, serta tiga investigasi memakai service domain, evidence, Guard, dan audit nyata. Semua temuan, pilihan asumsi, dan approval tetap memerlukan tindakan manusia. Default `db:reset` dan seed E2E existing tidak berubah.
+- `seed_workflow_demo(..., commit=False)` memungkinkan komposisi atomik; kegagalan persiapan mengembalikan data sebelum reset. ID/timestamp dapat berubah, sedangkan isi fixture, jumlah record, dan kondisi awal repeatable.
+- Walkthrough menggunakan shell, header, button, tokens, dan role switcher existing; tidak ada dependency UI baru. Daftar semantik, skip link, fokus, Escape, mobile navigation, dan overflow diuji. Screenshot desktop/mobile diperiksa visual.
+- Panduan presentasi Bahasa Indonesia, pemulihan, perintah reset, urutan peran, batasan data sintetis, serta disclosure simulasi tersedia di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md).
+
+## Verifikasi aktual
+
+- Backend PostgreSQL: **155 passed**, termasuk idempotensi persiapan, reset berulang, rollback persiapan gagal, permission, serta regresi domain. Frontend unit: **38 passed**.
+- Ruff lint/format, ESLint, TypeScript, lima generated contract checks, serta Prettier pada seluruh berkas kode yang berubah lulus.
+- Production build Next.js 16.3.6 lulus dan menghasilkan `/demo`. Warning dependency dinamis dari `@ai-sdk/google-vertex` bawaan CopilotKit tetap ada seperti baseline.
+- Smoke browser produksi: tujuh identitas membuka workspace relevan, role bertahan setelah navigasi, serta Ask → API → jawaban grounded → dialog citation berjalan tanpa page error.
+- Playwright full suite: **52 passed (7,1 menit)**, termasuk dua uji walkthrough baru, generative workspace/fallback, tujuh identitas, sumber/version/permission, investigasi/checker, regulatory remediation, investment approval, lima status reliability, concurrency, dan escalation/override. Screenshot desktop/mobile baru tersedia di `artifacts/screenshots/demo/`.
+- `format:check` seluruh repository pada checkout Windows masih menemukan 109 berkas legacy dengan drift format/CRLF. Berkas yang tidak terkait tidak diformat massal. Warning Starlette/httpx tidak menggagalkan pengujian.
+
+## Batasan
+
+- Pemeriksaan keyboard dan responsive bukan audit screen reader penuh. Demo tetap memakai identitas sintetis, bukan SSO, dan adapter FIU tetap fixture.
+- Tidak ada metrik atau durasi historis rekaan. Jalankan cerita sebelum menampilkan Impact; nilai tanpa observasi tetap belum diukur dan capacity tetap **Illustrative simulation**.
+- Runtime Node ARM64 Windows di sesi ini tidak didukung launcher `embedded-postgres` existing. Verifikasi memakai binary PostgreSQL Windows x64 yang berjalan pada cluster baru `.runtime/verification-db`, loopback port 5432; data salinan lokal lama tidak diubah. Setup umum tetap memerlukan Node/platform yang didukung atau PostgreSQL terpasang.
 
 # Pass Integrasi Generative Workspace — CopilotKit V2 / AG-UI
 
@@ -27,7 +53,7 @@
 
 ## Belum Diimplementasikan
 
-- Fase 8, SSO, integrasi sistem nyata, model yang dapat membuat tools baru, serta UI arbitrer.
+- SSO, integrasi sistem nyata, model yang dapat membuat tools baru, serta UI arbitrer.
 
 ## Hasil Pengujian
 
@@ -171,7 +197,7 @@ Lihat [GENERATIVE_WORKSPACE.md](docs/GENERATIVE_WORKSPACE.md) untuk kontrak, alu
 
 # Belum Diimplementasikan
 
-- Demo polish (Fase 8), integrasi FIU nyata, dan full Governance.
+- Integrasi FIU nyata dan full Governance.
 - Autentikasi produksi, notifikasi/integrasi eksternal, dan visual workflow builder.
 
 # Masalah yang Diketahui
@@ -230,4 +256,4 @@ Migrasi `0007` serta seed/reset lokal dijalankan pada PostgreSQL port 5432; API 
 2. Tambahkan filter periode dan snapshot/trend hanya setelah definisi business calendar serta retention analytics disepakati.
 3. Tinjau bahasa memo/approval bersama Finance dan bahasa gap/remediation bersama Compliance.
 4. Lanjutkan audit screen reader dan normalisasi baseline Prettier di pass terpisah.
-5. Setelah Fase 7 stabil, rencanakan Fase 8 secara terpisah; jangan hubungkan FIU ke data nyata tanpa desain keamanan dan otorisasi produksi.
+5. Gunakan panduan Fase 8 untuk presentasi sintetis; jangan hubungkan FIU ke data nyata tanpa desain keamanan dan otorisasi produksi.

@@ -4,13 +4,13 @@
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi baseline prototype sintetis. Fase 7 memakai fondasi Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency untuk Investigation Review. Fase 8 belum dimulai.
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi baseline prototype sintetis. Fase 7 memakai fondasi Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency untuk Investigation Review. Fase 8 menambahkan persiapan presentasi atomik dan walkthrough terintegrasi; hasil verifikasi dicatat di status implementasi.
 
 ## Pass integrasi Generative Workspace
 
 Tujuan: satu permintaan bahasa alami di Ask memilih workspace yang sudah ada tanpa menyalin logika domain. CopilotKit V2 dan AG-UI mengirim intent ke adapter Next.js/FastAPI; kontrak bertipe membatasi tujuh workspace, view, dan identifier. FastAPI melakukan klasifikasi deterministik atau memakai Ollama opsional, lalu memeriksa role dan akses investigation. Komponen domain existing mengambil ulang data dari API. Keputusan material tetap memerlukan interaksi manusia.
 
-Deliverable: runtime `/api/copilotkit`, endpoint `/api/workspace-intent`, AskComposer terintegrasi, GenerativeWorkspace, fallback deterministik, invalidasi saat role berubah, uji unit/API/E2E, PNG di `artifacts/screenshots/generative-workspace/`, serta [dokumentasi teknis](docs/GENERATIVE_WORKSPACE.md). Dependency: Fase 0–7 selesai, database/seed tersedia, paket CopilotKit V2. Status: selesai untuk scope prototype sintetis; Fase 8 belum dimulai.
+Deliverable: runtime `/api/copilotkit`, endpoint `/api/workspace-intent`, AskComposer terintegrasi, GenerativeWorkspace, fallback deterministik, invalidasi saat role berubah, uji unit/API/E2E, PNG di `artifacts/screenshots/generative-workspace/`, serta [dokumentasi teknis](docs/GENERATIVE_WORKSPACE.md). Dependency: Fase 0–7 selesai, database/seed tersedia, paket CopilotKit V2. Status: selesai untuk scope prototype sintetis.
 
 ## Rekonsiliasi Product Experience
 
@@ -36,7 +36,7 @@ Dependency: fondasi Fase 0–3 dan PRD v2. Status: selesai untuk scope prototype
 | 5 — Investment Intelligence | Analisis investasi deterministik           | Extraction, formula keuangan, sensitivity, memo, approval                                          | Fase 1–3                             | Selesai untuk scope prototype; seluruh quality gate lulus                          |
 | 6 — Analytics               | Pengukuran QCD dan dampak                  | Quality, Cost/Capacity, Delivery, audit visualization, controlled generative UI                    | Data eksekusi dan definisi metrik    | Selesai; functional gate dan format file Fase 6 lulus, baseline format dicatat     |
 | 7 — AML/FIU Proof Point     | Investigation Review sintetis terkendali  | UI existing, Investigation/ToolRun persisten, template, alat allowlist, agent terbatas, Guard, analyst/checker, audit | Fase 0–6 | Selesai untuk prototype sintetis; verifikasi dicatat di status |
-| 8 — Polish                  | Stabilitas demo seluruh platform           | Journey lengkap, reset lintas modul, presentasi                                                    | Modul yang diotorisasi telah selesai | Ditunda; reset lokal dan aksesibilitas Fase 0/1 tersedia sebagai kebutuhan fondasi |
+| 8 — Polish                  | Stabilitas demo seluruh platform           | Journey lengkap, reset lintas modul, presentasi                                                    | Modul yang diotorisasi telah selesai | Selesai untuk prototype sintetis; backend/unit/E2E/build dan smoke produksi lulus |
 
 ## Deliverable Fase 0
 
@@ -94,11 +94,21 @@ Pass frontend terfokus telah menyempurnakan tujuh masalah komposisi: header, tin
 
 ## Pekerjaan yang ditunda
 
-Demo polish (Fase 8), autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan. FIU Fase 7 memakai data dan adapter sintetis; integrasi produksi berada di luar scope.
+Autentikasi produksi, OCR, dan vector retrieval belum diimplementasikan. FIU Fase 7 memakai data dan adapter sintetis; integrasi produksi berada di luar scope.
+
+## Deliverable Fase 8 — Demo Polish
+
+1. Reuse fondasi Fase 0–7 dan generative workspace dari `main` terbaru; pertahankan otorisasi, Guard, evidence, audit, revision/idempotency, formula, serta keputusan manusia existing.
+2. `demo:reset` menambahkan opsi dataset presentasi pada reset lokal terjaga. Persiapkan request pengetahuan, regulatory review, dan analisis investasi dengan service domain di transaksi reset yang sama; kegagalan persiapan harus rollback seluruhnya.
+3. `/demo` menyediakan cerita platform yang stabil, link beridentitas demo eksplisit, informasi langkah dan hasil yang perlu diperiksa, serta investigation opsional. Gunakan shell, header, button, dan design tokens existing.
+4. Uji repeatability/idempotensi, rollback, identitas/navigasi/refresh, keyboard/Escape, responsive/overflow, dan disclosure Impact. Jalankan regresi backend/frontend/E2E, kontrak, lint, formatter, typecheck, build, serta smoke browser produksi.
+5. Dokumentasikan urutan presentasi, setup, batasan dan pemulihan di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md), dengan bukti desktop/mobile di `artifacts/screenshots/demo/` dan hasil aktual di status implementasi.
+
+Dependency: Fase 0–7, PostgreSQL/migrasi/seed, identitas sintetis, dan domain services existing. Tidak ada integrasi bank nyata, approval otomatis, atau metrik/savings rekaan.
 
 ## Deliverable Fase 7 — AML/FIU Investigation Review
 
-**Status:** Selesai untuk prototype sintetis; integrasi sistem nyata dan Fase 8 tetap di luar ruang lingkup.
+**Status:** Selesai untuk prototype sintetis; integrasi sistem nyata tetap di luar ruang lingkup. Demo terintegrasi ditangani pada Fase 8.
 
 1. Pertahankan layar Investigation Review existing; ganti state browser dengan API dan PostgreSQL. Tambahkan migrasi `0007` untuk `Investigation` dan `ToolRun`, memakai Case dan CaseEvidence existing.
 2. Template `synthetic-alert-review-v1` menentukan lima bukti wajib dan satu opsional. Empat alat sintetis terdaftar dengan input/output terstruktur, upaya persisten, fingerprint, izin backend, dan audit.
