@@ -99,6 +99,7 @@ export function SourcePanel({
             tables against the original document before relying on it.
           </div>
         )}
+        {source.usage_scope && <p className="notice">{source.usage_scope}</p>}
         <Metadata
           items={[
             { label: "Version", value: `v${source.version}` },
@@ -107,6 +108,12 @@ export function SourcePanel({
               value: dateLabel(source.effective_date),
             },
             { label: "Owner", value: source.owner },
+            ...(source.publisher
+              ? [{ label: "Publisher", value: source.publisher }]
+              : []),
+            ...(source.jurisdiction
+              ? [{ label: "Jurisdiction", value: source.jurisdiction }]
+              : []),
             { label: "Authority", value: `${source.authority_level} / 5` },
             { label: "Section", value: source.section_path },
             ...(source.extraction_method

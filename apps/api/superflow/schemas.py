@@ -59,6 +59,9 @@ class AskInput(BaseModel):
 
 
 class Citation(BaseModel):
+    publisher: str | None = None
+    jurisdiction: str | None = None
+    usage_scope: str | None = None
     source_origin: Literal["knowledge_base", "internet"] = "knowledge_base"
     media_type: str | None = None
     capture_engine: Literal["puppeteer"] | None = None

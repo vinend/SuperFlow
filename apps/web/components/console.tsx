@@ -26,12 +26,8 @@ import { RagStatus } from "./rag-status";
 import { HomeAttention } from "./home-attention";
 import { roleLabel } from "@/lib/product-view";
 import { AskGenerativeArea } from "./ask-generative-area";
-import {
-  ErrorState,
-  LoadingState,
-  PageHeader,
-  SectionHeader,
-} from "./ui/primitives";
+import { AskActivity } from "./ask-activity";
+import { ErrorState, PageHeader, SectionHeader } from "./ui/primitives";
 
 const SUGGESTIONS = [
   { title: "Annual leave", question: "How many annual leave days do I get?" },
@@ -175,7 +171,11 @@ function Workspace({ view }: { view: View }) {
   const result = (
     <>
       {w.asking && (
-        <LoadingState label="Retrieving permitted source sections…" />
+        <AskActivity
+          progress={w.progress}
+          webSearch={w.webSearch}
+          scope={w.domain || "Your accessible sources"}
+        />
       )}
       {w.answer && (
         <AnswerCard

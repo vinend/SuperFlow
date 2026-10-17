@@ -6,8 +6,11 @@ from functools import lru_cache
 from threading import Lock
 from typing import Protocol
 
+from sqlalchemy import select, text
+from sqlalchemy.orm import object_session, selectinload
+
 from .config import settings
-from .models import ChunkEmbedding
+from .models import AuditEvent, ChunkEmbedding, Document, DocumentChunk, DocumentVersion
 
 
 class EmbeddingUnavailable(RuntimeError):
@@ -91,6 +94,9 @@ def content_hash(chunk) -> str:
 
 def index_embeddings(chunks, *, force=False) -> int:
     """Attach model-specific vectors within the caller's document transaction."""
+    chunks = list(chunks)
+    if chunks and (db := object_session(chunks[0])) is not None:
+        lock_embedding_index(db)
     provider = embedding_provider()
     missing = [
         chunk
@@ -111,3 +117,44 @@ def index_embeddings(chunks, *, force=False) -> int:
             chunk.embeddings.append(row)
         row.content_hash, row.vector = content_hash(chunk), normalized(vector)
     return len(missing)
+
+
+def lock_embedding_index(db):
+    # Share the ordering with manual index repair, so it cannot deadlock a
+    # full rebuild by updating the same vector rows in document/ordinal order.
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(734829105)"))
+
+
+def rebuild_knowledge_embeddings(db, trigger_version_id: str) -> int:
+    """Replace all KB vectors atomically with the PDF upload; preserve chunks/citations.
+
+    This is a system maintenance operation, not a retrieval operation. Restricted
+    documents are indexed locally but never returned to the uploading actor.
+    Private per-question WebSearch snapshots are outside the shared KB.
+    """
+    lock_embedding_index(db)
+    db.flush()
+    chunks = list(
+        db.scalars(
+            select(DocumentChunk)
+            .join(DocumentVersion, DocumentChunk.version_id == DocumentVersion.id)
+            .join(Document, DocumentVersion.document_id == Document.id)
+            .where(Document.context_run_id.is_(None))
+            .order_by(DocumentChunk.id)
+            .options(selectinload(DocumentChunk.embeddings))
+        )
+    )
+    count = index_embeddings(chunks, force=True)
+    db.add(
+        AuditEvent(
+            actor_id="knowledge-indexer",
+            actor_type="system",
+            entity_type="document_version",
+            entity_id=trigger_version_id,
+            event_type="knowledge_embeddings_rebuilt",
+            payload={"indexed_chunks": count, "model": settings.embedding_model},
+        )
+    )
+    db.flush()
+    return count

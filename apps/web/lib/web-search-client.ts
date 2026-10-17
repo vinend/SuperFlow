@@ -1,10 +1,12 @@
 import { api, type Answer, type User } from "./api";
 import { isGuardResult } from "./reliability-view";
+import type { AskProgress } from "./ask-progress";
 
 export async function waitForWebSearch(
   id: string,
   user: User,
   signal: AbortSignal,
+  onProgress?: (progress: AskProgress) => void,
 ): Promise<Answer> {
   let connectionFailures = 0;
   for (let attempt = 0; attempt < 1600; attempt++) {
@@ -13,6 +15,7 @@ export async function waitForWebSearch(
       status: string;
       message?: string;
       answer?: Answer;
+      progress?: AskProgress | null;
     };
     try {
       job = await api(`/api/web-search/asks/${encodeURIComponent(id)}`, user, {
@@ -43,6 +46,9 @@ export async function waitForWebSearch(
     }
     if (job.status === "failed")
       throw new Error(job.message || "Local WebSearch failed. Try again.");
+    if (job.progress) onProgress?.(job.progress);
+    else if (job.message)
+      onProgress?.({ stage: "queued", message: job.message });
     await new Promise<void>((resolve, reject) => {
       const abort = () => {
         clearTimeout(timer);

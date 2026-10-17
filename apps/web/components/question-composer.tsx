@@ -74,7 +74,7 @@ export function QuestionComposer({
           aria-label="Ask question"
         >
           {busy ? <span className="spinner" /> : <ArrowUp size={16} />}
-          <span>{busy ? "Retrieving" : "Ask SuperFlow"}</span>
+          <span>{busy ? "Working…" : "Ask SuperFlow"}</span>
         </button>
       </div>
     </form>

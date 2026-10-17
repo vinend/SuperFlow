@@ -259,12 +259,18 @@ export function DocumentDetail({
                 {version.source_provenance.publisher} ·{" "}
                 {version.source_provenance.kind === "question-web-context"
                   ? "WebSearch snapshot"
-                  : version.source_provenance.kind}
+                  : version.source_provenance.kind.replaceAll("-", " ")}
               </strong>
               <p>
                 Retrieved {dateLabel(version.source_provenance.retrieved_at)}.
                 Applicability is unverified.
               </p>
+              {version.source_provenance.jurisdiction && (
+                <p>{version.source_provenance.jurisdiction}</p>
+              )}
+              {version.source_provenance.usage_scope && (
+                <p>{version.source_provenance.usage_scope}</p>
+              )}
               <a
                 className="text-link"
                 href={version.source_provenance.source_url}

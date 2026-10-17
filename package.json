@@ -16,6 +16,7 @@
     "demo:reset": "node scripts/python.mjs -m superflow.seed --reset --confirm-synthetic-data --presentation",
     "rag:reindex": "node scripts/python.mjs -m superflow.rag_index",
     "demo:ojk": "node scripts/python.mjs -m superflow.ojk",
+    "demo:public": "node scripts/python.mjs -m superflow.public_sources",
     "test:ojk:live": "node scripts/verify-ojk.mjs",
     "db:reset": "node scripts/python.mjs -m superflow.seed --reset",
     "ai:up": "docker compose --profile ai up -d ollama",

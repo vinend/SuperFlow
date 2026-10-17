@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api, Answer, HistoryItem, KnowledgeDocument, Source } from "@/lib/api";
 import { useSession } from "./session";
 import { waitForWebSearch } from "@/lib/web-search-client";
+import type { AskProgress } from "@/lib/ask-progress";
 import type { EditorMode } from "./document-editor";
 
 export function useKnowledgeWorkspace() {
@@ -30,6 +31,7 @@ export function useKnowledgeWorkspace() {
   const [search, setSearch] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [asking, setAsking] = useState(false);
+  const [progress, setProgress] = useState<AskProgress | null>(null);
   const [source, setSource] = useState<Source | null>(null);
   const [detail, setDetail] = useState<KnowledgeDocument | null>(null);
   const [detailVersionId, setDetailVersionId] = useState<string | undefined>();
@@ -116,6 +118,7 @@ export function useKnowledgeWorkspace() {
               hash.get("webjob")!,
               user,
               controller.signal,
+              setProgress,
             );
             applyAnswer(result);
             remember({ run: result.id, webjob: "" });
@@ -153,6 +156,7 @@ export function useKnowledgeWorkspace() {
     if (text.length < 3 || asking) return;
     setQuestion(text);
     setAsking(true);
+    setProgress(null);
     setError("");
     setSource(null);
     setAnswer(null);
@@ -179,12 +183,34 @@ export function useKnowledgeWorkspace() {
           job.id,
           user,
           webController.current.signal,
+          setProgress,
         );
       } else {
-        result = await api<Answer>("/api/ask", user, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
+        const token = crypto.randomUUID();
+        const controller = new AbortController();
+        webController.current = controller;
+        const poll = setInterval(() => {
+          void api<AskProgress>(`/api/ask-progress/${token}`, user, {
+            signal: controller.signal,
+          })
+            .then((value) => {
+              if (mounted.current) setProgress(value);
+            })
+            .catch(() => {
+              /* The answer request reports errors; progress may expire or reconnect. */
+            });
+        }, 1200);
+        try {
+          result = await api<Answer>("/api/ask", user, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "X-Ask-Progress": token },
+            signal: controller.signal,
+          });
+        } finally {
+          clearInterval(poll);
+          controller.abort();
+        }
       }
       applyAnswer(result);
       remember({ run: result.id, webjob: "", document: "", version: "" });
@@ -207,6 +233,10 @@ export function useKnowledgeWorkspace() {
     setError("");
     setSource(null);
     setAsking(true);
+    setProgress({
+      stage: "saved",
+      message: "Rechecking access and reliability for your saved answer.",
+    });
     setAnswer(null);
     try {
       const result = await api<Answer>(`/api/ask/${id}`, user);
@@ -294,6 +324,7 @@ export function useKnowledgeWorkspace() {
     setSearch,
     answer,
     asking,
+    progress,
     source,
     setSource,
     detail,

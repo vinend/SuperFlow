@@ -19,10 +19,14 @@ import { QuestionComposer } from "./question-composer";
 import { QuestionHistory } from "./question-history";
 import { GenerativeWorkspace } from "./generative-workspace";
 import { SectionHeader } from "./ui/primitives";
+import { AskActivity } from "./ask-activity";
 
 const PROMPTS = [
   "Apa persyaratan autentikasi dalam POJK 21 Tahun 2023?",
   "Bagaimana pelindungan data konsumen dalam POJK 22 Tahun 2023?",
+  "How do cash flow actuals differ from projections in the FDIC guide?",
+  "How does NIST connect incident response to cybersecurity risk management?",
+  "What does the ILO recommend for communication and well-being while teleworking?",
   "What changed in the latest regulation?",
   "Analyze proposal A.",
   "Investigate alert AML-2026-001.",
@@ -288,21 +292,33 @@ export function AskGenerativeArea({
           </p>
         )}
         {busy && !selection && (
-          <p className="generated-loading" role="status">
-            Selecting an approved workspace…
-          </p>
+          <AskActivity
+            progress={{
+              stage: "routing",
+              message: "Selecting an approved workspace for your request.",
+            }}
+          />
         )}
-        <GenerativeWorkspace
-          selection={effectiveSelection}
-          prompt={submittedPrompt}
-          user={w.user}
-          knowledge={{
-            answer: w.answer,
-            asking: w.asking,
-            onSource: w.setSource,
-            onDocument: w.openDocument,
-          }}
-        />
+        {!(busy && !selection) && (
+          <GenerativeWorkspace
+            selection={effectiveSelection}
+            prompt={submittedPrompt}
+            user={w.user}
+            knowledge={{
+              answer: w.answer,
+              asking: w.asking,
+              progress: w.progress,
+              webSearch: w.webSearch,
+              scope:
+                w.documents.find((document) => document.id === w.documentFilter)
+                  ?.title ||
+                w.domain ||
+                "Your accessible sources",
+              onSource: w.setSource,
+              onDocument: w.openDocument,
+            }}
+          />
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,67 @@
+{
+  "checked_at": "2026-10-18T05:24:00.91736+07:00",
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "shared_documents": 27,
+  "shared_chunks": 1437,
+  "ready_vectors": 1437,
+  "new_public_documents": 6,
+  "new_public_chunks": 311,
+  "rebuild_audit_events": 6,
+  "permission_denied_sources": 0,
+  "retrieval_checks": [
+    {
+      "domain": "Finance",
+      "question": "What is the difference between cash flow actuals and cash flow projections?",
+      "retrieved_titles": [
+        "FDIC — Managing Cash Flow (public business training)",
+        "FDIC — Managing Cash Flow (public business training)",
+        "FDIC — Managing Cash Flow (public business training)",
+        "FDIC — Managing Cash Flow (public business training)",
+        "FDIC — Managing Cash Flow (public business training)",
+        "FDIC — Managing Cash Flow (public business training)"
+      ]
+    },
+    {
+      "domain": "Operations",
+      "question": "How does incident response connect to cybersecurity risk management?",
+      "retrieved_titles": [
+        "NIST SP 800-61r3 — Incident Response (2025 public IT guidance)",
+        "NIST SP 800-61r3 — Incident Response (2025 public IT guidance)",
+        "NIST SP 800-61r3 — Incident Response (2025 public IT guidance)",
+        "NIST SP 800-61r3 — Incident Response (2025 public IT guidance)",
+        "NIST SP 800-61r3 — Incident Response (2025 public IT guidance)",
+        "NIST SP 800-61r3 — Incident Response (2025 public IT guidance)"
+      ]
+    },
+    {
+      "domain": "People",
+      "question": "How can managers support communication and worker well-being while teleworking?",
+      "retrieved_titles": [
+        "ILO — Employers' Guide on Working from Home (2020 reference)",
+        "ILO — Teleworking Practical Guide (2020 public People guidance)",
+        "ILO — Teleworking Practical Guide (2020 public People guidance)",
+        "ILO — Teleworking Practical Guide (2020 public People guidance)",
+        "ILO — Teleworking Practical Guide (2020 public People guidance)",
+        "ILO — Employers' Guide on Working from Home (2020 reference)"
+      ]
+    }
+  ],
+  "real_model_browser_verification": {
+    "provider": "ollama-grounded-v1",
+    "language": "Indonesian",
+    "source_count": 6,
+    "citation_ids": [2],
+    "reliability": "REVIEW_REQUIRED",
+    "browser_received_answer": true,
+    "proxy_timeout_ms": 600000,
+    "cited_sections": [
+      {
+        "title": "FDIC — Managing Cash Flow (public business training)",
+        "page_number": 5,
+        "extraction_method": "mixed",
+        "publisher": "US Federal Deposit Insurance Corporation and Small Business Administration",
+        "jurisdiction": "United States; educational reference"
+      }
+    ]
+  }
+}

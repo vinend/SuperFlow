@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from .auth import can_read
 from .config import settings
-from .embeddings import index_embeddings
+from .embeddings import index_embeddings, rebuild_knowledge_embeddings
 from .models import Document, DocumentChunk, DocumentVersion, User, WebsiteCapture
 from .parsing import ParsedChunk, parse_file
 from .schemas import Metadata, VersionInput
@@ -101,7 +101,7 @@ def document_payload(db: Session, user: User, document: Document, detail=False) 
     return result
 
 
-def index_chunks(version: DocumentVersion, chunks: list[ParsedChunk]) -> None:
+def index_chunks(version: DocumentVersion, chunks: list[ParsedChunk], *, embed=True) -> None:
     version.chunks = [
         DocumentChunk(
             id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"{version.id}:{number}")),
@@ -114,7 +114,7 @@ def index_chunks(version: DocumentVersion, chunks: list[ParsedChunk]) -> None:
         )
         for number, chunk in enumerate(chunks)
     ]
-    if settings.retrieval_provider == "hybrid":
+    if embed and settings.retrieval_provider == "hybrid":
         index_embeddings(version.chunks)
 
 
@@ -150,9 +150,12 @@ def add_version(
         checksum=hashlib.sha256(data).hexdigest(),
         file_content=data,
     )
-    index_chunks(version, chunks)
+    is_pdf = media_type == "application/pdf"
+    index_chunks(version, chunks, embed=not is_pdf)
     document.versions.append(version)
     db.flush()
+    if is_pdf:
+        rebuild_knowledge_embeddings(db, version.id)
     return version
 
 
@@ -210,4 +213,7 @@ def citation_payload(
             else (version.source_provenance or {}).get("source_url")
         ),
         "legal_status": (version.source_provenance or {}).get("legal_status"),
+        "publisher": (version.source_provenance or {}).get("publisher"),
+        "jurisdiction": (version.source_provenance or {}).get("jurisdiction"),
+        "usage_scope": (version.source_provenance or {}).get("usage_scope"),
     }

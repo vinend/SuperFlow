@@ -22,6 +22,25 @@ from superflow.main import app
 from superflow.seed import seed
 
 
+@pytest.fixture(autouse=True)
+def local_test_embeddings(monkeypatch):
+    # PDF uploads now rebuild the full KB even in keyword mode. Unit/functional
+    # tests use a deterministic local adapter; opt-in model tests instantiate
+    # FastEmbedProvider directly. Individual semantic tests can override this.
+    from superflow import embeddings
+
+    class FixtureEmbedding:
+        model = "functional-test-vectors"
+
+        def documents(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+        def query(self, text):
+            return [1.0, 0.0]
+
+    monkeypatch.setattr(embeddings, "embedding_provider", FixtureEmbedding)
+
+
 @pytest.fixture(scope="session")
 def test_engine():
     url = os.environ.get("TEST_DATABASE_URL")

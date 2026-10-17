@@ -533,7 +533,8 @@ class SuperFlowGuard:
         check(
             "human_review_requirement",
             not review and value.action is None,
-            "Confirm official-source applicability and subsequent amendments with Compliance."
+            "Confirm public-reference applicability with the responsible division; "
+            "check jurisdiction, publication period and subsequent amendments before applying it."
             if official_reference
             else "Website and vision observations must be checked against the captured evidence."
             if web_source

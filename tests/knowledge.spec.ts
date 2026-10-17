@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Request } from "@playwright/test";
 
 test("compact Ask and repository filters preserve source inspection", async ({
   page,
@@ -448,16 +448,25 @@ test("a delayed Ask response cannot restore another role's content or URL contex
     .fill("Proposal A initial investment");
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
   await ready;
+  // Switching identities now aborts the old request. Both cancellation and a
+  // response arriving just before cancellation must keep the new role clean.
+  const requestEnded = new Promise<void>((resolve) => {
+    const ended = (request: Request) => {
+      if (!request.url().endsWith("/api/ask") || request.method() !== "POST")
+        return;
+      page.off("requestfinished", ended);
+      page.off("requestfailed", ended);
+      resolve();
+    };
+    page.on("requestfinished", ended);
+    page.on("requestfailed", ended);
+  });
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("employee");
   const url = page.url();
-  const response = page.waitForResponse(
-    (result) =>
-      result.url().endsWith("/api/ask") && result.request().method() === "POST",
-  );
   release();
-  await (await response).finished();
+  await requestEnded;
   await page.evaluate(
     () =>
       new Promise<void>((resolve) =>

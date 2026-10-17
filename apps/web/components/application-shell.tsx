@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import {
   BookOpen,
   ChartNoAxesCombined,
@@ -68,6 +69,7 @@ export function ApplicationShell({
 }) {
   const { user, users, selectUser } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
+  const reduced = useReducedMotion();
   const nav = navigationFor(user.role_id);
   const activeView = view === "workflows" ? "cases" : view;
   const navigation = (
@@ -178,7 +180,15 @@ export function ApplicationShell({
             </label>
           </div>
         </header>
-        {children}
+        <motion.div
+          key={view}
+          className="workspace-content"
+          initial={reduced ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          {children}
+        </motion.div>
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
           <Link href="/demo">Demo walkthrough</Link>

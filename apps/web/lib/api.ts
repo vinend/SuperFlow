@@ -22,6 +22,8 @@ export type Chunk = {
 };
 export type Version = {
   source_provenance?: {
+    jurisdiction?: string;
+    usage_scope?: string;
     vision_model?: string | null;
     capture_engine?: "puppeteer" | null;
     source_url: string;
@@ -56,6 +58,9 @@ export type KnowledgeDocument = {
   versions: Version[];
 };
 export type Source = {
+  publisher?: string | null;
+  jurisdiction?: string | null;
+  usage_scope?: string | null;
   source_origin?: "knowledge_base" | "internet";
   media_type?: string | null;
   capture_engine?: "puppeteer" | null;

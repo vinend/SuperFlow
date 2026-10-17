@@ -7,7 +7,7 @@ loadEnvConfig(resolve(process.cwd(), "../.."));
 const config: NextConfig = {
   reactStrictMode: true,
   devIndicators: false,
-  experimental: { proxyClientMaxBodySize: "12mb" },
+  experimental: { proxyClientMaxBodySize: "12mb", proxyTimeout: 600_000 },
   distDir: process.env.SUPERFLOW_E2E ? ".next-e2e" : ".next",
   env: { COPILOTKIT_TELEMETRY_DISABLED: "true" },
   async rewrites() {

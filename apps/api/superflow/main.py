@@ -5,8 +5,9 @@ from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import PurePath
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
@@ -15,6 +16,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.concurrency import run_in_threadpool
 
+from . import ask_progress
 from .analytics_api import router as analytics_router
 from .audit import record
 from .auth import can_read, current_user, require_manage
@@ -72,7 +74,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
     allow_methods=["GET", "POST", "PATCH"],
-    allow_headers=["Content-Type", "X-User-Id"],
+    allow_headers=["Content-Type", "X-User-Id", "X-Ask-Progress"],
 )
 Db = Annotated[Session, Depends(get_db)]
 Actor = Annotated[User, Depends(current_user)]
@@ -366,11 +368,41 @@ def run_payload(db: Session, user: User, run: QuestionRun) -> dict:
 
 
 @app.post("/api/ask", status_code=201, response_model=AskOutput)
-def ask(query: AskInput, db: Db, user: Actor):
-    return execute_question(query, db, user)
+def ask(
+    query: AskInput,
+    db: Db,
+    user: Actor,
+    progress_id: Annotated[UUID | None, Header(alias="X-Ask-Progress")] = None,
+):
+    def progress(stage, message):
+        if progress_id:
+            ask_progress.update(user.id, str(progress_id), stage, message)
+
+    try:
+        result = execute_question(query, db, user, progress=progress)
+        progress("complete", "Your cited answer is ready.")
+        return result
+    except Exception:
+        progress("failed", "This request could not complete. See the error and retry.")
+        raise
 
 
-def execute_question(query: AskInput, db: Session, user: User, run: QuestionRun | None = None):
+@app.get("/api/ask-progress/{progress_id}")
+def question_progress(progress_id: UUID, user: Actor):
+    value = ask_progress.read(user.id, str(progress_id))
+    if value is None:
+        raise HTTPException(404, "Question progress is unavailable.")
+    return value
+
+
+def execute_question(
+    query: AskInput,
+    db: Session,
+    user: User,
+    run: QuestionRun | None = None,
+    *,
+    progress=lambda *_: None,
+):
     run = run or QuestionRun(
         user_id=user.id,
         question=query.question,
@@ -391,6 +423,7 @@ def execute_question(query: AskInput, db: Session, user: User, run: QuestionRun 
         question_length=len(query.question),
         filters=query.model_dump(exclude={"question"}),
     )
+    progress("retrieving", "Searching permitted sources and checking version scope.")
     hits = retriever.retrieve(db, user, query)
     if query.web_search:
         hits = hits[:4]
@@ -399,6 +432,7 @@ def execute_question(query: AskInput, db: Session, user: User, run: QuestionRun 
         for number, hit in enumerate(hits, start=1)
     ]
     if query.web_search:
+        progress("web_search", "Opening the local browser and inspecting public pages with vision.")
         sources.extend(collect_web_context(db, user, run, query, len(sources) + 1))
     run.source_refs = [
         {"chunk_id": source["chunk_id"], "score": source["score"]} for source in sources
@@ -416,6 +450,9 @@ def execute_question(query: AskInput, db: Session, user: User, run: QuestionRun 
         retrieved_count=len(sources),
     )
     try:
+        progress(
+            "generating", f"Composing an answer from {len(sources)} authorized evidence excerpts."
+        )
         run.answer = provider.answer(query.question, sources)
     except ProviderUnavailable as error:
         raise HTTPException(
@@ -431,6 +468,7 @@ def execute_question(query: AskInput, db: Session, user: User, run: QuestionRun 
         provider=provider.name,
         answer_digest=digest(run.answer),
     )
+    progress("verifying", "Checking citations, access, source conflicts and reliability.")
     result = run_payload(db, user, run)
     record(
         db,
@@ -462,7 +500,15 @@ def process_web_search(run_id: str):
             }
             db.commit()
             query = AskInput(question=run.question, **run.filters)
-            execute_question(query, db, user, run)
+            execute_question(
+                query,
+                db,
+                user,
+                run,
+                progress=lambda stage, message: ask_progress.update(
+                    user.id, run_id, stage, message
+                ),
+            )
         except Exception:
             logging.getLogger(__name__).exception("Local WebSearch job failed: %s", run_id)
             db.rollback()
@@ -504,6 +550,7 @@ def start_web_search(query: AskInput, db: Db, user: Actor):
     db.flush()
     record(db, user, run.id, "web_search_queued", engine="google-puppeteer-local")
     db.commit()
+    ask_progress.update(user.id, run.id, "queued", "Waiting for the local browser worker.")
     web_search_pool.submit(process_web_search, run.id)
     return {"id": run.id, "status": "queued"}
 
@@ -530,7 +577,11 @@ def web_search_job(run_id: str, db: Db, user: Actor):
     if run.outcome == "web_search_failed":
         return {"status": "failed", "message": (run.web_search_result or {}).get("message")}
     if not run.answer:
-        return {"status": "running", "message": (run.web_search_result or {}).get("message")}
+        return {
+            "status": "running",
+            "message": (run.web_search_result or {}).get("message"),
+            "progress": ask_progress.read(user.id, run_id),
+        }
     return {"status": "complete", "answer": run_payload(db, user, run)}
 
 

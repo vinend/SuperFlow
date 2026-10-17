@@ -28,10 +28,15 @@ import { useInvestmentWorkspace } from "./use-investment-workspace";
 import { useActionWorkspace } from "./use-action-workspace";
 import { useImpactWorkspace } from "./use-impact-workspace";
 import { ErrorState, LoadingState } from "./ui/primitives";
+import { AskActivity } from "./ask-activity";
+import type { AskProgress } from "@/lib/ask-progress";
 
 type KnowledgeActions = {
   answer: Answer | null;
   asking: boolean;
+  progress?: AskProgress | null;
+  webSearch?: boolean;
+  scope?: string;
   onSource: (source: Source) => void;
   onDocument: (id: string, versionId?: string) => void;
 };
@@ -97,7 +102,11 @@ export function GenerativeWorkspace({
       >
         {selection.intent === "knowledge_answer" ? (
           knowledge.asking ? (
-            <LoadingState label="Retrieving authorized sources…" />
+            <AskActivity
+              progress={knowledge.progress}
+              webSearch={knowledge.webSearch}
+              scope={knowledge.scope}
+            />
           ) : knowledge.answer ? (
             <AnswerCard
               view={
@@ -110,7 +119,9 @@ export function GenerativeWorkspace({
               onDocument={knowledge.onDocument}
             />
           ) : (
-            <LoadingState label="Retrieving authorized sources…" />
+            <p className="muted">
+              A completed question will show its cited answer here.
+            </p>
           )
         ) : selection.intent === "regulatory_review" ? (
           <RegulatoryGenerated user={user} />
