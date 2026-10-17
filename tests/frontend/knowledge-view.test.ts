@@ -10,6 +10,43 @@ import type {
   Source,
   Version,
 } from "../../apps/web/lib/api.ts";
+import { evidenceIdentity } from "../../apps/web/lib/evidence-origin.ts";
+
+test("evidence labels distinguish stored PDF/OCR from browser and vision observations", () => {
+  assert.deepEqual(
+    evidenceIdentity({
+      media_type: "application/pdf",
+      extraction_method: "ocr",
+    }),
+    {
+      internet: false,
+      label: "From Knowledge Base",
+      methods: ["PDF", "OCR"],
+    },
+  );
+  assert.deepEqual(
+    evidenceIdentity({
+      extraction_method: "web_capture",
+      vision_model: "real-model",
+    }),
+    {
+      internet: true,
+      label: "Internet",
+      methods: ["Puppeteer", "Vision scan"],
+    },
+  );
+  assert.deepEqual(
+    evidenceIdentity({ extraction_method: "web_capture" }).methods,
+    ["Puppeteer"],
+  );
+  assert.equal(
+    evidenceIdentity({
+      media_type: "application/pdf",
+      source_origin: "knowledge_base",
+    }).label,
+    "From Knowledge Base",
+  );
+});
 
 test("only actual backend sources become clickable citation references", () => {
   const sources = [{ citation_id: 2, chunk_id: "stored-chunk" }] as Source[];

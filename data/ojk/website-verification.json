@@ -1,0 +1,18 @@
+{
+  "checked_on": "2026-10-17",
+  "url": "https://ojk.go.id/id/regulasi/Pages/Layanan-Digital-oleh-Bank-Umum.aspx",
+  "title": "Layanan Digital oleh Bank Umum",
+  "captured_at": "2026-10-17T16:47:31.267Z",
+  "capture_engine": "puppeteer",
+  "vision_model": "qwen3.5:0.8b",
+  "elapsed_seconds": 140.214,
+  "dom_characters": 7383,
+  "screenshot_count": 1,
+  "screenshot_sha256": [
+    "fd80ce6a8cc58d37238235883ceed845e123cf4bc35e1e40942e712ad26828db"
+  ],
+  "observation_count": 1,
+  "coverage": "Top two viewports (maximum 1800 vertical pixels); not a complete crawl.",
+  "google_search_status": 429,
+  "vision_observations_indexed_as_facts": false
+}

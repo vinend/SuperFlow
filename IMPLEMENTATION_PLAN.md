@@ -1,5 +1,7 @@
 # Rencana Implementasi SuperFlow
 
+Pass UI/provenance selesai: hapus preamble review berulang dari body jawaban, pertahankan Guard, tambahkan label Knowledge Base/Internet dan metode PDF/OCR/Puppeteer/vision, motion yang menghormati reduced-motion, serta fallback registrasi CopilotKit. Scan OJK nyata dan hasil pengujian dicatat di `IMPLEMENTATION_STATUS.md` dan `data/ojk/website-verification.json`.
+
 ## Tujuan dan ruang lingkup
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.

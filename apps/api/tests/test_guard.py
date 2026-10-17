@@ -114,12 +114,16 @@ def test_missing_evidence_is_explicit_and_unsafe_conclusion_removed(client):
     assert "[1]" not in result["answer"]
 
 
-def test_conflicting_sources_both_visible_and_not_resolved(client):
+def test_conflicting_sources_keep_review_status_without_answer_preamble(client, db, employee):
     result = ask(client, "How often are access rights reviewed?")
     ids = {source["document_id"] for source in result["sources"]}
     assert {"access-sop", "access-review-policy"} <= ids
     assert "12 months" in result["answer"] and "6 months" in result["answer"]
-    assert "not a resolved conclusion" in result["answer"]
+    assert result["answer"] == db.get(QuestionRun, result["id"]).answer
+    assert result["reliability"]["status"] == "REVIEW_REQUIRED"
+    reopened = client.get(f"/api/ask/{result['id']}", headers=employee).json()
+    assert reopened["answer"] == result["answer"]
+    assert reopened["reliability"]["status"] == "REVIEW_REQUIRED"
     assert result["reliability"]["checks"]["conflict_detection"]["passed"] is False
     conflicting = [
         item for item in result["reliability"]["evidence"] if item["status"] == "conflicting"

@@ -1,5 +1,7 @@
 # SuperFlow
 
+Update UI: referensi jawaban kini berlabel **From Knowledge Base** atau **Internet**, dengan badge PDF/OCR/Puppeteer/Vision scan sesuai provenance. Animasi ringan menghormati reduced motion. Verifikasi website OJK dengan Puppeteer dan vision lokal tersedia di [WEBSITE_CAPTURE.md](docs/WEBSITE_CAPTURE.md).
+
 **Enterprise Knowledge-to-Action Platform**  
 **From Trusted Knowledge to Measurable Action**
 

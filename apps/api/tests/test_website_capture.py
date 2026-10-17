@@ -116,6 +116,13 @@ def test_preview_save_evidence_permissions_and_guard(client, db, monkeypatch):
     assert answer["sources"] and all(
         s["extraction_method"] == "web_capture" for s in answer["sources"]
     )
+    assert all(
+        s["source_origin"] == "internet"
+        and s["capture_engine"] == "puppeteer"
+        and s["vision_model"] == "unit-test-model"
+        and s["source_url"] == preview["url"]
+        for s in answer["sources"]
+    )
     assert answer["reliability"]["status"] == "REVIEW_REQUIRED"
     assert answer["reliability"]["policy_version"] == "guard-website-review-v1"
     assert db.scalar(select(WebsiteCapture)).version_id == version["id"]

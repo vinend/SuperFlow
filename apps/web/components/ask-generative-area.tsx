@@ -131,12 +131,21 @@ export function AskGenerativeArea({
         );
       }
       if (!live.current) return;
-      const tool = await copilotkit.runTool({
-        name: APPROVED_WORKSPACE_TOOL,
-        agentId: "workspace",
-        parameters: resolution,
-      });
-      if (tool.error) throw tool.error;
+      let displayed = false;
+      if (isReady) {
+        try {
+          const tool = await copilotkit.runTool({
+            name: APPROVED_WORKSPACE_TOOL,
+            agentId: "workspace",
+            parameters: resolution,
+          });
+          displayed = !tool.error;
+        } catch {
+          // Runtime registration may still be loading or reconnecting. The
+          // same schema-validated, read-only view can be displayed directly.
+        }
+      }
+      if (!displayed && live.current) setSelection(resolution);
       if (
         resolution.intent === "knowledge_answer" &&
         resolution.status === "ready"

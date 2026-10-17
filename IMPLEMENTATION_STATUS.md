@@ -8,6 +8,15 @@
 
 **Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
 
+## Motion, label evidence, dan verifikasi website OJK
+
+- Kalimat pembuka otomatis "Human review is required; the following cited answer..." dihapus dari body jawaban baru maupun tersimpan. Status Guard, konflik, alasan review dan kontrol approval tetap berlaku.
+- Referensi jawaban, checklist dan Source Panel menampilkan **From Knowledge Base** untuk file tersimpan (termasuk PDF OJK), atau **Internet** untuk snapshot website. Badge PDF/OCR/Puppeteer/Vision scan mengikuti format/provenance nyata. Vision scan menandai observasi pendamping screenshot; citation tetap teks DOM, bukan output model sebagai fakta.
+- Spring entrance, stagger evidence, hover/tap serta page/dialog fade menghormati reduced motion. Tab dan layout tetap sama.
+- Endpoint produksi berhasil membuka halaman OJK Layanan Digital oleh Bank Umum melalui Puppeteer: **7.383 karakter**, **1 screenshot/hash**, dan observasi Qwen3.5 0.8B tervalidasi dalam **140,214 detik**. Metadata: `data/ojk/website-verification.json`. Coverage terbatas viewport; model kecil tetap dapat salah baca. Google masih HTTP 429, tanpa bypass atau hasil buatan.
+- Browser test menemukan race registrasi CopilotKit pada Ask pertama. Fallback sekarang menampilkan workspace read-only yang sudah lolos schema validation saat runtime belum siap. Permission dan domain API tetap authoritative.
+- Validasi: **46 targeted backend tests**, **41 frontend unit tests**, **28 browser scenarios** lulus (25 pada run awal; satu failure registrasi diperbaiki dan lulus retest, ditambah dua skenario label/reduced-motion). Lint, formatter, TypeScript dan build produksi diperiksa sebelum restart layanan.
+
 # Full-stack RPL RAG dan corpus OJK — 17 Oktober 2026
 
 - **Database terisi nyata:** 8 PDF dari domain OJK resmi, 397 halaman, 3.585.502 byte original, 1.101 chunk/vektor baru. Bersama corpus existing: 21 dokumen, 1.126 chunk dan 1.126 vektor pada model multilingual aktif; vektor BGE lama tetap terpisah. Tidak dilakukan reset data aplikasi. Manifest, checksum/count hasil impor, retrieval checks dan real-model verification tersimpan di `data/ojk/`.

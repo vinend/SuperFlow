@@ -53,6 +53,10 @@ export type KnowledgeDocument = {
   versions: Version[];
 };
 export type Source = {
+  source_origin?: "knowledge_base" | "internet";
+  media_type?: string | null;
+  capture_engine?: "puppeteer" | null;
+  vision_model?: string | null;
   source_url?: string | null;
   legal_status?: string | null;
   citation_id: number;

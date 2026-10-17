@@ -9,6 +9,7 @@ import { EvidenceChecklist } from "./evidence-checklist";
 import { askAction } from "@/lib/product-view";
 import { useSession } from "./session";
 import { motion, useReducedMotion } from "motion/react";
+import { EvidenceOrigin } from "./evidence-origin";
 
 export function AnswerCard({
   answer,
@@ -19,8 +20,10 @@ export function AnswerCard({
 }: AnswerCardProps) {
   const { user } = useSession();
   const reduce = useReducedMotion();
-  const officialSources = answer.sources.filter((source) =>
-    source.source_url?.startsWith("https://ojk.go.id/"),
+  const officialSources = answer.sources.filter(
+    (source) =>
+      source.source_url?.startsWith("https://ojk.go.id/") &&
+      source.extraction_method !== "web_capture",
   );
   const regulatory = view === "regulation_brief" || officialSources.length > 0;
   const nextAction = askAction(answer, user.role_id);
@@ -32,7 +35,7 @@ export function AnswerCard({
       data-response-view={regulatory ? "regulation_brief" : "source_answer"}
       initial={reduce ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
+      transition={{ type: "spring", stiffness: 320, damping: 30 }}
     >
       <div className="answer-heading">
         <div className="answer-label">
@@ -98,10 +101,18 @@ export function AnswerCard({
             </span>
           </div>
           <div className="source-references">
-            {answer.sources.map((source) => (
-              <button
+            {answer.sources.map((source, index) => (
+              <motion.button
                 key={source.chunk_id}
                 className="source-reference"
+                initial={reduce ? false : { opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.24,
+                  delay: reduce ? 0 : Math.min(index, 6) * 0.035,
+                }}
+                whileHover={reduce ? undefined : { x: 3 }}
+                whileTap={reduce ? undefined : { scale: 0.99 }}
                 onClick={() => onSource(source)}
               >
                 <span className="citation-number">{source.citation_id}</span>
@@ -110,10 +121,11 @@ export function AnswerCard({
                   <small>
                     v{source.version} · {source.section_path}
                   </small>
+                  <EvidenceOrigin source={source} />
                 </span>
                 <StatusBadge status={source.status} />
                 <ChevronRight size={15} />
-              </button>
+              </motion.button>
             ))}
           </div>
         </div>

@@ -56,6 +56,10 @@ class AskInput(BaseModel):
 
 
 class Citation(BaseModel):
+    source_origin: Literal["knowledge_base", "internet"] = "knowledge_base"
+    media_type: str | None = None
+    capture_engine: Literal["puppeteer"] | None = None
+    vision_model: str | None = None
     source_url: str | None = None
     legal_status: str | None = None
     citation_id: int = Field(ge=1)

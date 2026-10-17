@@ -1,5 +1,9 @@
 # Import website dengan Puppeteer dan vision lokal
 
+Verifikasi ulang pada halaman OJK Layanan Digital oleh Bank Umum berhasil: Puppeteer mengekstrak 7.383 karakter dan satu screenshot, lalu Qwen3.5 0.8B menyelesaikan scan nyata dalam 140,214 detik. Metadata/hash: `data/ojk/website-verification.json`. Google search pada jaringan ini tetap HTTP 429.
+
+Label evidence: **From Knowledge Base** untuk file yang diindeks (termasuk PDF OJK), **Internet** untuk snapshot website. Badge PDF/OCR/Puppeteer/Vision scan menjelaskan metode, terpisah dari status reliabilitas. Vision scan berarti observasi pendamping screenshot; citation website memakai teks DOM. Label tersedia pada referensi jawaban, checklist, Source Panel, detail dokumen dan preview website. Motion ringan menghormati reduced-motion tanpa mengubah tab/layout.
+
 Update OJK/RPL: dialog yang sama sekarang menyediakan Google discovery via Puppeteer dan direct official PDF import. Search Google pada jaringan pengujian mendapat HTTP 429 dan menampilkan kegagalan eksplisit; corpus resmi telah diimpor melalui tautan OJK terverifikasi. Implementasi LlamaIndex, index controls, serta CopilotKit dynamic response dijelaskan di [OJK_DEMO.md](OJK_DEMO.md).
 
 Knowledge → **Import website** tersedia untuk SME/Governance dengan permission `knowledge:write`. Masukkan URL publik, pilih **Scan website**, periksa screenshot/teks/observasi vision, tentukan owner/domain/readers, lalu **Save draft source**. Detail dokumen menyediakan **Inspect website capture** untuk membuka bukti tersimpan. Publikasi tetap melalui kontrol versi Knowledge existing.

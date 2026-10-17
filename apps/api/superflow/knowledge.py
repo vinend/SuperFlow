@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from .auth import can_read
 from .config import settings
 from .embeddings import index_embeddings
-from .models import Document, DocumentChunk, DocumentVersion, User
+from .models import Document, DocumentChunk, DocumentVersion, User, WebsiteCapture
 from .parsing import ParsedChunk, parse_file
 from .schemas import Metadata, VersionInput
 
@@ -168,6 +168,11 @@ def citation_payload(
     document = accessible_document(db, user, identity.document_id)
     chunk = db.get(DocumentChunk, chunk_id)
     version = db.get(DocumentVersion, identity.version_id)
+    capture = (
+        db.scalar(select(WebsiteCapture).where(WebsiteCapture.version_id == version.id))
+        if chunk.extraction_method == "web_capture"
+        else None
+    )
     return {
         "citation_id": citation_id,
         "document_id": document.id,
@@ -186,6 +191,14 @@ def citation_payload(
         "extraction_method": chunk.extraction_method,
         "page_number": chunk.page_number,
         "ocr_confidence": chunk.ocr_confidence,
-        "source_url": (version.source_provenance or {}).get("source_url"),
+        "source_origin": "internet" if capture else "knowledge_base",
+        "media_type": version.media_type,
+        "capture_engine": "puppeteer" if capture else None,
+        "vision_model": capture.payload.get("vision_model") if capture else None,
+        "source_url": (
+            capture.payload.get("url")
+            if capture
+            else (version.source_provenance or {}).get("source_url")
+        ),
         "legal_status": (version.source_provenance or {}).get("legal_status"),
     }

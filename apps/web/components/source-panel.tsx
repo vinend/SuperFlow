@@ -6,6 +6,7 @@ import type { SourcePanelProps } from "@/lib/workspace-contracts";
 import { Dialog } from "./ui/dialog";
 import { Metadata, StatusBadge } from "./ui/primitives";
 import { RELIABILITY_PRESENTATION } from "@/lib/reliability-view";
+import { EvidenceOrigin } from "./evidence-origin";
 
 export function SourcePanel({
   source,
@@ -35,21 +36,33 @@ export function SourcePanel({
       <div className="source-content">
         <div className="context-label">Citation [{source.citation_id}]</div>
         <h2>{source.title}</h2>
-        {source.source_url?.startsWith("https://ojk.go.id/") && (
-          <div className="notice">
-            <a
-              className="text-link"
-              href={source.source_url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              Open official OJK PDF
-            </a>
-            <p>
-              Official-source reference. Legal applicability and amendments
-              still require human review.
-            </p>
-          </div>
+        <EvidenceOrigin source={source} />
+        {source.source_url?.startsWith("https://ojk.go.id/") &&
+          source.extraction_method !== "web_capture" && (
+            <div className="notice">
+              <a
+                className="text-link"
+                href={source.source_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open official OJK PDF
+              </a>
+              <p>
+                Official-source reference. Legal applicability and amendments
+                still require human review.
+              </p>
+            </div>
+          )}
+        {source.extraction_method === "web_capture" && source.source_url && (
+          <a
+            className="text-link"
+            href={source.source_url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Open captured website
+          </a>
         )}
         <div className="tag-row">
           <span className="domain-label">{source.domain}</span>
@@ -97,7 +110,7 @@ export function SourcePanel({
                     label: "Extraction",
                     value:
                       source.extraction_method === "web_capture"
-                        ? "Website and vision capture"
+                        ? "Puppeteer webpage text"
                         : source.extraction_method === "pdf_text"
                           ? "PDF text"
                           : source.extraction_method === "ocr"
@@ -115,6 +128,9 @@ export function SourcePanel({
                     value: source.ocr_confidence.toFixed(2) + " / 1",
                   },
                 ]
+              : []),
+            ...(source.vision_model
+              ? [{ label: "Vision model", value: source.vision_model }]
               : []),
           ]}
         />

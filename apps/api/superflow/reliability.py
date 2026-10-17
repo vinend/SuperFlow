@@ -97,11 +97,6 @@ def presented_answer(run: QuestionRun, result: GuardResult) -> str:
         return "I could not find supporting evidence sufficient for a safe conclusion. " + " ".join(
             result.reasons
         )
-    if result.status == ReliabilityStatus.REVIEW_REQUIRED:
-        return (
-            "Human review is required; the following cited answer is evidence-backed, "
-            "not a resolved conclusion.\n\n" + run.answer
-        )
     if result.status == ReliabilityStatus.OUTDATED:
         return "Historical extracts are not current authority.\n\n" + run.answer
     return run.answer

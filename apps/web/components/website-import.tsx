@@ -6,6 +6,7 @@ import { api, DOMAINS, KnowledgeDocument, ROLES } from "@/lib/api";
 import { useSession } from "./session";
 import { Dialog } from "./ui/dialog";
 import { OjkDiscovery } from "./ojk-discovery";
+import { EvidenceOrigin } from "./evidence-origin";
 
 export type WebsiteCapture = {
   id: string;
@@ -28,6 +29,13 @@ export type WebsiteCapture = {
 export function WebsiteEvidence({ capture }: { capture: WebsiteCapture }) {
   return (
     <div className="website-evidence">
+      <EvidenceOrigin
+        source={{
+          source_origin: "internet",
+          capture_engine: "puppeteer",
+          vision_model: capture.vision_model,
+        }}
+      />
       <p>
         <strong>Source:</strong> {capture.url}
       </p>
@@ -69,6 +77,9 @@ export function WebsiteEvidence({ capture }: { capture: WebsiteCapture }) {
       </details>
       {capture.observations.map((item) => (
         <section key={item.screenshot}>
+          <span className="method-badge">
+            Vision observation · not a cited fact
+          </span>
           <h3>Vision scan · screenshot {item.screenshot}</h3>
           <p>{item.visual_description}</p>
           <details>

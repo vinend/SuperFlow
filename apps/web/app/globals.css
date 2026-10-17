@@ -3329,3 +3329,101 @@ select {
 .ojk-discovery .source-references li {
   padding-block: var(--space-3);
 }
+
+.evidence-origin {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-block: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.origin-badge,
+.method-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted);
+  background: var(--surface-muted);
+}
+.origin-badge.knowledge {
+  background: #edf7f2;
+  color: #27604b;
+  border-color: #cde5d8;
+}
+.origin-badge.internet {
+  background: #edf3ff;
+  color: #365a9b;
+  border-color: #d1def5;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  #workspace-main {
+    animation: workspace-arrive 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  dialog[open] {
+    animation: panel-arrive 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  dialog::backdrop {
+    animation: backdrop-arrive 180ms ease-out both;
+  }
+  .nav-item,
+  .button,
+  .icon-button,
+  .intent-suggestions button,
+  .prompt-suggestions button {
+    transition:
+      background-color 180ms ease,
+      color 180ms ease,
+      box-shadow 180ms ease,
+      translate 180ms ease;
+  }
+  .nav-item:hover {
+    translate: 3px 0;
+  }
+  .button:not(:disabled):hover,
+  .intent-suggestions button:hover,
+  .prompt-suggestions button:hover {
+    translate: 0 -2px;
+  }
+  .button:not(:disabled):active,
+  .intent-suggestions button:active,
+  .prompt-suggestions button:active {
+    translate: 0 0;
+  }
+}
+@keyframes workspace-arrive {
+  from {
+    opacity: 0;
+    translate: 0 8px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes panel-arrive {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@keyframes backdrop-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

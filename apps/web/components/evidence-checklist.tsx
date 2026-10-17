@@ -8,6 +8,7 @@ import {
   RELIABILITY_PRESENTATION,
   visibleEvidence,
 } from "@/lib/reliability-view";
+import { EvidenceOrigin } from "./evidence-origin";
 
 const CHECK_LABELS = {
   citation_coverage: "Citation coverage",
@@ -81,6 +82,7 @@ export function EvidenceChecklist({
                         >
                           Inspect evidence [{ref.citation_id}] · v
                           {source.version}
+                          <EvidenceOrigin source={source} />
                         </button>
                       ) : null;
                     })}

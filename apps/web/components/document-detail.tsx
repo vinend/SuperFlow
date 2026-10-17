@@ -8,6 +8,7 @@ import { EditorMode } from "./document-editor";
 import { Dialog } from "./ui/dialog";
 import { StatusBadge } from "./ui/primitives";
 import { WebsiteEvidence, type WebsiteCapture } from "./website-import";
+import { EvidenceOrigin } from "./evidence-origin";
 
 export function DocumentDetail({
   document,
@@ -209,6 +210,22 @@ export function DocumentDetail({
               {version.chunk_count} source sections
             </span>
           </div>
+          <EvidenceOrigin
+            source={{
+              filename: version.filename,
+              media_type: version.media_type,
+              extraction_method: version.chunks?.find(
+                (chunk) =>
+                  chunk.extraction_method === "web_capture" ||
+                  chunk.extraction_method === "mixed" ||
+                  chunk.extraction_method === "ocr",
+              )?.extraction_method,
+              vision_model:
+                webEvidence?.versionId === version.id
+                  ? webEvidence.capture.vision_model
+                  : undefined,
+            }}
+          />
           {version.status !== "active" && (
             <div className="notice">
               This {version.status} version is not current authority. Default
