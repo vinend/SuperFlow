@@ -1,5 +1,7 @@
 # Rencana Implementasi SuperFlow
 
+Ekstensi Ask lokal: **Enable WebSearch**, Google Puppeteer + vision, pembacaan HTML/PDF, bukti per-answer, penggabungan context dan job background/polling. Batas akses dan kegagalan Google diuji; lihat `docs/WEBSEARCH.md`.
+
 Pass UI/provenance selesai: hapus preamble review berulang dari body jawaban, pertahankan Guard, tambahkan label Knowledge Base/Internet dan metode PDF/OCR/Puppeteer/vision, motion yang menghormati reduced-motion, serta fallback registrasi CopilotKit. Scan OJK nyata dan hasil pengujian dicatat di `IMPLEMENTATION_STATUS.md` dan `data/ojk/website-verification.json`.
 
 ## Tujuan dan ruang lingkup

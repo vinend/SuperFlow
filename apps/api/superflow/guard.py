@@ -95,7 +95,7 @@ def restricted_relevance(db: Session, user: User, query: AskInput) -> bool:
     and half the title vocabulary. Denied title/ID/owner are never returned.
     """
     question_terms = set(tokens(query.question))
-    for document in db.scalars(select(Document)):
+    for document in db.scalars(select(Document).where(Document.context_run_id.is_(None))):
         if can_read(user, document):
             continue
         if query.domain and document.domain != query.domain:
@@ -514,7 +514,11 @@ class SuperFlowGuard:
                 False,
             )
         ocr_source = any(source.get("extraction_method") in {"ocr", "mixed"} for source in sources)
-        web_source = any(source.get("extraction_method") == "web_capture" for source in sources)
+        web_source = any(
+            source.get("extraction_method") in {"web_capture", "vision"}
+            or source.get("source_origin") == "internet"
+            for source in sources
+        )
         official_reference = any(
             source.get("legal_status") == "unverified-reference" for source in sources
         )

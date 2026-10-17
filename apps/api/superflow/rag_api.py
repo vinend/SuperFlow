@@ -17,7 +17,9 @@ router = APIRouter(prefix="/api/rag", tags=["RAG document management"])
 def status(db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_manage(user)
     result = []
-    for document in db.scalars(select(Document).order_by(Document.title)):
+    for document in db.scalars(
+        select(Document).where(Document.context_run_id.is_(None)).order_by(Document.title)
+    ):
         if not can_read(user, document):
             continue
         chunks = [c for v in document.versions for c in v.chunks]
@@ -54,7 +56,7 @@ class IndexInput(BaseModel):
 def index(value: IndexInput, db: Session = Depends(get_db), user: User = Depends(current_user)):
     require_manage(user)
     document = db.scalar(select(Document).where(Document.id == value.document_id).with_for_update())
-    if not document or not can_read(user, document):
+    if not document or document.context_run_id or not can_read(user, document):
         raise HTTPException(404, "Document not found or unavailable to this role.")
     count = index_embeddings([c for v in document.versions for c in v.chunks])
     record(

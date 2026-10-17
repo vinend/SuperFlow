@@ -93,7 +93,7 @@ export function AskGenerativeArea({
     setError("");
     setBusy(true);
     try {
-      if (w.documentFilter || w.includeOutdated || w.domain) {
+      if (w.documentFilter || w.includeOutdated || w.domain || w.webSearch) {
         setSelection({
           status: "ready",
           intent: "knowledge_answer",
@@ -183,6 +183,57 @@ export function AskGenerativeArea({
           busy={busy || w.asking}
           disabled={w.loading}
         />
+        <div className="websearch-controls">
+          <button
+            type="button"
+            className={`button secondary websearch-toggle ${w.webSearch ? "enabled" : ""}`}
+            aria-pressed={w.webSearch}
+            disabled={busy || w.asking}
+            onClick={() => w.setWebSearch(!w.webSearch)}
+          >
+            Enable WebSearch{" "}
+            <span aria-hidden="true">{w.webSearch ? "On" : "Off"}</span>
+          </button>
+          {w.webSearch && (
+            <details className="websearch-options">
+              <summary>WebSearch options</summary>
+              <p className="muted small">
+                Puppeteer and vision run on this device. Your question is sent
+                to Google as a public search query. Reading up to two results
+                can take several minutes.
+              </p>
+              <label>
+                Public Google query (optional)
+                <input
+                  maxLength={200}
+                  value={w.webQuery}
+                  onChange={(event) => w.setWebQuery(event.target.value)}
+                  placeholder="Defaults to your question"
+                  disabled={busy || w.asking}
+                />
+              </label>
+              <label>
+                Selected result URLs (optional)
+                <textarea
+                  value={w.webUrls}
+                  onChange={(event) => w.setWebUrls(event.target.value)}
+                  placeholder="If Google blocks automation, paste up to two public result URLs."
+                  disabled={busy || w.asking}
+                />
+              </label>
+              <p className="muted small">
+                Pasted URLs are read directly and labelled as your selected
+                sources; they are not claimed as an automated Google search.
+              </p>
+            </details>
+          )}
+          {w.webSearch && w.asking && (
+            <p role="status" className="muted small">
+              WebSearch is running locally: browser search, source reading,
+              vision, then AI synthesis. Please keep this page open.
+            </p>
+          )}
+        </div>
         <div className="query-scope" role="group" aria-label="Retrieval scope">
           {filters}
         </div>

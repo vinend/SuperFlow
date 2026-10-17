@@ -1,0 +1,36 @@
+{
+  "checked_on": "2026-10-18",
+  "execution": "local-device",
+  "browser": "puppeteer-core/chromium",
+  "vision_model": "qwen3.5:0.8b",
+  "inference_provider": "ollama-grounded-v1",
+  "google": {
+    "status": "blocked",
+    "http_status": 429,
+    "captcha_observed": true,
+    "screenshot_saved": true,
+    "result_documents_read": 0
+  },
+  "selected_result": {
+    "status": "complete",
+    "discovery": "user-selected-urls",
+    "sources_read": 1,
+    "url": "https://ojk.go.id/id/regulasi/Pages/Layanan-Digital-oleh-Bank-Umum.aspx",
+    "kb_citations": 4,
+    "webpage_citations": 1,
+    "vision_citations": 1,
+    "answer_cites_web_text": true,
+    "answer_cites_vision": true,
+    "answer_cites_kb": true,
+    "guard": "REVIEW_REQUIRED",
+    "background_job": true
+  },
+  "public_pdf_download": {
+    "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/FAQ%20POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf",
+    "bytes": 135397,
+    "sha256": "26ce73a6dba3ed2d916fe10f070767a8f7c30d0668f1196ec3f889418893a5c5",
+    "engine": "public-ip-pinned-node-download",
+    "pdf_magic": "%PDF-"
+  },
+  "limitations": "Google discovery was blocked, not successful. Selected-URL reading is separately verified. Vision/synthesis can contain inaccuracies and are not benchmarked or approved conclusions. Screenshots/model files/private run data are not committed."
+}

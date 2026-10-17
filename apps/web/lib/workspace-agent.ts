@@ -5,7 +5,9 @@ import { WorkspaceResolutionSchema } from "./workspace-catalog";
 
 const API_URL =
   process.env.SUPERFLOW_API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NEXT_PUBLIC_API_URL?.startsWith("http")
+    ? process.env.NEXT_PUBLIC_API_URL
+    : undefined) ||
   "http://127.0.0.1:8000";
 
 export class SuperFlowWorkspaceAgent extends AbstractAgent {

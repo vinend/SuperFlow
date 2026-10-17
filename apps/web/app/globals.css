@@ -3340,6 +3340,49 @@ select {
   font-weight: 500;
   line-height: 1.5;
 }
+.websearch-controls {
+  margin-block: 12px;
+}
+.websearch-toggle {
+  gap: 12px;
+}
+.websearch-toggle.enabled {
+  background: #edf7f2;
+  border-color: #9dc9b2;
+  color: #27604b;
+}
+.websearch-toggle > span {
+  font-size: 11px;
+  opacity: 0.75;
+}
+.websearch-options {
+  margin-top: 10px;
+}
+.websearch-options summary {
+  cursor: pointer;
+  font-size: 12px;
+}
+.websearch-options label {
+  display: grid;
+  gap: 5px;
+  margin-block: 10px;
+  font-size: 12px;
+}
+.websearch-options input,
+.websearch-options textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.websearch-options textarea {
+  min-height: 72px;
+}
+.websearch-result details {
+  margin-top: 8px;
+}
 .origin-badge,
 .method-badge {
   display: inline-flex;

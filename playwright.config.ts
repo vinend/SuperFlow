@@ -49,7 +49,8 @@ export default defineConfig({
       reuseExistingServer: false,
       timeout: 90_000,
       env: {
-        NEXT_PUBLIC_API_URL: "http://127.0.0.1:8001",
+        NEXT_PUBLIC_API_URL: "/api/backend",
+        SUPERFLOW_API_URL: "http://127.0.0.1:8001",
         SUPERFLOW_E2E: "1",
         NEXT_TELEMETRY_DISABLED: "1",
       },

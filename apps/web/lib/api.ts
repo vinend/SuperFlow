@@ -1,5 +1,4 @@
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/backend";
 
 import type { GuardResult } from "./reliability-contracts";
 import { isGuardResult } from "./reliability-view";
@@ -16,12 +15,15 @@ export type Chunk = {
   id: string;
   section_path: string;
   text: string;
-  extraction_method?: "native" | "pdf_text" | "ocr" | "mixed" | "web_capture";
+  extraction_method?:
+    "native" | "pdf_text" | "ocr" | "mixed" | "web_capture" | "vision";
   page_number?: number | null;
   ocr_confidence?: number | null;
 };
 export type Version = {
   source_provenance?: {
+    vision_model?: string | null;
+    capture_engine?: "puppeteer" | null;
     source_url: string;
     publisher: string;
     retrieved_at: string;
@@ -49,6 +51,7 @@ export type KnowledgeDocument = {
   authority_level: number;
   access_roles: string[];
   related_document_ids: string[];
+  context_run_id?: string | null;
   created_at: string;
   versions: Version[];
 };
@@ -73,11 +76,27 @@ export type Source = {
   section_path: string;
   excerpt: string;
   score: number;
-  extraction_method?: "native" | "pdf_text" | "ocr" | "mixed" | "web_capture";
+  extraction_method?:
+    "native" | "pdf_text" | "ocr" | "mixed" | "web_capture" | "vision";
   page_number?: number | null;
   ocr_confidence?: number | null;
 };
 export type Answer = {
+  web_search?: {
+    status: "complete" | "partial" | "blocked" | "unavailable";
+    query: string;
+    search_url: string;
+    sources_read: number;
+    search_capture_id?: string | null;
+    message: string;
+    discovery?: string;
+    failures: { url: string; message: string }[];
+    google_vision_observations?: {
+      visual_description: string;
+      visible_text: string;
+      limitations: string;
+    }[];
+  } | null;
   id: string;
   question: string;
   answer: string;
@@ -90,6 +109,9 @@ export type Answer = {
     domain: string | null;
     document_ids: string[];
     include_outdated: boolean;
+    web_search?: boolean;
+    web_query?: string | null;
+    web_urls?: string[];
   };
   created_at: string;
 };
@@ -129,7 +151,8 @@ export async function api<T>(
       headers,
       cache: "no-store",
     });
-  } catch {
+  } catch (error) {
+    if (init.signal?.aborted) throw error;
     throw new Error(
       "Cannot reach the knowledge API. Check that the API and PostgreSQL are running.",
     );

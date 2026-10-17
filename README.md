@@ -1,5 +1,7 @@
 # SuperFlow
 
+**Enable WebSearch** pada Ask menjalankan Puppeteer/Chromium dan Ollama vision di perangkat lokal untuk menambahkan konteks Internet/PDF ke jawaban. Job background/polling mendukung scan yang lama. Google pada jaringan pengujian mengembalikan 429/reCAPTCHA; statusnya ditampilkan, tanpa hasil buatan. Detail: [WEBSEARCH.md](docs/WEBSEARCH.md).
+
 Update UI: referensi jawaban kini berlabel **From Knowledge Base** atau **Internet**, dengan badge PDF/OCR/Puppeteer/Vision scan sesuai provenance. Animasi ringan menghormati reduced motion. Verifikasi website OJK dengan Puppeteer dan vision lokal tersedia di [WEBSITE_CAPTURE.md](docs/WEBSITE_CAPTURE.md).
 
 **Enterprise Knowledge-to-Action Platform**  

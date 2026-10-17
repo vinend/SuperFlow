@@ -25,7 +25,11 @@ def main():
         if user is None or not user.active:
             parser.error("Choose an active knowledge maintainer.")
         require_manage(user)
-        ids = [args.document] if args.document else list(db.scalars(select(Document.id)))
+        ids = (
+            [args.document]
+            if args.document
+            else list(db.scalars(select(Document.id).where(Document.context_run_id.is_(None))))
+        )
         count = 0
         for document_id in ids:
             # One document transaction bounds lock duration; a failed document is rolled

@@ -61,6 +61,27 @@ test("only actual backend sources become clickable citation references", () => {
   assert.equal(paragraphs[2].text, "Untrusted <script> text");
 });
 
+test("web PDF and vision observations retain distinct provenance", () => {
+  assert.deepEqual(
+    evidenceIdentity({
+      source_origin: "internet",
+      media_type: "application/pdf",
+      capture_engine: "puppeteer",
+      vision_model: "local",
+    }).methods,
+    ["PDF", "Puppeteer", "Vision scan"],
+  );
+  assert.deepEqual(
+    evidenceIdentity({
+      source_origin: "internet",
+      extraction_method: "vision",
+      capture_engine: "puppeteer",
+      vision_model: "local",
+    }).methods,
+    ["Puppeteer", "Vision observation"],
+  );
+});
+
 test("repository presentation respects persisted active status rather than version label order", () => {
   const draft = { id: "draft", version: "9.0", status: "draft" } as Version;
   const active = { id: "active", version: "2.0", status: "active" } as Version;

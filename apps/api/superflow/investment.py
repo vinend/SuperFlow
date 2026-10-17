@@ -112,7 +112,9 @@ def open_analysis_for(db, user, version_id) -> InvestmentAnalysis | None:
 def proposal_sources(db, user) -> list[dict]:
     require_analyst(user)
     result = []
-    for document in db.scalars(select(Document).order_by(Document.title)):
+    for document in db.scalars(
+        select(Document).where(Document.context_run_id.is_(None)).order_by(Document.title)
+    ):
         # Authorize before reading any version or chunk text.
         if not can_read(user, document):
             continue

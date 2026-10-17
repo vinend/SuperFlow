@@ -57,6 +57,7 @@ class Document(Base):
     title: Mapped[str] = mapped_column(String(200))
     domain: Mapped[str] = mapped_column(String(50))
     owner_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
+    context_run_id: Mapped[str | None] = mapped_column(ForeignKey("question_runs.id"), index=True)
     authority_level: Mapped[int]
     access_roles: Mapped[list[str]] = mapped_column(JSON)
     related_document_ids: Mapped[list[str]] = mapped_column(JSON, default=list)
@@ -142,6 +143,7 @@ class QuestionRun(Base):
     answer: Mapped[str] = mapped_column(Text)
     outcome: Mapped[str] = mapped_column(String(30))
     filters: Mapped[dict] = mapped_column(JSON)
+    web_search_result: Mapped[dict | None] = mapped_column(JSON)
     source_refs: Mapped[list[dict]] = mapped_column(JSON)
     provider: Mapped[str] = mapped_column(String(80))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)

@@ -1,12 +1,19 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 17 Oktober 2026
+**Diperbarui:** 18 Oktober 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
 **Ruang lingkup:** Fase 0–8, rekonsiliasi Product Experience, ingestion RAG/OCR lokal, dan import website dengan Puppeteer/vision. Fase 7 adalah proof point AML/FIU di atas fondasi bersama; Fase 8 menambahkan demo terintegrasi.
 
 **Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+
+## WebSearch lokal — 18 Oktober 2026
+
+- Tombol **Enable WebSearch** memakai Puppeteer di perangkat ini untuk membuka Google, memindai screenshot dengan Ollama vision, dan membaca halaman/PDF hasil pencarian sebagai konteks tambahan jawaban. Tidak memakai search API. Snapshot bersifat privat per pemilik pertanyaan dan tidak masuk indeks knowledge base bersama. Observasi vision diberi label belum terverifikasi, terpisah dari teks sumber.
+- Job background, polling yang dapat dilanjutkan, pemulihan job setelah restart, dan proxy API same-origin menjaga alur tetap berjalan selama inference lokal yang lambat. Source panel membedakan **From Knowledge Base**, **Internet**, PDF, DOM dan vision.
+- Google nyata masih mengembalikan **HTTP 429 / CAPTCHA**; tidak ada hasil pencarian sukses yang diklaim. Jalur URL pilihan berhasil memindai halaman resmi OJK dengan Puppeteer dan vision, menghasilkan jawaban nyata dengan citation KB, halaman web dan observasi vision. Downloader PDF resmi juga diverifikasi dengan hash original. Metadata tersanitasi: `data/ojk/websearch-verification.json`; rincian: `docs/WEBSEARCH.md`.
+- Validasi: full backend **195 passed, 2 skipped**, ditambah **8 targeted tests** untuk job/recovery dan **4 provider tests** setelah penyempurnaan prompt; **42 frontend unit tests**, **29 browser scenarios** melalui proxy same-origin, lint, formatter, TypeScript dan build produksi lulus. Layanan produksi direstart; RAG, OCR, Ollama dan capture aktif untuk pengujian pengguna. Model kecil masih dapat salah membaca atau menyimpulkan; akurasi belum dibenchmark luas.
 
 ## Motion, label evidence, dan verifikasi website OJK
 

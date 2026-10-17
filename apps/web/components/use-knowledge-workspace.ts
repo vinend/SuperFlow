@@ -2,15 +2,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, Answer, HistoryItem, KnowledgeDocument, Source } from "@/lib/api";
 import { useSession } from "./session";
+import { waitForWebSearch } from "@/lib/web-search-client";
 import type { EditorMode } from "./document-editor";
 
 export function useKnowledgeWorkspace() {
   const { user } = useSession();
   const mounted = useRef(true);
+  const webController = useRef<AbortController | null>(null);
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      webController.current?.abort();
     };
   }, []);
   const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
@@ -21,6 +24,9 @@ export function useKnowledgeWorkspace() {
   const [domain, setDomain] = useState("");
   const [documentFilter, setDocumentFilter] = useState("");
   const [includeOutdated, setIncludeOutdated] = useState(false);
+  const [webSearch, setWebSearch] = useState(false);
+  const [webQuery, setWebQuery] = useState("");
+  const [webUrls, setWebUrls] = useState("");
   const [search, setSearch] = useState("");
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [asking, setAsking] = useState(false);
@@ -34,20 +40,23 @@ export function useKnowledgeWorkspace() {
   const [notice, setNotice] = useState("");
   const canManage = user.permissions.includes("knowledge:write");
 
-  function remember(values: Record<string, string>) {
-    if (!mounted.current) return;
-    const hash = new URLSearchParams(location.hash.slice(1));
-    hash.set("role", user.id);
-    for (const [key, value] of Object.entries(values)) {
-      if (value) hash.set(key, value);
-      else hash.delete(key);
-    }
-    window.history.replaceState(
-      window.history.state,
-      "",
-      `${location.pathname}#${hash}`,
-    );
-  }
+  const remember = useCallback(
+    (values: Record<string, string>) => {
+      if (!mounted.current) return;
+      const hash = new URLSearchParams(location.hash.slice(1));
+      hash.set("role", user.id);
+      for (const [key, value] of Object.entries(values)) {
+        if (value) hash.set(key, value);
+        else hash.delete(key);
+      }
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `${location.pathname}#${hash}`,
+      );
+    },
+    [user.id],
+  );
   function applyAnswer(result: Answer) {
     if (!mounted.current) return;
     setAnswer(result);
@@ -55,6 +64,9 @@ export function useKnowledgeWorkspace() {
     setDomain(result.filters.domain || "");
     setDocumentFilter(result.filters.document_ids[0] || "");
     setIncludeOutdated(result.filters.include_outdated);
+    setWebSearch(Boolean(result.filters.web_search));
+    setWebQuery(result.filters.web_query || "");
+    setWebUrls((result.filters.web_urls || []).join("\n"));
   }
   function closeDocument() {
     setDetail(null);
@@ -96,6 +108,19 @@ export function useKnowledgeWorkspace() {
             );
             applyAnswer(result);
           }
+          if (hash.get("webjob")) {
+            setLoading(false);
+            setWebSearch(true);
+            setAsking(true);
+            const result = await waitForWebSearch(
+              hash.get("webjob")!,
+              user,
+              controller.signal,
+            );
+            applyAnswer(result);
+            remember({ run: result.id, webjob: "" });
+            setAsking(false);
+          }
           if (hash.get("document")) {
             const result = await api<KnowledgeDocument>(
               `/api/documents/${encodeURIComponent(hash.get("document")!)}`,
@@ -111,12 +136,13 @@ export function useKnowledgeWorkspace() {
       .catch((reason: Error) => {
         if (!controller.signal.aborted) {
           setError(reason.message);
+          setAsking(false);
           setLoading(false);
         }
       });
     return () => controller.abort();
     // The workspace remounts for each identity; restored records are re-authorized by the API.
-  }, [loadData, user]);
+  }, [loadData, user, remember]);
 
   async function submitQuestion(
     event?: React.FormEvent<HTMLFormElement>,
@@ -132,20 +158,40 @@ export function useKnowledgeWorkspace() {
     setAnswer(null);
     let completed = false;
     try {
-      const result = await api<Answer>("/api/ask", user, {
-        method: "POST",
-        body: JSON.stringify({
-          question: text,
-          domain: domain || null,
-          document_ids: documentFilter ? [documentFilter] : [],
-          include_outdated: includeOutdated,
-        }),
-      });
+      const payload = {
+        question: text,
+        domain: domain || null,
+        document_ids: documentFilter ? [documentFilter] : [],
+        include_outdated: includeOutdated,
+        web_search: webSearch,
+        web_query: webQuery.trim() || null,
+        web_urls: webUrls.split(/\s+/).filter(Boolean).slice(0, 2),
+      };
+      let result: Answer;
+      if (webSearch) {
+        const job = await api<{ id: string }>("/api/web-search/asks", user, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        remember({ webjob: job.id, run: "", document: "", version: "" });
+        webController.current = new AbortController();
+        result = await waitForWebSearch(
+          job.id,
+          user,
+          webController.current.signal,
+        );
+      } else {
+        result = await api<Answer>("/api/ask", user, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
       applyAnswer(result);
-      remember({ run: result.id, document: "", version: "" });
+      remember({ run: result.id, webjob: "", document: "", version: "" });
       completed = true;
     } catch (reason) {
-      setError((reason as Error).message);
+      if (mounted.current && (reason as Error).name !== "AbortError")
+        setError((reason as Error).message);
     } finally {
       setAsking(false);
     }
@@ -238,6 +284,12 @@ export function useKnowledgeWorkspace() {
     setDocumentFilter,
     includeOutdated,
     setIncludeOutdated,
+    webSearch,
+    setWebSearch,
+    webQuery,
+    setWebQuery,
+    webUrls,
+    setWebUrls,
     search,
     setSearch,
     answer,

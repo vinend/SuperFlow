@@ -1,4 +1,7 @@
 import json
+import logging
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import PurePath
 from typing import Annotated
@@ -16,7 +19,7 @@ from .analytics_api import router as analytics_router
 from .audit import record
 from .auth import can_read, current_user, require_manage
 from .config import settings
-from .db import get_db
+from .db import SessionLocal, get_db
 from .embeddings import EmbeddingUnavailable, index_embeddings
 from .investigation_api import router as investigation_router
 from .investment_api import router as investment_router
@@ -28,7 +31,7 @@ from .knowledge import (
     document_payload,
     validate_metadata,
 )
-from .models import AuditEvent, Case, Document, DocumentVersion, QuestionRun, User
+from .models import AuditEvent, Case, Document, DocumentVersion, QuestionRun, User, WebsiteCapture
 from .ojk import router as ojk_router
 from .parsing import MAX_BYTES, ParseError, parse_file
 from .providers import AnswerProvider, ProviderUnavailable, configured_answer_provider
@@ -38,11 +41,20 @@ from .reliability import digest, evaluate_run, presented_answer
 from .reliability_contracts import GuardResult, ReliabilityStatus
 from .retrieval import Retriever, configured_retriever
 from .schemas import AskInput, AskOutput, Metadata, VersionInput, VersionStatus
+from .web_search import collect as collect_web_context
 from .website_capture import router as website_capture_router
 from .workflow_api import router as workflow_router
 from .workspace_intent import router as workspace_intent_router
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    recover_web_searches()
+    yield
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="SuperFlow Knowledge API",
     version="0.6.0",
     description="Synthetic knowledge-to-action prototype. X-User-Id is mock authentication only.",
@@ -134,7 +146,9 @@ def users(db: Db):
 def documents(db: Db, user: Actor, domain: str | None = None, search: str = ""):
     return [
         document_payload(db, user, document)
-        for document in db.scalars(select(Document).order_by(Document.title))
+        for document in db.scalars(
+            select(Document).where(Document.context_run_id.is_(None)).order_by(Document.title)
+        )
         if can_read(user, document)
         and (not domain or document.domain == domain)
         and search.lower() in document.title.lower()
@@ -305,6 +319,8 @@ def download_file(document_id: str, version_id: str, db: Db, user: Actor):
 
 
 def run_payload(db: Session, user: User, run: QuestionRun) -> dict:
+    if run.outcome == "web_search_pending":
+        raise HTTPException(409, "WebSearch is still running. Use its job status endpoint.")
     if run.user_id != user.id:
         raise HTTPException(404, "Question not found.")
     try:
@@ -331,6 +347,7 @@ def run_payload(db: Session, user: User, run: QuestionRun) -> dict:
         "id": run.id,
         "question": run.question,
         "answer": presented_answer(run, reliability),
+        "web_search": run.web_search_result,
         "outcome": "source_grounded" if sources else "no_sources",
         "sources": sources,
         "filters": run.filters,
@@ -350,7 +367,11 @@ def run_payload(db: Session, user: User, run: QuestionRun) -> dict:
 
 @app.post("/api/ask", status_code=201, response_model=AskOutput)
 def ask(query: AskInput, db: Db, user: Actor):
-    run = QuestionRun(
+    return execute_question(query, db, user)
+
+
+def execute_question(query: AskInput, db: Session, user: User, run: QuestionRun | None = None):
+    run = run or QuestionRun(
         user_id=user.id,
         question=query.question,
         answer="",
@@ -371,11 +392,17 @@ def ask(query: AskInput, db: Db, user: Actor):
         filters=query.model_dump(exclude={"question"}),
     )
     hits = retriever.retrieve(db, user, query)
+    if query.web_search:
+        hits = hits[:4]
     sources = [
         citation_payload(db, user, hit.chunk_id, number, hit.score)
         for number, hit in enumerate(hits, start=1)
     ]
-    run.source_refs = [{"chunk_id": hit.chunk_id, "score": hit.score} for hit in hits]
+    if query.web_search:
+        sources.extend(collect_web_context(db, user, run, query, len(sources) + 1))
+    run.source_refs = [
+        {"chunk_id": source["chunk_id"], "score": source["score"]} for source in sources
+    ]
     run.outcome = "source_grounded" if sources else "no_sources"
     record(
         db,
@@ -394,7 +421,7 @@ def ask(query: AskInput, db: Db, user: Actor):
         raise HTTPException(
             503,
             "Local AI is unavailable or returned an unsafe response. "
-            "Check the Ollama container and model, then retry.",
+            "Check the local Ollama service and model, then retry.",
         ) from error
     record(
         db,
@@ -417,11 +444,117 @@ def ask(query: AskInput, db: Db, user: Actor):
     return result
 
 
+web_search_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="local-web-search")
+
+
+def process_web_search(run_id: str):
+    with SessionLocal() as db:
+        run = db.get(QuestionRun, run_id)
+        if run is None:
+            return
+        user = db.get(User, run.user_id)
+        try:
+            if user is None or not user.active:
+                raise ValueError("User unavailable")
+            run.web_search_result = {
+                "status": "running",
+                "message": "Local browser and vision scan in progress.",
+            }
+            db.commit()
+            query = AskInput(question=run.question, **run.filters)
+            execute_question(query, db, user, run)
+        except Exception:
+            logging.getLogger(__name__).exception("Local WebSearch job failed: %s", run_id)
+            db.rollback()
+            run = db.get(QuestionRun, run_id)
+            if run is not None:
+                run.outcome = "web_search_failed"
+                run.web_search_result = {
+                    "status": "failed",
+                    "message": "Local WebSearch could not complete. Check Ollama and try again.",
+                }
+                db.commit()
+
+
+@app.post("/api/web-search/asks", status_code=202)
+def start_web_search(query: AskInput, db: Db, user: Actor):
+    # One worker bounds local browser/model memory. Jobs are persisted before dispatch.
+    db.scalar(select(User).where(User.id == user.id).with_for_update())
+    pending = db.scalar(
+        select(QuestionRun).where(
+            QuestionRun.user_id == user.id, QuestionRun.outcome == "web_search_pending"
+        )
+    )
+    if pending is not None:
+        raise HTTPException(
+            409, "A WebSearch is already running for this user. Wait for it to finish."
+        )
+    query = query.model_copy(update={"web_search": True})
+    run = QuestionRun(
+        user_id=user.id,
+        question=query.question,
+        answer="",
+        outcome="web_search_pending",
+        filters=query.model_dump(exclude={"question"}),
+        source_refs=[],
+        provider=provider.name,
+        web_search_result={"status": "queued", "message": "Waiting for the local browser worker."},
+    )
+    db.add(run)
+    db.flush()
+    record(db, user, run.id, "web_search_queued", engine="google-puppeteer-local")
+    db.commit()
+    web_search_pool.submit(process_web_search, run.id)
+    return {"id": run.id, "status": "queued"}
+
+
+def recover_web_searches():
+    try:
+        with SessionLocal() as db:
+            pending = list(
+                db.scalars(
+                    select(QuestionRun.id).where(QuestionRun.outcome == "web_search_pending")
+                )
+            )
+        for run_id in pending:
+            web_search_pool.submit(process_web_search, run_id)
+    except SQLAlchemyError:
+        logging.getLogger(__name__).warning("WebSearch recovery needs a migrated database.")
+
+
+@app.get("/api/web-search/asks/{run_id}")
+def web_search_job(run_id: str, db: Db, user: Actor):
+    run = db.get(QuestionRun, run_id)
+    if run is None or run.user_id != user.id:
+        raise HTTPException(404, "WebSearch not found.")
+    if run.outcome == "web_search_failed":
+        return {"status": "failed", "message": (run.web_search_result or {}).get("message")}
+    if not run.answer:
+        return {"status": "running", "message": (run.web_search_result or {}).get("message")}
+    return {"status": "complete", "answer": run_payload(db, user, run)}
+
+
+@app.get("/api/ask/{run_id}/web-search")
+def web_search_evidence(run_id: str, db: Db, user: Actor):
+    run = db.get(QuestionRun, run_id)
+    if run is None or run.user_id != user.id:
+        raise HTTPException(404, "Question not found.")
+    capture_id = (run.web_search_result or {}).get("search_capture_id")
+    capture = db.get(WebsiteCapture, capture_id) if capture_id else None
+    if capture is None or capture.actor_id != user.id:
+        raise HTTPException(404, "Google scan not available for this question.")
+    return {"id": capture.id, **capture.payload}
+
+
 @app.get("/api/ask")
 def question_history(db: Db, user: Actor):
     runs = db.scalars(
         select(QuestionRun)
-        .where(QuestionRun.user_id == user.id, QuestionRun.id.not_in(select(Case.context_run_id)))
+        .where(
+            QuestionRun.user_id == user.id,
+            QuestionRun.answer != "",
+            QuestionRun.id.not_in(select(Case.context_run_id)),
+        )
         .order_by(QuestionRun.created_at.desc())
         .limit(20)
     )

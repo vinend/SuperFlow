@@ -22,6 +22,10 @@ def accessible_document(db: Session, user: User, document_id: str, lock=False) -
     if document is None or not can_read(user, document):
         # Identical result for unknown and inaccessible identifiers.
         raise HTTPException(404, "Document not found or unavailable to this role.")
+    if lock and document.context_run_id:
+        raise HTTPException(
+            409, "WebSearch snapshots are immutable evidence for their saved answer."
+        )
     return document
 
 
@@ -74,6 +78,7 @@ def document_payload(db: Session, user: User, document: Document, detail=False) 
         "related_document_ids": visible_related,
         "created_at": document.created_at,
         "versions": [version_payload(version) for version in versions],
+        "context_run_id": document.context_run_id,
     }
     if detail:
         result["versions"] = [
@@ -170,7 +175,7 @@ def citation_payload(
     version = db.get(DocumentVersion, identity.version_id)
     capture = (
         db.scalar(select(WebsiteCapture).where(WebsiteCapture.version_id == version.id))
-        if chunk.extraction_method == "web_capture"
+        if chunk.extraction_method in {"web_capture", "vision"}
         else None
     )
     return {
@@ -191,10 +196,14 @@ def citation_payload(
         "extraction_method": chunk.extraction_method,
         "page_number": chunk.page_number,
         "ocr_confidence": chunk.ocr_confidence,
-        "source_origin": "internet" if capture else "knowledge_base",
+        "source_origin": "internet" if capture or document.context_run_id else "knowledge_base",
         "media_type": version.media_type,
-        "capture_engine": "puppeteer" if capture else None,
-        "vision_model": capture.payload.get("vision_model") if capture else None,
+        "capture_engine": ("puppeteer" if capture.payload.get("engine") != "pdfium" else None)
+        if capture
+        else (version.source_provenance or {}).get("capture_engine"),
+        "vision_model": capture.payload.get("vision_model")
+        if capture
+        else (version.source_provenance or {}).get("vision_model"),
         "source_url": (
             capture.payload.get("url")
             if capture

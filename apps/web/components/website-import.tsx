@@ -9,6 +9,7 @@ import { OjkDiscovery } from "./ojk-discovery";
 import { EvidenceOrigin } from "./evidence-origin";
 
 export type WebsiteCapture = {
+  engine?: "pdfium" | "puppeteer";
   id: string;
   url: string;
   title: string;
@@ -32,7 +33,9 @@ export function WebsiteEvidence({ capture }: { capture: WebsiteCapture }) {
       <EvidenceOrigin
         source={{
           source_origin: "internet",
-          capture_engine: "puppeteer",
+          capture_engine: capture.engine === "pdfium" ? undefined : "puppeteer",
+          media_type:
+            capture.engine === "pdfium" ? "application/pdf" : undefined,
           vision_model: capture.vision_model,
         }}
       />

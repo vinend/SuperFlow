@@ -1,6 +1,7 @@
 import puppeteer from "puppeteer-core";
 import http from "node:http";
 import net from "node:net";
+import https from "node:https";
 import { lookup } from "node:dns/promises";
 import { pathToFileURL } from "node:url";
 import ipaddr from "ipaddr.js";
@@ -33,6 +34,59 @@ export function checkedUrl(value) {
     );
   }
   return url;
+}
+
+// Download discovered PDFs through the same public-address boundary. The socket
+// uses a checked IP while TLS still verifies the original hostname.
+export async function downloadPublicPdf(value, redirects = 0) {
+  const url = checkedUrl(value);
+  if (redirects > 5) throw new Error("Too many PDF redirects.");
+  const address = await publicAddress(url.hostname);
+  const response = await new Promise((resolve, reject) => {
+    const request = (url.protocol === "https:" ? https : http).get(
+      url,
+      {
+        lookup: (_host, options, callback) => {
+          const entry = { address, family: net.isIP(address) };
+          if (options.all) callback(null, [entry]);
+          else callback(null, address, entry.family);
+        },
+        headers: {
+          Accept: "application/pdf",
+          "User-Agent": "SuperFlow-public-reference/1.0",
+        },
+      },
+      resolve,
+    );
+    request.setTimeout(30000, () =>
+      request.destroy(new Error("PDF download timed out.")),
+    );
+    request.on("error", reject);
+  });
+  if ([301, 302, 303, 307, 308].includes(response.statusCode)) {
+    const location = response.headers.location;
+    response.destroy();
+    if (!location) throw new Error("Missing PDF redirect location.");
+    return downloadPublicPdf(new URL(location, url).href, redirects + 1);
+  }
+  if (response.statusCode !== 200) {
+    response.destroy();
+    throw new Error(`PDF download failed (HTTP ${response.statusCode}).`);
+  }
+  const parts = [];
+  let size = 0;
+  for await (const part of response) {
+    size += part.length;
+    if (size > 10 * 1024 * 1024) {
+      response.destroy();
+      throw new Error("PDF exceeds 10 MB.");
+    }
+    parts.push(part);
+  }
+  const data = Buffer.concat(parts);
+  if (!data.subarray(0, 5).equals(Buffer.from("%PDF-")))
+    throw new Error("The result is not a PDF.");
+  return { url: url.href, content: data.toString("base64") };
 }
 
 async function safeProxy() {
@@ -166,7 +220,12 @@ export async function captureWebsite(value, executablePath, options = {}) {
       timeout: 30000,
     });
     if (
-      !response?.ok() ||
+      (!response?.ok() &&
+        !(
+          options.search &&
+          options.scanSearch &&
+          [403, 429, 503].includes(response?.status())
+        )) ||
       !response.headers()["content-type"]?.includes("text/html")
     ) {
       throw new Error(
@@ -177,9 +236,14 @@ export async function captureWebsite(value, executablePath, options = {}) {
     const height = await page.evaluate(
       () => document.documentElement.scrollHeight,
     );
-    for (const y of options.search
+    for (const y of options.search && !options.scanSearch
       ? []
-      : [0, ...(height > 900 ? [Math.min(900, height - 900)] : [])]) {
+      : [
+          0,
+          ...(height > 900 && options.maxScreenshots !== 1
+            ? [Math.min(900, height - 900)]
+            : []),
+        ]) {
       await page.evaluate((offset) => window.scrollTo(0, offset), y);
       const image = await page.screenshot({ type: "png", encoding: "base64" });
       if (image.length > 4_000_000)
@@ -200,6 +264,7 @@ export async function captureWebsite(value, executablePath, options = {}) {
       links: Array.from(document.querySelectorAll("a[href]"))
         .map((a) => ({
           url: a.href,
+          result_heading: Boolean(a.querySelector("h3")),
           title: (a.querySelector("h3")?.textContent || a.textContent || "")
             .trim()
             .slice(0, 240),
@@ -223,7 +288,10 @@ export async function captureWebsite(value, executablePath, options = {}) {
               target.searchParams.get("q") || target.searchParams.get("url"),
             );
           if (
-            !["ojk.go.id", "www.ojk.go.id"].includes(target.hostname) ||
+            (options.searchAll
+              ? !link.result_heading ||
+                /(^|\.)google\.[a-z.]+$/.test(target.hostname)
+              : !["ojk.go.id", "www.ojk.go.id"].includes(target.hostname)) ||
             seen.has(target.href)
           )
             continue;
@@ -234,7 +302,7 @@ export async function captureWebsite(value, executablePath, options = {}) {
           /* Ignore non-result links. */
         }
       }
-      if (!results.length)
+      if (!results.length && !options.scanSearch)
         throw new Error(
           "Google returned no accessible OJK results. It may require consent or CAPTCHA; no bypass or synthetic results are used.",
         );
@@ -244,6 +312,18 @@ export async function captureWebsite(value, executablePath, options = {}) {
         captured_at: new Date().toISOString(),
         results: results.slice(0, 10),
         engine: "google-puppeteer",
+        blocked: !response.ok() || results.length === 0,
+        http_status: response.status(),
+        ...(options.scanSearch
+          ? {
+              ...content,
+              url: url.href,
+              requested_url: url.href,
+              screenshots,
+              coverage:
+                "First Google results viewport; result URLs come from DOM links, not model output.",
+            }
+          : {}),
       };
     }
     return {
@@ -272,12 +352,31 @@ if (
       input += part;
       if (input.length > 8192) throw new Error("Input too large");
     }
-    const { url, executablePath, search } = JSON.parse(input);
+    const {
+      url,
+      executablePath,
+      search,
+      searchAll,
+      scanSearch,
+      maxScreenshots,
+      downloadPdf,
+    } = JSON.parse(input);
+    if (downloadPdf) {
+      process.stdout.write(JSON.stringify(await downloadPublicPdf(url)));
+      process.exit(0);
+    }
     const target = search
-      ? `https://www.google.com/search?q=${encodeURIComponent(`site:ojk.go.id ${String(search).slice(0, 200)}`)}&num=10`
+      ? `https://www.google.com/search?q=${encodeURIComponent(`${searchAll ? "" : "site:ojk.go.id "}${String(search).slice(0, 200)}`)}&num=10`
       : url;
     process.stdout.write(
-      JSON.stringify(await captureWebsite(target, executablePath, { search })),
+      JSON.stringify(
+        await captureWebsite(target, executablePath, {
+          search,
+          searchAll,
+          scanSearch,
+          maxScreenshots,
+        }),
+      ),
     );
   } catch (error) {
     process.stderr.write(error.message);

@@ -38,7 +38,9 @@ export function SourcePanel({
         <h2>{source.title}</h2>
         <EvidenceOrigin source={source} />
         {source.source_url?.startsWith("https://ojk.go.id/") &&
-          source.extraction_method !== "web_capture" && (
+          !["web_capture", "vision"].includes(
+            source.extraction_method || "",
+          ) && (
             <div className="notice">
               <a
                 className="text-link"
@@ -54,16 +56,18 @@ export function SourcePanel({
               </p>
             </div>
           )}
-        {source.extraction_method === "web_capture" && source.source_url && (
-          <a
-            className="text-link"
-            href={source.source_url}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Open captured website
-          </a>
-        )}
+        {(source.extraction_method === "web_capture" ||
+          source.extraction_method === "vision") &&
+          source.source_url && (
+            <a
+              className="text-link"
+              href={source.source_url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open captured website
+            </a>
+          )}
         <div className="tag-row">
           <span className="domain-label">{source.domain}</span>
           <StatusBadge status={source.status} />
@@ -81,7 +85,8 @@ export function SourcePanel({
             relying on it as current authority.
           </div>
         )}
-        {source.extraction_method === "web_capture" && (
+        {(source.extraction_method === "web_capture" ||
+          source.extraction_method === "vision") && (
           <p className="notice">
             Website capture and vision observations require human review.
             Inspect the saved capture in the document.
@@ -109,15 +114,17 @@ export function SourcePanel({
                   {
                     label: "Extraction",
                     value:
-                      source.extraction_method === "web_capture"
-                        ? "Puppeteer webpage text"
-                        : source.extraction_method === "pdf_text"
-                          ? "PDF text"
-                          : source.extraction_method === "ocr"
-                            ? "OCR"
-                            : source.extraction_method === "mixed"
-                              ? "PDF text and OCR"
-                              : "Document text",
+                      source.extraction_method === "vision"
+                        ? "Unverified vision observation"
+                        : source.extraction_method === "web_capture"
+                          ? "Puppeteer webpage text"
+                          : source.extraction_method === "pdf_text"
+                            ? "PDF text"
+                            : source.extraction_method === "ocr"
+                              ? "OCR"
+                              : source.extraction_method === "mixed"
+                                ? "PDF text and OCR"
+                                : "Document text",
                   },
                 ]
               : []),

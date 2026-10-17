@@ -10,6 +10,7 @@ import { askAction } from "@/lib/product-view";
 import { useSession } from "./session";
 import { motion, useReducedMotion } from "motion/react";
 import { EvidenceOrigin } from "./evidence-origin";
+import { WebSearchResult } from "./web-search-result";
 
 export function AnswerCard({
   answer,
@@ -23,7 +24,7 @@ export function AnswerCard({
   const officialSources = answer.sources.filter(
     (source) =>
       source.source_url?.startsWith("https://ojk.go.id/") &&
-      source.extraction_method !== "web_capture",
+      !["web_capture", "vision"].includes(source.extraction_method || ""),
   );
   const regulatory = view === "regulation_brief" || officialSources.length > 0;
   const nextAction = askAction(answer, user.role_id);
@@ -49,6 +50,7 @@ export function AnswerCard({
         </span>
       </div>
       <h2>{answer.question}</h2>
+      <WebSearchResult answer={answer} />
       {officialSources.length > 0 && (
         <div className="notice" aria-label="Official source context">
           <strong>

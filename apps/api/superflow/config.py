@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     retrieval_engine: Literal["native", "llamaindex"] = "native"
     ocr_enabled: bool = True
     web_capture_enabled: bool = True
+    web_search_max_results: int = Field(default=2, ge=1, le=2)
     web_node_executable: str = "node"
     web_browser_executable: str | None = None
     vision_model: str = "qwen3.5:0.8b"

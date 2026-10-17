@@ -46,7 +46,8 @@ export function DocumentDetail({
   const version =
     document.versions.find((item) => item.id === versionId) ||
     document.versions[0];
-  const canManage = user.permissions.includes("knowledge:write");
+  const canManage =
+    user.permissions.includes("knowledge:write") && !document.context_run_id;
 
   async function inspectWebsite() {
     setBusy(true);
@@ -212,6 +213,8 @@ export function DocumentDetail({
           </div>
           <EvidenceOrigin
             source={{
+              source_origin: document.context_run_id ? "internet" : undefined,
+              capture_engine: version.source_provenance?.capture_engine,
               filename: version.filename,
               media_type: version.media_type,
               extraction_method: version.chunks?.find(
@@ -221,9 +224,10 @@ export function DocumentDetail({
                   chunk.extraction_method === "ocr",
               )?.extraction_method,
               vision_model:
-                webEvidence?.versionId === version.id
+                version.source_provenance?.vision_model ||
+                (webEvidence?.versionId === version.id
                   ? webEvidence.capture.vision_model
-                  : undefined,
+                  : undefined),
             }}
           />
           {version.status !== "active" && (
@@ -243,15 +247,23 @@ export function DocumentDetail({
             </div>
           )}
           <h3 className="source-content-heading">Source content</h3>
+          {document.context_run_id && (
+            <p className="notice">
+              External evidence captured for this answer only. This is not a
+              published knowledge-base source.
+            </p>
+          )}
           {version.source_provenance && (
             <div className="notice">
               <strong>
                 {version.source_provenance.publisher} ·{" "}
-                {version.source_provenance.kind}
+                {version.source_provenance.kind === "question-web-context"
+                  ? "WebSearch snapshot"
+                  : version.source_provenance.kind}
               </strong>
               <p>
                 Retrieved {dateLabel(version.source_provenance.retrieved_at)}.
-                Legal applicability is unverified.
+                Applicability is unverified.
               </p>
               <a
                 className="text-link"
@@ -259,12 +271,14 @@ export function DocumentDetail({
                 target="_blank"
                 rel="noreferrer"
               >
-                Open official PDF
+                Open original source
               </a>
             </div>
           )}
           {version.chunks?.some(
-            (chunk) => chunk.extraction_method === "web_capture",
+            (chunk) =>
+              chunk.extraction_method === "web_capture" ||
+              chunk.extraction_method === "vision",
           ) && (
             <section>
               <p className="notice">
@@ -279,7 +293,9 @@ export function DocumentDetail({
                   disabled={busy}
                   onClick={inspectWebsite}
                 >
-                  Inspect website capture
+                  {version.media_type === "application/pdf"
+                    ? "Inspect PDF vision evidence"
+                    : "Inspect website capture"}
                 </button>
               )}
             </section>

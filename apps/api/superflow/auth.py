@@ -18,6 +18,8 @@ def current_user(
 
 
 def can_read(user: User, document: Document) -> bool:
+    if document.context_run_id is not None:
+        return user.id == document.owner_id
     return user.role_id == "governance" or user.role_id in document.access_roles
 
 

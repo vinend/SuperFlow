@@ -63,7 +63,7 @@ class Retriever(Protocol):
 
 
 def authorized_chunks(db: Session, user: User, query: AskInput):
-    documents = db.scalars(select(Document)).all()
+    documents = db.scalars(select(Document).where(Document.context_run_id.is_(None))).all()
     # Access is resolved BEFORE reading chunk content or ranking candidates.
     allowed = [
         document

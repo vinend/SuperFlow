@@ -17,12 +17,16 @@ export function EvidenceOrigin({ source }: { source: EvidenceIdentity }) {
           className="method-badge"
           key={method}
           title={
-            method === "Vision scan"
-              ? `${source.vision_model}: visual observations accompany this capture; cited text comes from the webpage.`
-              : undefined
+            method === "Vision observation"
+              ? `${source.vision_model}: unverified model observation; inspect the original screenshot.`
+              : method === "Vision scan"
+                ? `${source.vision_model}: visual observations accompany this capture; cited text comes from the webpage.`
+                : undefined
           }
         >
-          {method === "Vision scan" && <ScanEye size={12} aria-hidden="true" />}
+          {method.startsWith("Vision") && (
+            <ScanEye size={12} aria-hidden="true" />
+          )}
           {method}
         </span>
       ))}

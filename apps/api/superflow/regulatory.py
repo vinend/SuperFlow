@@ -101,7 +101,9 @@ def open_review_for(db, user, target_version_id: str) -> RegulatoryReview | None
 def regulatory_sources(db, user) -> list[dict]:
     require_reviewer(user)
     result = []
-    for document in db.scalars(select(Document).order_by(Document.title)):
+    for document in db.scalars(
+        select(Document).where(Document.context_run_id.is_(None)).order_by(Document.title)
+    ):
         if not can_read(user, document) or not is_regulation(document):
             continue
         pair = version_pair(document)
@@ -125,7 +127,9 @@ def regulatory_sources(db, user) -> list[dict]:
 def impact_candidates(db, user, regulation: Document) -> list[Candidate]:
     related = set(regulation.related_document_ids)
     result = []
-    for document in db.scalars(select(Document).order_by(Document.id)):
+    for document in db.scalars(
+        select(Document).where(Document.context_run_id.is_(None)).order_by(Document.id)
+    ):
         # Authorize BEFORE any version or chunk text is read; restricted sources never map.
         if (
             document.id == regulation.id

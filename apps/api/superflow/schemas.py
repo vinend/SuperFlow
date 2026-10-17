@@ -45,6 +45,9 @@ class AskInput(BaseModel):
     domain: Domain | None = None
     document_ids: list[str] = Field(default_factory=list, max_length=30)
     include_outdated: bool = False
+    web_search: bool = False
+    web_query: str | None = Field(default=None, min_length=3, max_length=200)
+    web_urls: list[str] = Field(default_factory=list, max_length=2)
 
     @field_validator("question")
     @classmethod
@@ -76,12 +79,15 @@ class Citation(BaseModel):
     section_path: str
     excerpt: str
     score: float
-    extraction_method: Literal["native", "pdf_text", "ocr", "mixed", "web_capture"] = "native"
+    extraction_method: Literal["native", "pdf_text", "ocr", "mixed", "web_capture", "vision"] = (
+        "native"
+    )
     page_number: int | None = Field(default=None, ge=1)
     ocr_confidence: float | None = Field(default=None, ge=0, le=1)
 
 
 class AskOutput(BaseModel):
+    web_search: dict | None = None
     id: str
     question: str
     answer: str
