@@ -108,7 +108,7 @@ async function safeProxy() {
   };
 }
 
-export async function captureWebsite(value, executablePath) {
+export async function captureWebsite(value, executablePath, options = {}) {
   const url = checkedUrl(value);
   await publicAddress(url.hostname);
   const proxy = await safeProxy();
@@ -169,16 +169,17 @@ export async function captureWebsite(value, executablePath) {
       !response?.ok() ||
       !response.headers()["content-type"]?.includes("text/html")
     ) {
-      throw new Error("The website did not return an accessible HTML page.");
+      throw new Error(
+        `The website did not return accessible HTML (HTTP ${response?.status() || "unavailable"}).`,
+      );
     }
     const screenshots = [];
     const height = await page.evaluate(
       () => document.documentElement.scrollHeight,
     );
-    for (const y of [
-      0,
-      ...(height > 900 ? [Math.min(900, height - 900)] : []),
-    ]) {
+    for (const y of options.search
+      ? []
+      : [0, ...(height > 900 ? [Math.min(900, height - 900)] : [])]) {
       await page.evaluate((offset) => window.scrollTo(0, offset), y);
       const image = await page.screenshot({ type: "png", encoding: "base64" });
       if (image.length > 4_000_000)
@@ -196,9 +197,55 @@ export async function captureWebsite(value, executablePath) {
       title: document.title.slice(0, 200),
       text: document.body.innerText.slice(0, 100000),
       text_truncated: document.body.innerText.length > 100000,
+      links: Array.from(document.querySelectorAll("a[href]"))
+        .map((a) => ({
+          url: a.href,
+          title: (a.querySelector("h3")?.textContent || a.textContent || "")
+            .trim()
+            .slice(0, 240),
+        }))
+        .filter((a) => a.title && /^https?:/.test(a.url))
+        .slice(0, 500),
     }));
     if (!content.text.trim())
       throw new Error("No visible text was found on the website.");
+    if (options.search) {
+      const results = [];
+      const seen = new Set();
+      for (const link of content.links) {
+        try {
+          let target = new URL(link.url);
+          if (
+            target.hostname.endsWith("google.com") &&
+            target.pathname === "/url"
+          )
+            target = new URL(
+              target.searchParams.get("q") || target.searchParams.get("url"),
+            );
+          if (
+            !["ojk.go.id", "www.ojk.go.id"].includes(target.hostname) ||
+            seen.has(target.href)
+          )
+            continue;
+          checkedUrl(target.href);
+          seen.add(target.href);
+          results.push({ ...link, url: target.href });
+        } catch {
+          /* Ignore non-result links. */
+        }
+      }
+      if (!results.length)
+        throw new Error(
+          "Google returned no accessible OJK results. It may require consent or CAPTCHA; no bypass or synthetic results are used.",
+        );
+      return {
+        query: options.search,
+        search_url: url.href,
+        captured_at: new Date().toISOString(),
+        results: results.slice(0, 10),
+        engine: "google-puppeteer",
+      };
+    }
     return {
       ...content,
       requested_url: url.href,
@@ -225,9 +272,12 @@ if (
       input += part;
       if (input.length > 8192) throw new Error("Input too large");
     }
-    const { url, executablePath } = JSON.parse(input);
+    const { url, executablePath, search } = JSON.parse(input);
+    const target = search
+      ? `https://www.google.com/search?q=${encodeURIComponent(`site:ojk.go.id ${String(search).slice(0, 200)}`)}&num=10`
+      : url;
     process.stdout.write(
-      JSON.stringify(await captureWebsite(url, executablePath)),
+      JSON.stringify(await captureWebsite(target, executablePath, { search })),
     );
   } catch (error) {
     process.stderr.write(error.message);

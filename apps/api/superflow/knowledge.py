@@ -44,6 +44,7 @@ def version_payload(version: DocumentVersion) -> dict:
         "filename": version.filename,
         "media_type": version.media_type,
         "checksum": version.checksum,
+        "source_provenance": version.source_provenance,
         "chunk_count": len(version.chunks),
         "created_at": version.created_at,
     }
@@ -127,10 +128,12 @@ def add_version(
     version_input: VersionInput,
     filename: str,
     data: bytes,
+    *,
+    chunker: str = "legacy",
 ) -> DocumentVersion:
     if any(version.version == version_input.version for version in document.versions):
         raise HTTPException(409, "This document already has that version label.")
-    media_type, chunks = parse_file(filename, data)
+    media_type, chunks = parse_file(filename, data, chunker=chunker)
     if version_input.status == "active":
         activate(db, document, version_input.effective_date)
     version = DocumentVersion(
@@ -183,4 +186,6 @@ def citation_payload(
         "extraction_method": chunk.extraction_method,
         "page_number": chunk.page_number,
         "ocr_confidence": chunk.ocr_confidence,
+        "source_url": (version.source_provenance or {}).get("source_url"),
+        "legal_status": (version.source_provenance or {}).get("legal_status"),
     }

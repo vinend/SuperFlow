@@ -15,6 +15,8 @@ Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Contr
 
 ## RAG dan OCR dokumen
 
+**Demo OJK nyata:** delapan PDF resmi (397 halaman, 1.101 chunk) tersedia melalui importer `npm run demo:ojk`, dengan LlamaIndex 0.14.25, embedding multilingual, BM25, persistent vectors, original bytes dan citation halaman/Pasal. Profil Ollama menghasilkan sintesis asli di kartu dinamis CopilotKit V2; tab dan konsep SuperFlow dipertahankan. Google search via Puppeteer tersedia di dialog Import website, dengan error eksplisit bila Google menolak akses (pemeriksaan aktual HTTP 429). Setup, matriks implementasi RPL, corpus, dan batasannya ada di [OJK_DEMO.md](docs/OJK_DEMO.md).
+
 Ingestion kini mendukung OCR lokal untuk halaman PDF bergambar dan upload PNG/JPEG, metadata halaman/extraction, serta pencarian hybrid keyword + vektor BGE. Migrasi `0008` menyimpan vektor bersama chunk di PostgreSQL; permission dan versi diperiksa sebelum retrieval. Evidence OCR selalu memerlukan human review. Setup dependency, backfill `npm run rag:reindex`, konfigurasi `RETRIEVAL_PROVIDER=hybrid`, referensi repository RPL, dan batasannya ada di [RAG_OCR.md](docs/RAG_OCR.md). Pekerjaan sakelar demo/AI tetap dipause sesuai permintaan pengguna; modul ini tidak mengaktifkan generator AI secara otomatis.
 
 ## Arsitektur

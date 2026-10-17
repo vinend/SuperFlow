@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     embedding_cache_dir: str = str(ROOT / ".runtime/models")
     embedding_threads: int = Field(default=2, ge=1, le=8)
     semantic_min_score: float = Field(default=0.65, ge=0, le=1)
+    retrieval_top_k: int = Field(default=4, ge=1, le=10)
+    retrieval_engine: Literal["native", "llamaindex"] = "native"
     ocr_enabled: bool = True
     web_capture_enabled: bool = True
     web_node_executable: str = "node"

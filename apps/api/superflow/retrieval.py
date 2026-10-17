@@ -158,34 +158,86 @@ class HybridRetriever:
                 "Ask a knowledge owner to re-index the documents."
             )
         query_vector = embeddings.normalized(provider.query(query.question))
-        semantic = []
         for _, _, chunk in candidates:
             vector = embeddings.normalized(rows[chunk.id].vector)
             if len(vector) != len(query_vector):
                 raise embeddings.EmbeddingUnavailable(
                     "Embedding dimensions changed. Re-index the documents."
                 )
-            score = sum(a * b for a, b in zip(query_vector, vector, strict=True))
-            if score >= settings.semantic_min_score:
-                semantic.append(Hit(chunk.id, score))
+        if settings.retrieval_engine == "llamaindex":
+            from .llama_rag import retrieve_nodes
+
+            scores = retrieve_nodes(
+                candidates, rows, provider, query_vector, query.question, len(candidates)
+            )
+        else:
+            scores = [
+                (
+                    chunk.id,
+                    sum(
+                        a * b
+                        for a, b in zip(
+                            query_vector, embeddings.normalized(rows[chunk.id].vector), strict=True
+                        )
+                    ),
+                )
+                for _, _, chunk in candidates
+            ]
+        semantic = [
+            Hit(key, score) for key, score in scores if score >= settings.semantic_min_score
+        ]
         semantic.sort(key=lambda hit: (-hit.score, hit.chunk_id))
         eligible = {hit.chunk_id for hit in semantic}
-        lexical = [
-            hit
-            for hit in KeywordConceptRetriever().rank(candidates, query)
-            if hit.chunk_id in eligible
-        ]
-        ranks: dict[str, float] = {}
-        # The semantic relevance floor also gates incidental keyword overlaps.
-        # Reciprocal rank fusion balances exact terms with semantic matches. The score
-        # is a retrieval ordering value, never a probability or answer confidence.
-        for ranked in (lexical, semantic[:12]):
-            for rank, hit in enumerate(ranked, 1):
-                ranks[hit.chunk_id] = ranks.get(hit.chunk_id, 0) + 1 / (60 + rank)
+        lexical = [hit for hit in bm25_rank(candidates, query.question) if hit.chunk_id in eligible]
+        # Preserve BM25's absolute discrimination for exact Indonesian legal terms.
+        # Gate lexical hits against all authorized dense scores, including those
+        # outside the dense top-40. This score is ranking, never answer confidence.
+        semantic_scores = {hit.chunk_id: hit.score for hit in semantic}
+        maximum = max((hit.score for hit in lexical), default=1)
+        lexical_scores = {hit.chunk_id: hit.score / maximum for hit in lexical}
+        keys = set(lexical_scores) | {hit.chunk_id for hit in semantic[:40]}
+        ranks = {
+            key: 0.65 * lexical_scores.get(key, 0) + 0.35 * semantic_scores[key] for key in keys
+        }
         return [
             Hit(key, score)
-            for key, score in sorted(ranks.items(), key=lambda item: (-item[1], item[0]))[:4]
+            for key, score in sorted(ranks.items(), key=lambda item: (-item[1], item[0]))[
+                : settings.retrieval_top_k
+            ]
         ]
+
+
+def bm25_rank(candidates, question):
+    """Corpus-aware lexical ranking improves exact Indonesian legal terminology."""
+    stop = set(
+        (
+            "yang dan di ke dari untuk pada dalam dengan adalah ini itu atau oleh serta "
+            "apakah bagaimana apa saja tentang bagi sebagai harus dapat bank umum ojk "
+            "peraturan tahun"
+        ).split()
+    )
+
+    def terms(text):
+        return Counter(word for word in tokens(text).elements() if word not in stop)
+
+    query = set(terms(question))
+    bodies = [
+        (chunk.id, terms(document.title + " " + chunk.section_path + " " + chunk.text))
+        for document, _, chunk in candidates
+    ]
+    average = sum(sum(body.values()) for _, body in bodies) / max(len(bodies), 1)
+    frequencies = Counter(word for _, body in bodies for word in set(body) & query)
+    result = []
+    for key, body in bodies:
+        score = 0
+        length = sum(body.values())
+        for word in query & set(body):
+            idf = math.log(1 + (len(bodies) - frequencies[word] + 0.5) / (frequencies[word] + 0.5))
+            count = body[word]
+            score += idf * count * 2.2 / (count + 1.2 * (0.25 + 0.75 * length / max(average, 1)))
+        if score:
+            result.append(Hit(key, score))
+    return sorted(result, key=lambda hit: (-hit.score, hit.chunk_id))[:40]
 
 
 def configured_retriever() -> Retriever:

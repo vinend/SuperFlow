@@ -1,12 +1,25 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 16 Oktober 2026
+**Diperbarui:** 17 Oktober 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
 **Ruang lingkup:** Fase 0–8, rekonsiliasi Product Experience, ingestion RAG/OCR lokal, dan import website dengan Puppeteer/vision. Fase 7 adalah proof point AML/FIU di atas fondasi bersama; Fase 8 menambahkan demo terintegrasi.
 
 **Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+
+# Full-stack RPL RAG dan corpus OJK — 17 Oktober 2026
+
+- **Database terisi nyata:** 8 PDF dari domain OJK resmi, 397 halaman, 3.585.502 byte original, 1.101 chunk/vektor baru. Bersama corpus existing: 21 dokumen, 1.126 chunk dan 1.126 vektor pada model multilingual aktif; vektor BGE lama tetap terpisah. Tidak dilakukan reset data aplikasi. Manifest, checksum/count hasil impor, retrieval checks dan real-model verification tersimpan di `data/ojk/`.
+- RAG RPL sekarang **diimplementasikan**, bukan hanya referensi: LlamaIndex Core 0.14.25 `VectorStoreIndex`/retriever, `SentenceSplitter(512,128)` per halaman/Pasal, PostgreSQL persistence, multilingual MiniLM ONNX, BM25 + dense score fusion, index status/repair controls serta frontend document/import/query/citation flow. Dua repository RPL asli tidak dimodifikasi. Jalur cloud Groq/Gemini/Blob tidak disalin atau diklaim aktif; inference lokal memakai Ollama asli.
+- Corpus: POJK 21/2023, POJK 22/2023, POJK 11/2022 dan PADK 1/2026, masing-masing dengan FAQ. Migration `0010` menambahkan provenance sumber pada versi. Original bytes, SHA-256, official URL, publisher, retrieval date, kind dan chunker dipertahankan. Reimport idempotent; perubahan bytes menjadi versi baru. FAQ berbeda dari peraturan. `active` hanya ketersediaan retrieval; applicability/amendments belum dinyatakan verified dan selalu memerlukan review Compliance.
+- Navigation, tab, shell dan konsep SuperFlow tetap sama. Motion 14.3.0 memberi transisi kecil/reduced-motion-aware. CopilotKit V2/AG-UI tetap memilih approved workspace; `regulation_brief` merender kartu jawaban dinamis dari real source records, citation, Guard dan next actions. AI tidak menghasilkan HTML bebas atau mengambil keputusan material.
+- Profil lokal diubah ke `RETRIEVAL_PROVIDER=hybrid`, `RETRIEVAL_ENGINE=llamaindex`, multilingual MiniLM, relevance floor 0,30, top-k 6, `LLM_PROVIDER=ollama`, Qwen3.5 0.8B. Sakelar demo/AI WIP lama tetap di stash; profile baru memakai provider/config existing. Model kecil tetap memerlukan human review dan belum melalui benchmark akurasi luas.
+- Verifikasi produksi nyata: pertanyaan Bahasa Indonesia tentang two-factor authentication melewati CopilotKit/AG-UI → LlamaIndex → vektor lokal → Ollama → dynamic regulatory card. **Page 5 / Pasal 9 POJK 21/2023** menjadi sumber pertama, jawaban memiliki citation valid, Guard REVIEW_REQUIRED, official PDF link dan desktop/mobile tanpa page error/overflow. Employee yang memfilter Proposal A tetap mendapat nol source. Query pasta/Mars/alien menghasilkan nol source. Regression test melindungi exact article di luar dense top-40; score fusion diperbaiki setelah evaluasi awal menemukan incidental passages mengalahkan pasal tepat.
+- Google discovery tersedia di dialog Import website melalui Puppeteer `site:ojk.go.id`; **request nyata mendapat HTTP 429**. UI/API menampilkan error yang jelas tanpa bypass/fabricated results. Initial corpus berasal dari official OJK links yang diverifikasi, bukan hasil Google yang diklaim berhasil. Direct official PDF import bekerja; tes browser mengunduh FAQ OJK asli, memverifikasi checksum, menyimpan provenance dan membuka CopilotKit card.
+- Quality gates: **190 backend tests passed** termasuk real OCR/embedding dan LlamaIndex tests; **40 frontend unit tests passed**; ESLint, TypeScript, Ruff, lima generated contract checks, migration lifecycle/schema match dan production build lulus. **55 unique browser scenarios passed**: full run menghasilkan 54 passed dan satu selector test Google error bentrok dengan Next route announcer; setelah selector di-scope ke dialog, targeted re-test lulus. Satu vision test opt-in tidak diulang pada pass ini (sudah diverifikasi sebelumnya). Real OJK download + CopilotKit test lulus pada full run.
+
+Setup/profile, capability mapping RPL, batasan, perintah `npm run demo:ojk`/`npm run test:ojk:live`, dan contoh pertanyaan ada di [OJK_DEMO.md](docs/OJK_DEMO.md).
 
 # Perluasan RAG/OCR lokal — 16 Oktober 2026
 

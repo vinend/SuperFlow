@@ -40,7 +40,9 @@ export function QuestionHistory({
             <small>
               {dateLabel(item.created_at)} ·{" "}
               {item.outcome === "source_grounded"
-                ? "Source extracts"
+                ? item.provider?.startsWith("ollama-")
+                  ? "Cited AI answer"
+                  : "Source extracts"
                 : "No sources found"}
             </small>
           </span>

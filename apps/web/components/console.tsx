@@ -22,6 +22,7 @@ import { SourcePanel } from "./source-panel";
 import { DocumentDetail } from "./document-detail";
 import { DocumentEditor } from "./document-editor";
 import { WebsiteImport } from "./website-import";
+import { RagStatus } from "./rag-status";
 import { HomeAttention } from "./home-attention";
 import { roleLabel } from "@/lib/product-view";
 import { AskGenerativeArea } from "./ask-generative-area";
@@ -343,6 +344,13 @@ function Workspace({ view }: { view: View }) {
       {view === "ask" && <AskGenerativeArea w={w} filters={filters} />}
       {view === "knowledge" && (
         <>
+          {w.canManage && (
+            <RagStatus
+              revision={w.documents
+                .map((d) => d.id + d.versions.length)
+                .join(",")}
+            />
+          )}
           <div className="knowledge-summary">
             <span>
               <strong>{w.loading ? "—" : w.documents.length}</strong> documents

@@ -38,6 +38,8 @@ export default defineConfig({
         DATABASE_URL: database,
         CORS_ORIGINS: "http://127.0.0.1:3001",
         RETRIEVAL_PROVIDER: "keyword",
+        RETRIEVAL_ENGINE: "native",
+        LLM_PROVIDER: "deterministic",
       },
     },
     {

@@ -15,6 +15,8 @@
     "demo:workflow": "node scripts/python.mjs -m superflow.workflow_demo",
     "demo:reset": "node scripts/python.mjs -m superflow.seed --reset --confirm-synthetic-data --presentation",
     "rag:reindex": "node scripts/python.mjs -m superflow.rag_index",
+    "demo:ojk": "node scripts/python.mjs -m superflow.ojk",
+    "test:ojk:live": "node scripts/verify-ojk.mjs",
     "db:reset": "node scripts/python.mjs -m superflow.seed --reset",
     "ai:up": "docker compose --profile ai up -d ollama",
     "ai:pull": "docker compose --profile ai --profile model run --rm ollama-model",

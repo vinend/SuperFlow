@@ -1,0 +1,67 @@
+{
+  "name": "OJK banking reference corpus",
+  "checked_on": "2026-10-17",
+  "legal_status": "unverified-reference",
+  "sources": [
+    {
+      "id": "pojk-21-2023",
+      "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+      "kind": "regulation",
+      "effective_date": "2023-12-22",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/Layanan-Digital-oleh-Bank-Umum.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+    },
+    {
+      "id": "faq-pojk-21-2023",
+      "title": "OJK FAQ POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+      "kind": "faq",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/Layanan-Digital-oleh-Bank-Umum.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/FAQ%20POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+    },
+    {
+      "id": "pojk-22-2023",
+      "title": "OJK POJK 22 Tahun 2023 — Pelindungan Konsumen dan Masyarakat di Sektor Jasa Keuangan",
+      "kind": "regulation",
+      "effective_date": "2023-12-22",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/POJK%2022%20Tahun%202023%20Pelindungan%20Konsumen%20dan%20Masyarakat%20di%20Sektor%20Jasa%20Keuangan.pdf"
+    },
+    {
+      "id": "faq-pojk-22-2023",
+      "title": "OJK FAQ POJK 22 Tahun 2023 — Pelindungan Konsumen dan Masyarakat",
+      "kind": "faq",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/FAQ%20POJK%20Nomor%2022%20Tahun%202023%20PKM%20SJK.pdf"
+    },
+    {
+      "id": "pojk-11-2022",
+      "title": "OJK POJK 11 Tahun 2022 — Penyelenggaraan Teknologi Informasi oleh Bank Umum",
+      "kind": "regulation",
+      "effective_date": "2022-07-07",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/Penyelenggaraan-Teknologi-Informasi-Oleh-Bank-Umum.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Penyelenggaraan-Teknologi-Informasi-Oleh-Bank-Umum/POJK%2011%20-%2003%20-%202022.pdf"
+    },
+    {
+      "id": "faq-pojk-11-2022",
+      "title": "OJK FAQ POJK 11 Tahun 2022 — Penyelenggaraan Teknologi Informasi oleh Bank Umum",
+      "kind": "faq",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/Penyelenggaraan-Teknologi-Informasi-Oleh-Bank-Umum.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Penyelenggaraan-Teknologi-Informasi-Oleh-Bank-Umum/FAQ%20POJK%2011%20-%2003%20-%202022.pdf"
+    },
+    {
+      "id": "padk-1-2026",
+      "title": "OJK PADK 1 Tahun 2026 — Penyelenggaraan Teknologi Informasi oleh Bank Umum",
+      "kind": "regulation",
+      "effective_date": "2026-03-01",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum/PADK%201%20Tahun%202026%20Penyelenggaraan%20Teknologi%20Informasi%20oleh%20Bank%20Umum.pdf"
+    },
+    {
+      "id": "faq-padk-1-2026",
+      "title": "OJK FAQ PADK 1 Tahun 2026 — Penyelenggaraan Teknologi Informasi oleh Bank Umum",
+      "kind": "faq",
+      "landing_url": "https://ojk.go.id/id/regulasi/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum.aspx",
+      "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum/FAQ%20PADK%201%20Tahun%202026%20Penyelenggaraan%20Teknologi%20Informasi%20oleh%20Bank%20Umum.pdf"
+    }
+  ]
+}

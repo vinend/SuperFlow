@@ -97,6 +97,8 @@ class OllamaAnswerProvider:
             "supported by exactly one selected citation_id. Do not invent facts, policies, "
             "permissions, decisions, calculations, or citations. If sources disagree, state "
             "the disagreement without resolving it."
+            " Answer in the same language as the question. Preserve legal article numbers "
+            "and dates exactly; if the excerpts do not support an answer, explicitly say so."
         )
         payload = {
             "model": self.model,
@@ -115,6 +117,7 @@ class OllamaAnswerProvider:
             "format": GroundedCompletion.model_json_schema(),
             "options": {
                 "temperature": self.temperature,
+                "num_thread": 4,
                 "num_ctx": self.num_ctx,
                 "num_predict": self.num_predict,
             },

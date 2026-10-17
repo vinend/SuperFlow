@@ -2,6 +2,8 @@
 
 ## Tujuan dan referensi
 
+**Update 17 Oktober 2026:** integrasi OJK sekarang benar-benar memakai LlamaIndex 0.14.25/SentenceSplitter dari alur RPL, embedding multilingual dan score fusion BM25/cosine. Profil lokal mengaktifkan Ollama untuk jawaban asli serta CopilotKit dynamic regulatory card. Delapan PDF OJK sudah diimpor; lihat [OJK_DEMO.md](OJK_DEMO.md). Batasan/pengaturan BGE dan pause generator di bawah menggambarkan baseline pass 16 Oktober, bukan konfigurasi profil OJK terbaru. Sakelar demo/AI lama masih disimpan terpisah.
+
 Permintaan pengguna menambahkan ingestion PDF/OCR dan pencarian semantik sebelum pekerjaan sakelar demo/AI dilanjutkan. Ini memakai model pretrained lokal, bukan melatih model bahasa atau OCR dari awal.
 
 Referensi yang diinspeksi:

@@ -1,0 +1,14 @@
+{
+  "provider": "ollama-grounded-v1",
+  "engine": "llamaindex",
+  "model": "qwen3.5:0.8b",
+  "top_source": {
+    "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+    "section": "Page 5 / Pasal 9",
+    "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+  },
+  "copilotkit_runs": 1,
+  "guard": "REVIEW_REQUIRED",
+  "page_errors": [],
+  "denied_sources": 0
+}

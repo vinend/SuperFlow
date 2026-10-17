@@ -226,6 +226,26 @@ export function DocumentDetail({
             </div>
           )}
           <h3 className="source-content-heading">Source content</h3>
+          {version.source_provenance && (
+            <div className="notice">
+              <strong>
+                {version.source_provenance.publisher} ·{" "}
+                {version.source_provenance.kind}
+              </strong>
+              <p>
+                Retrieved {dateLabel(version.source_provenance.retrieved_at)}.
+                Legal applicability is unverified.
+              </p>
+              <a
+                className="text-link"
+                href={version.source_provenance.source_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                Open official PDF
+              </a>
+            </div>
+          )}
           {version.chunks?.some(
             (chunk) => chunk.extraction_method === "web_capture",
           ) && (

@@ -35,6 +35,22 @@ export function SourcePanel({
       <div className="source-content">
         <div className="context-label">Citation [{source.citation_id}]</div>
         <h2>{source.title}</h2>
+        {source.source_url?.startsWith("https://ojk.go.id/") && (
+          <div className="notice">
+            <a
+              className="text-link"
+              href={source.source_url}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Open official OJK PDF
+            </a>
+            <p>
+              Official-source reference. Legal applicability and amendments
+              still require human review.
+            </p>
+          </div>
+        )}
         <div className="tag-row">
           <span className="domain-label">{source.domain}</span>
           <StatusBadge status={source.status} />

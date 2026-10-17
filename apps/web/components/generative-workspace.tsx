@@ -100,6 +100,11 @@ export function GenerativeWorkspace({
             <LoadingState label="Retrieving authorized sources…" />
           ) : knowledge.answer ? (
             <AnswerCard
+              view={
+                selection.view === "regulation_brief"
+                  ? "regulation_brief"
+                  : "source_answer"
+              }
               answer={knowledge.answer}
               onSource={knowledge.onSource}
               onDocument={knowledge.onDocument}

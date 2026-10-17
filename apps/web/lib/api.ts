@@ -21,6 +21,14 @@ export type Chunk = {
   ocr_confidence?: number | null;
 };
 export type Version = {
+  source_provenance?: {
+    source_url: string;
+    publisher: string;
+    retrieved_at: string;
+    kind: string;
+    legal_status: string;
+    landing_url?: string | null;
+  } | null;
   id: string;
   version: string;
   status: "active" | "outdated" | "draft";
@@ -45,6 +53,8 @@ export type KnowledgeDocument = {
   versions: Version[];
 };
 export type Source = {
+  source_url?: string | null;
+  legal_status?: string | null;
   citation_id: number;
   document_id: string;
   version_id: string;
@@ -82,7 +92,7 @@ export type Answer = {
 export type HistoryItem = Pick<
   Answer,
   "id" | "question" | "outcome" | "created_at"
->;
+> & { provider?: string };
 export const DOMAINS = [
   "People",
   "Compliance",

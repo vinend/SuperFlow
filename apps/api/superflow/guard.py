@@ -515,17 +515,23 @@ class SuperFlowGuard:
             )
         ocr_source = any(source.get("extraction_method") in {"ocr", "mixed"} for source in sources)
         web_source = any(source.get("extraction_method") == "web_capture" for source in sources)
+        official_reference = any(
+            source.get("legal_status") == "unverified-reference" for source in sources
+        )
         review = (
             local_ai
             or ocr_source
             or web_source
+            or official_reference
             or bool(conflicts)
             or (bool(sources) and not authority)
         )
         check(
             "human_review_requirement",
             not review and value.action is None,
-            "Website and vision observations must be checked against the captured evidence."
+            "Confirm official-source applicability and subsequent amendments with Compliance."
+            if official_reference
+            else "Website and vision observations must be checked against the captured evidence."
             if web_source
             else "OCR text must be checked against the original scan before applying this guidance."
             if ocr_source

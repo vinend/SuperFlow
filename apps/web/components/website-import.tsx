@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { api, DOMAINS, KnowledgeDocument, ROLES } from "@/lib/api";
 import { useSession } from "./session";
 import { Dialog } from "./ui/dialog";
+import { OjkDiscovery } from "./ojk-discovery";
 
 export type WebsiteCapture = {
   id: string;
@@ -93,6 +94,7 @@ export function WebsiteImport({
   const [roles, setRoles] = useState<string[]>([user.role_id]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [url, setUrl] = useState("");
   async function scan(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -165,32 +167,43 @@ export function WebsiteImport({
         </p>
       )}
       {!capture ? (
-        <form className="editor-form" onSubmit={scan}>
-          <p className="muted">
-            Scan one public page with a headless browser and a local vision
-            model. No login or recursive crawl.
-          </p>
-          <label>
-            Website URL
-            <input
-              name="url"
-              type="url"
-              required
-              maxLength={2048}
-              placeholder="https://example.com"
-              disabled={busy}
-            />
-          </label>
-          <button className="button primary" disabled={busy}>
-            {busy ? "Capturing and scanning…" : "Scan website"}
-          </button>
-          {busy && (
-            <p role="status" className="muted">
-              The first model load can take a few minutes. Keep this window
-              open.
+        <div>
+          <OjkDiscovery
+            saved={(document) => {
+              saved(document);
+              close();
+            }}
+            choosePage={setUrl}
+          />
+          <form className="editor-form" onSubmit={scan}>
+            <p className="muted">
+              Scan one public page with a headless browser and a local vision
+              model. No login or recursive crawl.
             </p>
-          )}
-        </form>
+            <label>
+              Website URL
+              <input
+                name="url"
+                value={url}
+                onChange={(event) => setUrl(event.target.value)}
+                type="url"
+                required
+                maxLength={2048}
+                placeholder="https://example.com"
+                disabled={busy}
+              />
+            </label>
+            <button className="button primary" disabled={busy}>
+              {busy ? "Capturing and scanning…" : "Scan website"}
+            </button>
+            {busy && (
+              <p role="status" className="muted">
+                The first model load can take a few minutes. Keep this window
+                open.
+              </p>
+            )}
+          </form>
+        </div>
       ) : (
         <div className="editor-form">
           <WebsiteEvidence capture={capture} />

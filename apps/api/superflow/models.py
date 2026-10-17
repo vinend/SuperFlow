@@ -90,6 +90,7 @@ class DocumentVersion(Base):
     filename: Mapped[str] = mapped_column(String(200))
     media_type: Mapped[str] = mapped_column(String(100))
     checksum: Mapped[str] = mapped_column(String(64))
+    source_provenance: Mapped[dict | None] = mapped_column(JSON)
     file_content: Mapped[bytes] = mapped_column(LargeBinary, deferred=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     document: Mapped[Document] = relationship(back_populates="versions")

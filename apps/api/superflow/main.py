@@ -29,8 +29,10 @@ from .knowledge import (
     validate_metadata,
 )
 from .models import AuditEvent, Case, Document, DocumentVersion, QuestionRun, User
+from .ojk import router as ojk_router
 from .parsing import MAX_BYTES, ParseError, parse_file
 from .providers import AnswerProvider, ProviderUnavailable, configured_answer_provider
+from .rag_api import router as rag_router
 from .regulatory_api import router as regulatory_router
 from .reliability import digest, evaluate_run, presented_answer
 from .reliability_contracts import GuardResult, ReliabilityStatus
@@ -52,6 +54,8 @@ app.include_router(investigation_router)
 app.include_router(analytics_router)
 app.include_router(workspace_intent_router)
 app.include_router(website_capture_router)
+app.include_router(ojk_router)
+app.include_router(rag_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -100,6 +104,7 @@ def health(db: Db):
         "inference_provider": provider.name,
         "inference_model": settings.ollama_model if settings.llm_provider == "ollama" else None,
         "retrieval_provider": settings.retrieval_provider,
+        "retrieval_engine": settings.retrieval_engine,
         "embedding_model": settings.embedding_model
         if settings.retrieval_provider == "hybrid"
         else None,
@@ -254,7 +259,11 @@ def reindex_document(document_id: str, db: Db, user: Actor):
     document = accessible_document(db, user, document_id, lock=True)
     total = 0
     for version in document.versions:
-        _, parsed = parse_file(version.filename, version.file_content)
+        _, parsed = parse_file(
+            version.filename,
+            version.file_content,
+            chunker=(version.source_provenance or {}).get("chunker", "legacy"),
+        )
         # Immutable file bytes + same parser => stable source IDs for saved citations.
         if len(parsed) != len(version.chunks) or any(
             chunk.text != item.text or chunk.section_path != item.section
@@ -427,6 +436,7 @@ def question_history(db: Db, user: Actor):
                 "id": run.id,
                 "question": run.question,
                 "outcome": payload["outcome"],
+                "provider": payload["provider"],
                 "created_at": payload["created_at"],
             }
         )

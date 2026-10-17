@@ -56,6 +56,8 @@ class AskInput(BaseModel):
 
 
 class Citation(BaseModel):
+    source_url: str | None = None
+    legal_status: str | None = None
     citation_id: int = Field(ge=1)
     document_id: str
     version_id: str

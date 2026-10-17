@@ -36,7 +36,7 @@ class ParsedChunk:
     ocr_confidence: float | None = None
 
 
-def parse_file(filename: str, data: bytes) -> tuple[str, list[ParsedChunk]]:
+def parse_file(filename: str, data: bytes, *, chunker="legacy") -> tuple[str, list[ParsedChunk]]:
     suffix = Path(filename).suffix.lower()
     if suffix not in MEDIA_TYPES:
         raise ParseError("Supported formats are TXT, Markdown, PDF, DOCX, PNG, and JPEG.")
@@ -136,6 +136,18 @@ def parse_file(filename: str, data: bytes) -> tuple[str, list[ParsedChunk]]:
             chunks.append(ParsedChunk(heading, text, method, page_number, confidence))
 
         body = body.replace("\x00", "").strip()
+        if chunker == "llamaindex":
+            from llama_index.core.node_parser import SentenceSplitter
+
+            splitter = SentenceSplitter(chunk_size=512, chunk_overlap=128)
+            parts = re.split(r"(?m)(?=^\s*Pasal\s+\d+\s*$)", body)
+            for part in parts:
+                articles = re.findall(r"(?m)^\s*Pasal\s+(\d+)\s*$", part)
+                section = heading + (f" / Pasal {articles[0]}" if articles else "")
+                for piece in splitter.split_text(part):
+                    if piece.strip():
+                        chunks.append(ParsedChunk(section, piece, method, page_number, confidence))
+            continue
         for paragraph in re.split(r"\n\s*\n", body):
             block: list[str] = []
             length = 0

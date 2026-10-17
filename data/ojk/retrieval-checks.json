@@ -1,0 +1,95 @@
+{
+  "engine": "llamaindex",
+  "model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "threshold": 0.3,
+  "all_documents": 21,
+  "all_chunks": 1126,
+  "active_profile_vectors": 1126,
+  "checks": [
+    {
+      "question": "Apa persyaratan autentikasi dua faktor untuk layanan digital menurut POJK 21 Tahun 2023?",
+      "result_count": 6,
+      "top_sources": [
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 5 / Pasal 9",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 27",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+        }
+      ]
+    },
+    {
+      "question": "Bagaimana ketentuan pelindungan data pribadi konsumen dalam POJK 22 Tahun 2023?",
+      "result_count": 6,
+      "top_sources": [
+        {
+          "title": "OJK POJK 22 Tahun 2023 — Pelindungan Konsumen dan Masyarakat di Sektor Jasa Keuangan",
+          "section": "Page 91 / Pasal 20",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/POJK%2022%20Tahun%202023%20Pelindungan%20Konsumen%20dan%20Masyarakat%20di%20Sektor%20Jasa%20Keuangan.pdf"
+        },
+        {
+          "title": "OJK POJK 22 Tahun 2023 — Pelindungan Konsumen dan Masyarakat di Sektor Jasa Keuangan",
+          "section": "Page 17 / Pasal 20",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/POJK%2022%20Tahun%202023%20Pelindungan%20Konsumen%20dan%20Masyarakat%20di%20Sektor%20Jasa%20Keuangan.pdf"
+        }
+      ]
+    },
+    {
+      "question": "Apa tugas komite pengarah teknologi informasi menurut PADK 1 Tahun 2026?",
+      "result_count": 6,
+      "top_sources": [
+        {
+          "title": "OJK PADK 1 Tahun 2026 — Penyelenggaraan Teknologi Informasi oleh Bank Umum",
+          "section": "Page 14",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum/PADK%201%20Tahun%202026%20Penyelenggaraan%20Teknologi%20Informasi%20oleh%20Bank%20Umum.pdf"
+        },
+        {
+          "title": "OJK PADK 1 Tahun 2026 — Penyelenggaraan Teknologi Informasi oleh Bank Umum",
+          "section": "Page 13",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum/PADK%201%20Tahun%202026%20Penyelenggaraan%20Teknologi%20Informasi%20oleh%20Bank%20Umum.pdf"
+        }
+      ]
+    },
+    {
+      "question": "Which authentication factors must banks use for digital financial transactions?",
+      "result_count": 6,
+      "top_sources": [
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 17 / Pasal 3",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 5 / Pasal 9",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf"
+        }
+      ]
+    },
+    {
+      "question": "Bagaimana bank menangani pengaduan konsumen menurut POJK 22 Tahun 2023?",
+      "result_count": 6,
+      "top_sources": [
+        {
+          "title": "OJK FAQ POJK 22 Tahun 2023 — Pelindungan Konsumen dan Masyarakat",
+          "section": "Page 9",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/FAQ%20POJK%20Nomor%2022%20Tahun%202023%20PKM%20SJK.pdf"
+        },
+        {
+          "title": "OJK POJK 22 Tahun 2023 — Pelindungan Konsumen dan Masyarakat di Sektor Jasa Keuangan",
+          "section": "Page 64",
+          "url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/POJK%2022%20Tahun%202023%20Pelindungan%20Konsumen%20dan%20Masyarakat%20di%20Sektor%20Jasa%20Keuangan.pdf"
+        }
+      ]
+    },
+    {
+      "question": "Resep pasta di Mars untuk alien berwarna ungu",
+      "result_count": 0,
+      "top_sources": []
+    }
+  ]
+}

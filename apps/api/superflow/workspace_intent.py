@@ -47,6 +47,8 @@ class IntentChoice(BaseModel):
             "remediation",
             "assumptions",
             "evidence",
+            "source_answer",
+            "regulation_brief",
         ]
         | None
     ) = None
@@ -54,7 +56,7 @@ class IntentChoice(BaseModel):
     @model_validator(mode="after")
     def validate_view(self):
         allowed = {
-            WorkspaceKind.KNOWLEDGE_QA: {None},
+            WorkspaceKind.KNOWLEDGE_QA: {None, "source_answer", "regulation_brief"},
             WorkspaceKind.REGULATORY_REVIEW: {None, "latest_changes", "remediation"},
             WorkspaceKind.INVESTMENT_ANALYSIS: {None, "overview", "assumptions"},
             WorkspaceKind.INVESTIGATION_REVIEW: {None, "overview", "evidence"},
@@ -138,6 +140,10 @@ def deterministic_intent(prompt: str) -> IntentChoice:
             intent=WorkspaceKind.INVESTIGATION_REVIEW,
             view="evidence" if "evidence" in text else "overview",
         )
+    if re.search(r"\b(ojk|pojk|padk)\b", text) and not re.search(
+        r"remediat|what changed|compare|bandingkan|perubahan|review regulasi", text
+    ):
+        return IntentChoice(intent=WorkspaceKind.KNOWLEDGE_QA, view="regulation_brief")
     if re.search(r"\b(remediat\w*|regulat\w*|sop impact|policy changes)\b", text):
         return IntentChoice(
             intent=WorkspaceKind.REGULATORY_REVIEW,
@@ -184,7 +190,7 @@ def resolve_workspace(
     deterministic = deterministic_intent(prompt)
     choice = deterministic
     # Explicit protected-domain words are never overridden by a model suggestion.
-    if provider and deterministic.intent == WorkspaceKind.KNOWLEDGE_QA:
+    if provider and deterministic.intent == WorkspaceKind.KNOWLEDGE_QA and not deterministic.view:
         suggested = provider.choose(prompt)
         if suggested:
             choice = suggested

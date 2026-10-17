@@ -8,20 +8,36 @@ import { StatusBadge } from "./ui/primitives";
 import { EvidenceChecklist } from "./evidence-checklist";
 import { askAction } from "@/lib/product-view";
 import { useSession } from "./session";
+import { motion, useReducedMotion } from "motion/react";
 
 export function AnswerCard({
   answer,
   onSource,
   onDocument,
   reliabilitySlot,
+  view,
 }: AnswerCardProps) {
   const { user } = useSession();
+  const reduce = useReducedMotion();
+  const officialSources = answer.sources.filter((source) =>
+    source.source_url?.startsWith("https://ojk.go.id/"),
+  );
+  const regulatory = view === "regulation_brief" || officialSources.length > 0;
   const nextAction = askAction(answer, user.role_id);
   return (
-    <section className="answer-card" aria-label="Answer Card">
+    <motion.section
+      key={answer.id}
+      className="answer-card"
+      aria-label="Answer Card"
+      data-response-view={regulatory ? "regulation_brief" : "source_answer"}
+      initial={reduce ? false : { opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+    >
       <div className="answer-heading">
         <div className="answer-label">
-          Answer <span>· {dateLabel(answer.created_at)}</span>
+          {regulatory ? "Regulatory reference" : "Answer"}{" "}
+          <span>· {dateLabel(answer.created_at)}</span>
         </div>
         <span className="answer-outcome">
           {answer.outcome === "source_grounded"
@@ -30,6 +46,22 @@ export function AnswerCard({
         </span>
       </div>
       <h2>{answer.question}</h2>
+      {officialSources.length > 0 && (
+        <div className="notice" aria-label="Official source context">
+          <strong>
+            Official OJK evidence ·{" "}
+            {new Set(officialSources.map((source) => source.document_id)).size}{" "}
+            {new Set(officialSources.map((source) => source.document_id))
+              .size === 1
+              ? "document"
+              : "documents"}
+          </strong>
+          <p>
+            Page-level citations refer to the original OJK files. Confirm
+            applicability and subsequent amendments with Compliance.
+          </p>
+        </div>
+      )}
       <EvidenceChecklist
         result={answer.reliability}
         sources={answer.sources}
@@ -89,7 +121,10 @@ export function AnswerCard({
       <div className="answer-metadata">
         <FileText size={14} />
         <span>
-          Source extracts ·{" "}
+          {answer.provider.startsWith("ollama-")
+            ? "AI synthesis from cited sources"
+            : "Source extracts"}{" "}
+          ·{" "}
           {answer.filters.include_outdated
             ? "Historical versions included"
             : "Active versions only"}{" "}
@@ -134,6 +169,6 @@ export function AnswerCard({
           </a>
         )}
       </div>
-    </section>
+    </motion.section>
   );
 }

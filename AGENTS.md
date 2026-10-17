@@ -1055,6 +1055,8 @@ Ordinary users may see a readable activity timeline rather than raw event schema
 
 ## 35. Demo Data
 
+User-authorized OJK demo extension: real public OJK PDFs may populate Knowledge and the RAG index alongside synthetic fixtures. Keep official file bytes/checksum, publisher/URL, retrieval date, page/article citations, and separate FAQ from regulations. An indexed active version does not establish current legal applicability; official references remain REVIEW_REQUIRED. Use LlamaIndex with authorized persisted vectors, preserve CopilotKit V2 controlled response cards, and keep SuperFlow navigation/product concepts unchanged. See `docs/OJK_DEMO.md`. This does not authorize real customer/FIU integrations.
+
 User-authorized source ingestion extension: public website captures may be imported through Knowledge using Puppeteer and local vision. This is separate from the synthetic FIU proof point and must never be exposed as an investigation agent tool. Preserve capture URL/time, screenshots and model observations; validate public network destinations before connections, keep source permissions, save drafts first, and require human review for website-derived guidance. See `docs/WEBSITE_CAPTURE.md`.
 
 Use synthetic/mock data only.

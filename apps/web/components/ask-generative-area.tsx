@@ -21,7 +21,8 @@ import { GenerativeWorkspace } from "./generative-workspace";
 import { SectionHeader } from "./ui/primitives";
 
 const PROMPTS = [
-  "How many annual leave days do I get?",
+  "Apa persyaratan autentikasi dalam POJK 21 Tahun 2023?",
+  "Bagaimana pelindungan data konsumen dalam POJK 22 Tahun 2023?",
   "What changed in the latest regulation?",
   "Analyze proposal A.",
   "Investigate alert AML-2026-001.",

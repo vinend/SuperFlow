@@ -285,8 +285,8 @@ def test_reindex_rejects_changed_text_even_when_chunk_count_matches(client, admi
     original = main.parse_file
     before = {chunk.id: chunk.text for chunk in db.scalars(select(DocumentChunk))}
 
-    def changed(*args):
-        media, chunks = original(*args)
+    def changed(*args, **kwargs):
+        media, chunks = original(*args, **kwargs)
         chunks[0] = replace(chunks[0], text=chunks[0].text + " Parser changed text.")
         return media, chunks
 

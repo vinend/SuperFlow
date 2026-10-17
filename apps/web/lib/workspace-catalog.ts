@@ -32,6 +32,8 @@ export const WorkspaceResolutionSchema = z
         "remediation",
         "assumptions",
         "evidence",
+        "source_answer",
+        "regulation_brief",
       ])
       .nullable(),
     investigation_id: z.uuid().nullable(),
@@ -71,7 +73,7 @@ export const WorkspaceResolutionSchema = z
       (typeof WORKSPACE_KINDS)[number],
       (typeof value.view)[]
     > = {
-      knowledge_answer: [null],
+      knowledge_answer: [null, "source_answer", "regulation_brief"],
       regulatory_review: [null, "latest_changes", "remediation"],
       investment_analysis: [null, "overview", "assumptions"],
       investigation_review: [null, "overview", "evidence"],

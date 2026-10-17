@@ -39,6 +39,7 @@ export type EvidenceChecklistProps = {
 };
 
 export type AnswerCardProps = {
+  view?: "source_answer" | "regulation_brief";
   answer: Answer;
   onSource: (source: Source) => void;
   onDocument: (id: string, versionId?: string) => void;

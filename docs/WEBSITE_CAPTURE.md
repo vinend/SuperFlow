@@ -1,5 +1,7 @@
 # Import website dengan Puppeteer dan vision lokal
 
+Update OJK/RPL: dialog yang sama sekarang menyediakan Google discovery via Puppeteer dan direct official PDF import. Search Google pada jaringan pengujian mendapat HTTP 429 dan menampilkan kegagalan eksplisit; corpus resmi telah diimpor melalui tautan OJK terverifikasi. Implementasi LlamaIndex, index controls, serta CopilotKit dynamic response dijelaskan di [OJK_DEMO.md](OJK_DEMO.md).
+
 Knowledge → **Import website** tersedia untuk SME/Governance dengan permission `knowledge:write`. Masukkan URL publik, pilih **Scan website**, periksa screenshot/teks/observasi vision, tentukan owner/domain/readers, lalu **Save draft source**. Detail dokumen menyediakan **Inspect website capture** untuk membuka bukti tersimpan. Publikasi tetap melalui kontrol versi Knowledge existing.
 
 ## Setup

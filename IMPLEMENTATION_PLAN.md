@@ -8,6 +8,8 @@ Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0â
 
 ## Pass integrasi Generative Workspace
 
+Pass OJK/RPL (17 Oktober 2026): isi corpus resmi tanpa reset existing data; gunakan implementasi LlamaIndex, SentenceSplitter, multilingual vectors, BM25 + cosine fusion, provenance immutable dan index controls. Google discovery berada di dialog Knowledge existing; CopilotKit V2 memilih varian kartu `regulation_brief` pada Ask. Motion bersifat kecil/reduced-motion-aware. Jangan mengganti tab, shell, konsep produk atau modul di luar RAG. Detail dan hasil aktual di `docs/OJK_DEMO.md` dan status implementasi.
+
 Perluasan sumber atas permintaan pengguna: Puppeteer menangkap satu halaman publik dengan proxy DNS/IP terkontrol, lalu Ollama vision memindai screenshot. Knowledge menyediakan preview sebelum penyimpanan draft, bukti immutable, permission reader, provenance citation, dan human review wajib. Setup dan batasnya tercatat di `docs/WEBSITE_CAPTURE.md`; pengaktifan generator Ask/demo switch tetap pekerjaan terpisah yang dipause.
 
 Tujuan: satu permintaan bahasa alami di Ask memilih workspace yang sudah ada tanpa menyalin logika domain. CopilotKit V2 dan AG-UI mengirim intent ke adapter Next.js/FastAPI; kontrak bertipe membatasi tujuh workspace, view, dan identifier. FastAPI melakukan klasifikasi deterministik atau memakai Ollama opsional, lalu memeriksa role dan akses investigation. Komponen domain existing mengambil ulang data dari API. Keputusan material tetap memerlukan interaksi manusia.

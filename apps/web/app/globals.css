@@ -3310,3 +3310,22 @@ select {
   border: 1px solid var(--line);
   border-radius: var(--radius, 8px);
 }
+.ojk-discovery,
+.rag-status {
+  margin: var(--space-3) var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow-wrap: anywhere;
+}
+.ojk-discovery summary,
+.rag-status summary {
+  cursor: pointer;
+}
+.ojk-discovery .source-references {
+  list-style: none;
+  padding: 0;
+}
+.ojk-discovery .source-references li {
+  padding-block: var(--space-3);
+}

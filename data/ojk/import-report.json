@@ -1,0 +1,74 @@
+[
+  {
+    "id": "pojk-21-2023",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf",
+    "bytes": 272268,
+    "pages": 33,
+    "sha256": "0f7daa89e722d861cadb03f362c074813f14bfa1a11a2d59bed15ab1cc5439d5",
+    "document_id": "ojk-8854b45f1f435421a05ab48a",
+    "chunks": 121
+  },
+  {
+    "id": "faq-pojk-21-2023",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Layanan-Digital-oleh-Bank-Umum/FAQ%20POJK%2021%20Tahun%202023.%20Layanan%20Digital%20oleh%20Bank%20Umum.pdf",
+    "bytes": 135397,
+    "pages": 2,
+    "sha256": "26ce73a6dba3ed2d916fe10f070767a8f7c30d0668f1196ec3f889418893a5c5",
+    "document_id": "ojk-4b86fa07e0f6fecd095627f2",
+    "chunks": 4
+  },
+  {
+    "id": "pojk-22-2023",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/POJK%2022%20Tahun%202023%20Pelindungan%20Konsumen%20dan%20Masyarakat%20di%20Sektor%20Jasa%20Keuangan.pdf",
+    "bytes": 868593,
+    "pages": 131,
+    "sha256": "5615b0125906213112a0050f59ea24fcdbb93a3f0f3cbe8da424215bf30363b8",
+    "document_id": "ojk-09766979b4425bd49cd89f65",
+    "chunks": 446
+  },
+  {
+    "id": "faq-pojk-22-2023",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Pelindungan-Konsumen-dan-Masyarakat-di-Sektor-Jasa-Keuangan/FAQ%20POJK%20Nomor%2022%20Tahun%202023%20PKM%20SJK.pdf",
+    "bytes": 275136,
+    "pages": 12,
+    "sha256": "bd09d471788c3e17a139692f21c71358352d749ba8999167a44443561418f41f",
+    "document_id": "ojk-88ec735fe61ccb000994bd7f",
+    "chunks": 34
+  },
+  {
+    "id": "pojk-11-2022",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Penyelenggaraan-Teknologi-Informasi-Oleh-Bank-Umum/POJK%2011%20-%2003%20-%202022.pdf",
+    "bytes": 241982,
+    "pages": 76,
+    "sha256": "d4e8d59915bdecdbdc1ae61388b858b8c898bc349d23cbb64326f43a48b5b733",
+    "document_id": "ojk-d7af9d327596a16324acdd9f",
+    "chunks": 227
+  },
+  {
+    "id": "faq-pojk-11-2022",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/Penyelenggaraan-Teknologi-Informasi-Oleh-Bank-Umum/FAQ%20POJK%2011%20-%2003%20-%202022.pdf",
+    "bytes": 312923,
+    "pages": 5,
+    "sha256": "d484257bdca69292fe73f42ce9362acf70cdb237843f93a33a4d79138207ee72",
+    "document_id": "ojk-13d0deb2587d1f36c0fec210",
+    "chunks": 15
+  },
+  {
+    "id": "padk-1-2026",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum/PADK%201%20Tahun%202026%20Penyelenggaraan%20Teknologi%20Informasi%20oleh%20Bank%20Umum.pdf",
+    "bytes": 1296584,
+    "pages": 133,
+    "sha256": "51b074413f5275a4ac182d4bdef3c91185a35b2d5b392fe13ce0e3b0cd195f72",
+    "document_id": "ojk-87bd00b33453b54bda535142",
+    "chunks": 241
+  },
+  {
+    "id": "faq-padk-1-2026",
+    "source_url": "https://ojk.go.id/id/regulasi/Documents/Pages/PADK-1-Tahun-2026-Penyelenggaraan-Teknologi-Informasi-oleh-Bank-Umum/FAQ%20PADK%201%20Tahun%202026%20Penyelenggaraan%20Teknologi%20Informasi%20oleh%20Bank%20Umum.pdf",
+    "bytes": 182619,
+    "pages": 5,
+    "sha256": "ed1555b86bc260ad4f9fdd97b41327e150032de0369fcbb5759cad75f0716e8f",
+    "document_id": "ojk-55e520bc57b48d3e62f46bac",
+    "chunks": 13
+  }
+]
