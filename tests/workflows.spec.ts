@@ -6,9 +6,15 @@ async function askCase(page: Page, question: string, source?: string) {
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
   if (source)
-    await page
-      .getByRole("combobox", { name: "Question source" })
-      .selectOption(source);
+    if (
+      !(await page
+        .getByRole("combobox", { name: "Question source" })
+        .isVisible())
+    )
+      await page.locator(".chat-scope > summary").click();
+  await page
+    .getByRole("combobox", { name: "Question source" })
+    .selectOption(source);
   await page.getByRole("textbox", { name: "Your question" }).fill(question);
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
   await page

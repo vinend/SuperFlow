@@ -10,10 +10,17 @@ async function ask(
   await expect(
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
-  if (source)
+  if (source) {
+    if (
+      !(await page
+        .getByRole("combobox", { name: "Question source" })
+        .isVisible())
+    )
+      await page.locator(".chat-scope > summary").click();
     await page
       .getByRole("combobox", { name: "Question source" })
       .selectOption(source);
+  }
   if (historical)
     await page
       .getByRole("checkbox", { name: /Include historical versions/ })

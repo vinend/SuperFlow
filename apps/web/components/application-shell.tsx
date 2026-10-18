@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -11,7 +12,6 @@ import {
   ChevronRight,
   FolderKanban,
   Home,
-  Layers3,
   Menu,
   Scale,
   ShieldCheck,
@@ -75,10 +75,16 @@ export function ApplicationShell({
   const navigation = (
     <>
       <Link href="/" className="brand" onClick={() => setMenuOpen(false)}>
-        <span className="brand-mark">
-          <Layers3 size={21} />
+        <span className="superbank-wordmark">
+          <Image
+            src="/branding/superbank-wordmark.png"
+            width={1128}
+            height={191}
+            alt="Superbank"
+            priority
+          />
         </span>
-        <span>
+        <span className="superflow-brand-name">
           SuperFlow<span className="brand-caption">Knowledge to action</span>
         </span>
       </Link>

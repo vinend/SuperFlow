@@ -9,21 +9,23 @@ export function AskActivity({
   progress,
   webSearch = false,
   scope = "Your accessible sources",
+  startedAt,
 }: {
   progress?: AskProgress | null;
   webSearch?: boolean;
   scope?: string;
+  startedAt?: string;
 }) {
   const reduced = useReducedMotion();
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
-    const started = Date.now();
+    const started = startedAt ? Date.parse(startedAt) : Date.now();
     const timer = setInterval(
-      () => setElapsed(Math.floor((Date.now() - started) / 1000)),
+      () => setElapsed(Math.max(0, Math.floor((Date.now() - started) / 1000))),
       1000,
     );
     return () => clearInterval(timer);
-  }, []);
+  }, [startedAt]);
   const stages =
     progress?.stage === "routing"
       ? [

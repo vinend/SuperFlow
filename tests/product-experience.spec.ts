@@ -147,6 +147,10 @@ test("blocked Ask offers an explicit information request without authorizing an 
   await page
     .getByRole("textbox", { name: "Your question" })
     .fill("Can I reimburse an expense without a receipt?");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("expense-sop");

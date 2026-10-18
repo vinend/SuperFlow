@@ -207,7 +207,7 @@ function Workspace({ view }: { view: View }) {
           view === "home"
             ? "Find guidance, follow your work, and see what needs your attention."
             : view === "ask"
-              ? "Ask a question. Inspect the evidence and the exact source version."
+              ? "Start a conversation. Follow the process, inspect the evidence, and ask what comes next."
               : "A shared repository of enterprise sources. Your role determines what you can access."
         }
         action={

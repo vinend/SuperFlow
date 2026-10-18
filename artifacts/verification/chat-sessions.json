@@ -1,0 +1,120 @@
+{
+  "verified_at": "2026-10-18T03:46:34.6184455Z",
+  "model": "qwen3.5:0.8b",
+  "provider": "ollama-grounded-v1",
+  "session_id": "16532115-fa2e-425d-a972-7334113659e8",
+  "persisted_after_reload": true,
+  "web_search_enabled": false,
+  "turns": [
+    {
+      "question": "According to the FDIC guide, how do cash flow actuals differ from projections?",
+      "status": "complete",
+      "run_id": "d81d3ab5-ec71-409a-b8fe-f9b25ae76874",
+      "provider": "ollama-grounded-v1",
+      "evidence_count": 6,
+      "source_titles": [
+        "FDIC — Managing Cash Flow (public business training)"
+      ],
+      "pdf_pages": [
+        7,
+        6,
+        5,
+        4,
+        3,
+        15
+      ],
+      "events": [
+        {
+          "stage": "queued",
+          "message": "Request saved and queued on this device.",
+          "at": "2026-10-18T10:39:35.471098+07:00"
+        },
+        {
+          "stage": "routing",
+          "message": "Selecting an approved workspace for this message.",
+          "at": "2026-10-18T10:39:35.528556+07:00"
+        },
+        {
+          "stage": "retrieving",
+          "message": "Searching permitted sources and checking version scope.",
+          "at": "2026-10-18T10:39:35.556156+07:00"
+        },
+        {
+          "stage": "generating",
+          "message": "Composing an answer from 6 authorized evidence excerpts.",
+          "at": "2026-10-18T10:39:42.544353+07:00"
+        },
+        {
+          "stage": "verifying",
+          "message": "Checking citations, access, source conflicts and reliability.",
+          "at": "2026-10-18T10:40:46.199325+07:00"
+        },
+        {
+          "stage": "complete",
+          "message": "Cited reply ready.",
+          "at": "2026-10-18T10:40:46.245691+07:00"
+        }
+      ]
+    },
+    {
+      "question": "Summarize that distinction in three short points, with citations.",
+      "status": "complete",
+      "run_id": "d2943753-8163-44e9-b1e1-fd986258ce80",
+      "provider": "ollama-grounded-v1",
+      "evidence_count": 6,
+      "source_titles": [
+        "FDIC — Managing Cash Flow (public business training)"
+      ],
+      "pdf_pages": [
+        7,
+        5,
+        4,
+        6,
+        15,
+        9
+      ],
+      "events": [
+        {
+          "stage": "queued",
+          "message": "Request saved and queued on this device.",
+          "at": "2026-10-18T10:40:58.263335+07:00"
+        },
+        {
+          "stage": "routing",
+          "message": "Selecting an approved workspace for this message.",
+          "at": "2026-10-18T10:40:58.288128+07:00"
+        },
+        {
+          "stage": "context",
+          "message": "Reading 1 earlier replies after rechecking evidence access.",
+          "at": "2026-10-18T10:40:58.378619+07:00"
+        },
+        {
+          "stage": "retrieving",
+          "message": "Searching permitted sources and checking version scope.",
+          "at": "2026-10-18T10:40:58.385655+07:00"
+        },
+        {
+          "stage": "generating",
+          "message": "Composing an answer from 6 authorized evidence excerpts.",
+          "at": "2026-10-18T10:40:58.563269+07:00"
+        },
+        {
+          "stage": "verifying",
+          "message": "Checking citations, access, source conflicts and reliability.",
+          "at": "2026-10-18T10:42:13.823495+07:00"
+        },
+        {
+          "stage": "complete",
+          "message": "Cited reply ready.",
+          "at": "2026-10-18T10:42:13.873426+07:00"
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Small local model repeats points; no broad accuracy benchmark.",
+    "Fresh validated citation IDs are retained; stale inline markers are stripped from generated prose and dialogue context.",
+    "This smoke test used real PDF evidence; it did not claim a successful Google search."
+  ]
+}

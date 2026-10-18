@@ -83,11 +83,11 @@ test("real OJK PDF reaches document management and the CopilotKit regulatory car
   ).toBeVisible();
   await page.goto("/ask");
   await expect(
-    page.locator(".intent-rail[data-agent-ready='true']"),
+    page.locator(".ask-chat-layout[data-agent-ready='true']"),
   ).toBeVisible({ timeout: 20000 });
   const runs: string[] = [];
   page.on("request", (r) => {
-    if (r.url().includes("/api/copilotkit/agent/workspace/run"))
+    if (r.method() === "POST" && /\/api\/chats\/[^/]+\/turns$/.test(r.url()))
       runs.push(r.url());
   });
   await page

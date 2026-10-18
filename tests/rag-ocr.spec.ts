@@ -60,6 +60,10 @@ sys.stdout.buffer.write(buffer.getvalue())
   expect(await original.body()).toEqual(pdf);
   await page.goto("/ask");
   await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption(document.id);

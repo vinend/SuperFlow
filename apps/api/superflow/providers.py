@@ -1,4 +1,5 @@
 import json
+import re
 from typing import Protocol
 
 import httpx
@@ -30,6 +31,21 @@ class ExtractiveDemoProvider:
 
 class ProviderUnavailable(RuntimeError):
     """A configured inference provider could not return a safe validated result."""
+
+
+def strip_citation_markers(text: str) -> str:
+    """Structured citation_id is authoritative; dialogue/prose carries no reference IDs."""
+    return re.sub(r"\s+([.,;:!?])", r"\1", re.sub(r"\s*\[\d+\]", "", text)).strip()
+
+
+def normalize_generated_citations(answer: str) -> str:
+    """Present older saved AI replies with only their validated trailing citation."""
+    paragraphs = []
+    for paragraph in answer.split("\n\n"):
+        marker = re.search(r"\[(\d+)\]\s*$", paragraph)
+        body = strip_citation_markers(paragraph[: marker.start()] if marker else paragraph)
+        paragraphs.append(f"{body} [{marker[1]}]" if marker else body)
+    return "\n\n".join(paragraphs)
 
 
 class GroundedParagraph(BaseModel):
@@ -157,7 +173,13 @@ class OllamaAnswerProvider:
             raise ProviderUnavailable(
                 "Local AI returned a citation outside the authorized context."
             )
-        return "\n\n".join(f"{item.text} [{item.citation_id}]" for item in completion.paragraphs)
+        paragraphs = []
+        for item in completion.paragraphs:
+            text = strip_citation_markers(item.text)
+            if not text:
+                raise ProviderUnavailable("Local AI returned an empty answer paragraph.")
+            paragraphs.append(f"{text} [{item.citation_id}]")
+        return "\n\n".join(paragraphs)
 
 
 def configured_answer_provider(settings: Settings) -> AnswerProvider:

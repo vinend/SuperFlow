@@ -32,25 +32,26 @@ async function ask(page: Page, role: string, prompt: string) {
   if (role !== "employee")
     await page.getByRole("combobox", { name: "Demo role" }).selectOption(role);
   await expect(
-    page.locator(".intent-rail[data-agent-ready='true']"),
+    page.locator(".ask-chat-layout[data-agent-ready='true']"),
   ).toBeVisible({ timeout: 20000 });
+  await page.getByRole("button", { name: "New chat", exact: true }).click();
   await page.getByRole("textbox", { name: "Your question" }).fill(prompt);
   await page.getByRole("button", { name: "Ask question" }).click();
 }
 
-test("employee knowledge prompt uses AG-UI and grounded AnswerCard", async ({
+test("employee conversation uses grounded AnswerCard and retained evidence", async ({
   page,
 }) => {
   const runs: string[] = [];
   page.on("request", (request) => {
-    if (request.url().includes("/api/copilotkit/agent/workspace/run"))
+    if (
+      request.method() === "POST" &&
+      /\/api\/chats\/[^/]+\/turns$/.test(request.url())
+    )
       runs.push(request.url());
   });
   await ask(page, "employee", "How many annual leave days do I get?");
-  const workspace = page.getByRole("region", { name: "Generated workspace" });
-  await expect(
-    workspace.getByRole("heading", { name: "Knowledge answer" }),
-  ).toBeVisible();
+  const workspace = page.getByRole("region", { name: "Answer Card" });
   await expect(
     workspace.getByText("15 days", { exact: false }).first(),
   ).toBeVisible();
@@ -171,7 +172,7 @@ test("mobile generated workspace remains within viewport", async ({ page }) => {
   await ask(page, "employee", "How many annual leave days do I get?");
   await expect(
     page
-      .getByRole("region", { name: "Generated workspace" })
+      .getByRole("region", { name: "Answer Card" })
       .getByText(/15 days/)
       .first(),
   ).toBeVisible();
@@ -195,7 +196,7 @@ test("role change clears generated Impact data and reauthorizes", async ({
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("employee");
   await expect(
-    page.getByRole("heading", { name: "Tell SuperFlow what you need." }),
+    page.getByRole("heading", { name: "What can we work through?" }),
   ).toBeVisible();
   await expect(
     page
@@ -220,7 +221,7 @@ test("AG-UI outage falls back to approved deterministic routing", async ({
   await ask(page, "employee", "How many annual leave days do I get?");
   await expect(
     page
-      .getByRole("region", { name: "Generated workspace" })
+      .getByRole("region", { name: "Answer Card" })
       .getByText(/15 days/)
       .first(),
   ).toBeVisible();

@@ -1,6 +1,6 @@
 import { expect, test, type Request } from "@playwright/test";
 
-test("compact Ask and repository filters preserve source inspection", async ({
+test("roomy Ask and repository filters preserve source inspection", async ({
   page,
 }) => {
   await page.goto("/ask");
@@ -10,7 +10,8 @@ test("compact Ask and repository filters preserve source inspection", async ({
   ).toBeEnabled();
   await expect(page.locator(".question-history")).toHaveCount(0);
   const composer = await page.locator(".question-form").boundingBox();
-  expect(composer!.height).toBeLessThan(120);
+  expect(composer!.height).toBeGreaterThan(120);
+  await page.locator(".chat-scope > summary").click();
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toBeVisible();
@@ -107,6 +108,10 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
   page,
 }) => {
   await page.goto("/ask");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("leave-policy");
@@ -114,7 +119,7 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
     .getByRole("textbox", { name: "Your question" })
     .fill("How many annual leave days do I get?");
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
-  const answer = page.getByRole("region", { name: "Answer Card" });
+  const answer = page.getByRole("region", { name: "Answer Card" }).last();
   await expect(answer).toContainText("15 days");
   await expect(answer).not.toContainText("12 days");
   await page.getByRole("button", { name: "Open citation 1" }).click();
@@ -133,12 +138,15 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
   await page
     .getByRole("checkbox", { name: /Include historical versions/ })
     .check();
+  await page
+    .getByRole("textbox", { name: "Your question" })
+    .fill("How does this compare with historical annual leave entitlement?");
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
   await expect(answer).toContainText("12 days");
   await page.reload();
-  await expect(page.getByRole("region", { name: "Answer Card" })).toContainText(
-    "12 days",
-  );
+  await expect(
+    page.getByRole("region", { name: "Answer Card" }).last(),
+  ).toContainText("12 days");
   await expect(
     page.getByRole("checkbox", { name: /Include historical versions/ }),
   ).toBeChecked();
@@ -188,6 +196,10 @@ test("unsupported questions fail without fabricated evidence and source state cl
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("finance");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("proposal-a");
@@ -266,6 +278,10 @@ test("governance uploads, edits metadata, versions, reindexes, and retrieves the
   await page.getByRole("button", { name: "Close document details" }).click();
   // Governance navigation is control-focused; its existing Ask route remains available.
   await page.goto("/ask");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption({ label: `${title} Updated` });
@@ -387,6 +403,10 @@ test("mobile Source Panel is a keyboard-accessible sheet without page overflow",
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/ask");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("leave-policy");
@@ -425,6 +445,10 @@ test("a delayed Ask response cannot restore another role's content or URL contex
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("finance");
+  if (
+    !(await page.getByRole("combobox", { name: "Question source" }).isVisible())
+  )
+    await page.locator(".chat-scope > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("proposal-a");
@@ -436,7 +460,7 @@ test("a delayed Ask response cannot restore another role's content or URL contex
   const ready = new Promise<void>((resolve) => {
     fetched = resolve;
   });
-  await page.route("**/api/ask", async (route) => {
+  await page.route("**/api/chats/*/turns", async (route) => {
     if (route.request().method() !== "POST") return route.continue();
     const response = await route.fetch();
     fetched();
@@ -452,7 +476,10 @@ test("a delayed Ask response cannot restore another role's content or URL contex
   // response arriving just before cancellation must keep the new role clean.
   const requestEnded = new Promise<void>((resolve) => {
     const ended = (request: Request) => {
-      if (!request.url().endsWith("/api/ask") || request.method() !== "POST")
+      if (
+        !/\/api\/chats\/[^/]+\/turns$/.test(request.url()) ||
+        request.method() !== "POST"
+      )
         return;
       page.off("requestfinished", ended);
       page.off("requestfailed", ended);
@@ -467,6 +494,7 @@ test("a delayed Ask response cannot restore another role's content or URL contex
   const url = page.url();
   release();
   await requestEnded;
+  await page.locator(".chat-scope > summary").click();
   await page.evaluate(
     () =>
       new Promise<void>((resolve) =>

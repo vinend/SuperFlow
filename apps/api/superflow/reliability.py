@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from .audit import record
 from .guard import CalculationInput, GuardInput, SuperFlowGuard, restricted_relevance
 from .models import GuardEvaluation, QuestionRun, User
+from .providers import normalize_generated_citations
 from .reliability_contracts import EvidenceItem, GuardResult, ReliabilityStatus
 from .schemas import AskInput
 
@@ -97,6 +98,11 @@ def presented_answer(run: QuestionRun, result: GuardResult) -> str:
         return "I could not find supporting evidence sufficient for a safe conclusion. " + " ".join(
             result.reasons
         )
+    answer = (
+        normalize_generated_citations(run.answer)
+        if run.provider.startswith("ollama-")
+        else run.answer
+    )
     if result.status == ReliabilityStatus.OUTDATED:
-        return "Historical extracts are not current authority.\n\n" + run.answer
-    return run.answer
+        return "Historical extracts are not current authority.\n\n" + answer
+    return answer

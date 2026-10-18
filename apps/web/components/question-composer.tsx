@@ -12,6 +12,7 @@ export function QuestionComposer({
   busy,
   disabled,
   toolbar,
+  expanded = false,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -19,17 +20,19 @@ export function QuestionComposer({
   busy: boolean;
   disabled: boolean;
   toolbar?: ReactNode;
+  expanded?: boolean;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const input = ref.current!;
     input.style.height = "auto";
-    input.style.height = `${Math.max(52, Math.min(input.scrollHeight, 140))}px`;
-    input.style.overflowY = input.scrollHeight > 140 ? "auto" : "hidden";
-  }, [value]);
+    const maximum = expanded ? 220 : 140;
+    input.style.height = `${Math.max(expanded ? 96 : 52, Math.min(input.scrollHeight, maximum))}px`;
+    input.style.overflowY = input.scrollHeight > maximum ? "auto" : "hidden";
+  }, [value, expanded]);
   return (
     <form
-      className="question-form"
+      className={`question-form${expanded ? " expanded-composer" : ""}`}
       onSubmit={(event) => {
         event.preventDefault();
         if (!disabled && !busy) onSubmit();

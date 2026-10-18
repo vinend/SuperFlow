@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { api, User } from "@/lib/api";
+import Image from "next/image";
 
 type Session = { users: User[]; user: User; selectUser: (id: string) => void };
 const SessionContext = createContext<Session | null>(null);
@@ -38,7 +39,13 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   if (!user)
     return (
       <div className="boot-screen">
-        <div className="brand-mark">S</div>
+        <Image
+          src="/branding/superbank-symbol.png"
+          width={64}
+          height={64}
+          alt="Superbank"
+          priority
+        />
         <h1>SuperFlow</h1>
         <p>{error || "Connecting to your knowledge workspace…"}</p>
         {error && (

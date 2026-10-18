@@ -91,3 +91,54 @@ def test_ollama_provider_does_not_call_runtime_without_evidence():
 
     result = provider(handler).answer("Question", [])
     assert "could not find supporting evidence" in result
+
+
+def test_generated_prose_cannot_copy_stale_or_unlinked_citation_numbers():
+    def handler(_):
+        return httpx.Response(
+            200,
+            json={
+                "message": {
+                    "content": json.dumps(
+                        {
+                            "paragraphs": [
+                                {"text": "Employees receive 15 days [99].", "citation_id": 1}
+                            ]
+                        }
+                    )
+                }
+            },
+        )
+
+    assert provider(handler).answer("Summarize that", [source()]) == (
+        "Employees receive 15 days. [1]"
+    )
+
+
+def test_citation_only_generated_text_is_rejected():
+    def handler(_):
+        return httpx.Response(
+            200,
+            json={
+                "message": {
+                    "content": json.dumps({"paragraphs": [{"text": "[99]", "citation_id": 1}]})
+                }
+            },
+        )
+
+    with pytest.raises(ProviderUnavailable, match="empty answer"):
+        provider(handler).answer("Summarize that", [source()])
+
+
+def test_saved_ai_presentation_removes_old_inline_markers_only():
+    from types import SimpleNamespace
+
+    from superflow.models import QuestionRun
+    from superflow.reliability import presented_answer
+    from superflow.reliability_contracts import ReliabilityStatus
+
+    result = SimpleNamespace(status=ReliabilityStatus.REVIEW_REQUIRED)
+    run = QuestionRun(provider="ollama-grounded-v1", answer="A statement [99]. [1]")
+    assert presented_answer(run, result) == "A statement. [1]"
+    run.provider = "deterministic-extractive-v1"
+    assert presented_answer(run, result) == "A statement [99]. [1]"

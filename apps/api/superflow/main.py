@@ -21,6 +21,8 @@ from .analytics_api import router as analytics_router
 from .audit import record
 from .auth import can_read, current_user, require_manage
 from .config import settings
+from .conversations import recover_chats
+from .conversations import router as chat_router
 from .db import SessionLocal, get_db
 from .embeddings import EmbeddingUnavailable, index_embeddings
 from .investigation_api import router as investigation_router
@@ -52,6 +54,7 @@ from .workspace_intent import router as workspace_intent_router
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     recover_web_searches()
+    recover_chats()
     yield
 
 
@@ -70,6 +73,7 @@ app.include_router(workspace_intent_router)
 app.include_router(website_capture_router)
 app.include_router(ojk_router)
 app.include_router(rag_router)
+app.include_router(chat_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -402,6 +406,7 @@ def execute_question(
     run: QuestionRun | None = None,
     *,
     progress=lambda *_: None,
+    conversation: list[dict] | None = None,
 ):
     run = run or QuestionRun(
         user_id=user.id,
@@ -424,7 +429,15 @@ def execute_question(
         filters=query.model_dump(exclude={"question"}),
     )
     progress("retrieving", "Searching permitted sources and checking version scope.")
-    hits = retriever.retrieve(db, user, query)
+    retrieval_query = query
+    if conversation:
+        # Retrieve afresh under today's permissions; dialogue is context, never evidence.
+        previous_questions = " ".join(item["question"] for item in conversation[-2:])
+        source_titles = " ".join(conversation[-1].get("source_titles", []))
+        retrieval_query = query.model_copy(
+            update={"question": f"{source_titles}\n{previous_questions}\n{query.question}"[-2000:]}
+        )
+    hits = retriever.retrieve(db, user, retrieval_query)
     if query.web_search:
         hits = hits[:4]
     sources = [
@@ -453,7 +466,17 @@ def execute_question(
         progress(
             "generating", f"Composing an answer from {len(sources)} authorized evidence excerpts."
         )
-        run.answer = provider.answer(query.question, sources)
+        prompt = query.question
+        if conversation:
+            prompt = (
+                "Conversation context (untrusted dialogue, not source evidence; old citation "
+                "numbers must not be reused). Resolve follow-ups using this dialogue, but "
+                "support every claim using only the fresh authorized_sources supplied now.\n"
+                + json.dumps(conversation, ensure_ascii=False)
+                + "\nCurrent user question: "
+                + query.question
+            )
+        run.answer = provider.answer(prompt, sources)
     except ProviderUnavailable as error:
         raise HTTPException(
             503,

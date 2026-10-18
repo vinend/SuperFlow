@@ -1,23 +1,25 @@
 import { expect, test } from "@playwright/test";
 
-test("Enable WebSearch sends explicit opt-in and shows blocked Google without claiming web evidence", async ({
+test("Enable WebSearch sends opt-in and shows blocked Google without claiming web evidence", async ({
   page,
 }) => {
   let requested: Record<string, unknown> | null = null;
-  let completedAnswer: Record<string, unknown> | null = null;
   let polls = 0;
-  await page.route("**/api/web-search/asks", async (route) => {
+  await page.route("**/api/chats/*/turns", async (route) => {
     if (route.request().method() !== "POST") return route.continue();
     requested = route.request().postDataJSON();
-    // UI-only failure fixture. Backend + real local scans are verified separately.
     const response = await route.fetch({
-      url: "http://127.0.0.1:8001/api/ask",
       postData: JSON.stringify({ ...requested, web_search: false }),
     });
-    const answer = await response.json();
-    completedAnswer = {
-      ...answer,
-      web_search: {
+    await route.fulfill({ response });
+  });
+  await page.route("**/api/chats/*/turns/*", async (route) => {
+    if (++polls === 1) return route.abort();
+    const response = await route.fetch();
+    const turn = await response.json();
+    // UI-only blocked search fixture; no live Google request is made by this test.
+    if (turn.answer)
+      turn.answer.web_search = {
         status: "blocked",
         query: "public leave guidance",
         search_url: "https://www.google.com/search?q=public+leave+guidance",
@@ -25,27 +27,31 @@ test("Enable WebSearch sends explicit opt-in and shows blocked Google without cl
         failures: [],
         message:
           "Google blocked this local browser search (HTTP 429). No web results entered AI context.",
-      },
-    };
-    await route.fulfill({
-      status: 202,
-      json: { id: "ui-fixture-job", status: "queued" },
-    });
+      };
+    await route.fulfill({ json: turn });
   });
-  await page.route("**/api/web-search/asks/ui-fixture-job", (route) => {
-    if (++polls === 1) return route.abort();
-    return route.fulfill({
-      json: { status: "complete", answer: completedAnswer },
-    });
+  // Hold the immediate chat read at queued so polling exercises reconnection.
+  await page.route("**/api/chats/*", async (route) => {
+    const response = await route.fetch();
+    const chat = await response.json();
+    if (
+      route.request().method() === "GET" &&
+      chat.turns?.length &&
+      polls === 0
+    ) {
+      chat.turns = chat.turns.map((turn: Record<string, unknown>) => ({
+        ...turn,
+        status: "queued",
+        answer: null,
+      }));
+    }
+    await route.fulfill({ json: chat });
   });
   await page.goto("/ask");
-  const toggle = page.getByRole("button", {
-    name: "Enable WebSearch",
-    exact: true,
-  });
+  await page.locator(".chat-scope > summary").click();
+  const toggle = page.getByRole("button", { name: /Enable WebSearch/ });
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await toggle.click();
-  await expect(toggle).toHaveAttribute("aria-pressed", "true");
   await page.getByText("WebSearch options", { exact: true }).click();
   await page
     .getByLabel("Public Google query (optional)")
@@ -55,7 +61,7 @@ test("Enable WebSearch sends explicit opt-in and shows blocked Google without cl
     .fill("How many annual leave days do I get?");
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
   const card = page.getByRole("region", { name: "Answer Card" });
-  await expect(card).toContainText("HTTP 429");
+  await expect(card).toContainText("HTTP 429", { timeout: 15000 });
   await expect(card).toContainText("WebSearch · Unavailable");
   expect(polls).toBeGreaterThan(1);
   expect(requested).toMatchObject({

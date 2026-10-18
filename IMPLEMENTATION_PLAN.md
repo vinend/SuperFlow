@@ -1,5 +1,12 @@
 # Rencana Implementasi SuperFlow
 
+Ask conversation pass (18 Oktober 2026): atas permintaan eksplisit pengguna,
+composer diperbesar dan Ask memakai sesi percakapan tersimpan/follow-up, dengan
+process history per jawaban. Ini pengecualian terarah terhadap default UX non-chat;
+tab, evidence/Guard, domain workspace dan controlled actions dipertahankan. Tema
+neon Superbank dan aset/logo/favicon dari pengguna diterapkan. Detail kontrak,
+batasan dan contoh pertanyaan: `docs/CHAT_SESSIONS.md`.
+
 Ekstensi knowledge lintas divisi: importer PDF publik Finance/Operations/People, full shared-KB embedding refresh pada setiap PDF baru/versi baru, tahap Ask owner-scoped yang dilaporkan server, serta motion pada shell/kartu/loading. Tab dan permission existing dipertahankan. Rincian: `docs/PUBLIC_KNOWLEDGE.md`.
 
 Ekstensi Ask lokal: **Enable WebSearch**, Google Puppeteer + vision, pembacaan HTML/PDF, bukti per-answer, penggabungan context dan job background/polling. Batas akses dan kegagalan Google diuji; lihat `docs/WEBSEARCH.md`.

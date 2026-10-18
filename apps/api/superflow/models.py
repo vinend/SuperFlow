@@ -135,6 +135,31 @@ class ChunkEmbedding(Base):
     vector: Mapped[list[float]] = mapped_column(JSON)
 
 
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    title: Mapped[str] = mapped_column(String(120))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class ChatTurn(Base):
+    __tablename__ = "chat_turns"
+    __table_args__ = (UniqueConstraint("session_id", "ordinal", name="uq_chat_turn_ordinal"),)
+    id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
+    session_id: Mapped[str] = mapped_column(ForeignKey("chat_sessions.id"), index=True)
+    ordinal: Mapped[int]
+    question: Mapped[str] = mapped_column(Text)
+    query: Mapped[dict] = mapped_column(JSON)
+    status: Mapped[str] = mapped_column(String(20), default="queued")
+    resolution: Mapped[dict | None] = mapped_column(JSON)
+    run_id: Mapped[str | None] = mapped_column(ForeignKey("question_runs.id"))
+    events: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    error: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
 class QuestionRun(Base):
     __tablename__ = "question_runs"
     id: Mapped[str] = mapped_column(String(40), primary_key=True, default=identifier)
