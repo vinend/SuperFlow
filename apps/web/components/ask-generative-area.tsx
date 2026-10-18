@@ -18,22 +18,31 @@ import type { useKnowledgeWorkspace } from "./use-knowledge-workspace";
 import { QuestionComposer } from "./question-composer";
 import { QuestionHistory } from "./question-history";
 import { GenerativeWorkspace } from "./generative-workspace";
-import { SectionHeader } from "./ui/primitives";
 import { AskActivity } from "./ask-activity";
 
-const PROMPTS = [
-  "Apa persyaratan autentikasi dalam POJK 21 Tahun 2023?",
-  "Bagaimana pelindungan data konsumen dalam POJK 22 Tahun 2023?",
-  "How do cash flow actuals differ from projections in the FDIC guide?",
-  "How does NIST connect incident response to cybersecurity risk management?",
-  "What does the ILO recommend for communication and well-being while teleworking?",
-  "What changed in the latest regulation?",
-  "Analyze proposal A.",
-  "Investigate alert AML-2026-001.",
-  "Where does reliability need attention?",
-  "What do I need to do?",
-  "What needs my approval?",
-];
+const PROMPTS: Record<string, string[]> = {
+  employee: [
+    "How many annual leave days do I get?",
+    "How do I request system access?",
+    "What do I need to do?",
+  ],
+  manager: [
+    "What needs my approval?",
+    "What do I need to do?",
+    "What documents support an expense request?",
+  ],
+  compliance: [
+    "What changed in the latest regulation?",
+    "Apa persyaratan autentikasi dalam POJK 21 Tahun 2023?",
+    "What needs my review?",
+  ],
+  finance: [
+    "Analyze proposal A.",
+    "Which assumptions need review?",
+    "What needs my approval?",
+  ],
+  governance: ["Which sources need review?"],
+};
 
 export function AskGenerativeArea({
   w,
@@ -171,11 +180,11 @@ export function AskGenerativeArea({
     >
       <aside
         className="intent-rail"
-        aria-label="Ask and intent"
+        aria-label="Ask SuperFlow"
         data-agent-ready={isReady}
       >
         <div className="compose-heading">
-          <span>Ask / intent</span>
+          <span>Your question</span>
           <Link className="text-link" href="/knowledge">
             View sources
           </Link>
@@ -187,64 +196,76 @@ export function AskGenerativeArea({
           busy={busy || w.asking}
           disabled={w.loading}
         />
-        <div className="websearch-controls">
-          <button
-            type="button"
-            className={`button secondary websearch-toggle ${w.webSearch ? "enabled" : ""}`}
-            aria-pressed={w.webSearch}
-            disabled={busy || w.asking}
-            onClick={() => w.setWebSearch(!w.webSearch)}
+        <details className="search-options">
+          <summary>
+            Search options
+            {w.webSearch || w.domain || w.documentFilter || w.includeOutdated
+              ? " · customized"
+              : ""}
+          </summary>
+          <div className="websearch-controls">
+            <button
+              type="button"
+              className={`button secondary websearch-toggle ${w.webSearch ? "enabled" : ""}`}
+              aria-pressed={w.webSearch}
+              disabled={busy || w.asking}
+              onClick={() => w.setWebSearch(!w.webSearch)}
+            >
+              Enable WebSearch{" "}
+              <span aria-hidden="true">{w.webSearch ? "On" : "Off"}</span>
+            </button>
+            {w.webSearch && (
+              <details className="websearch-options">
+                <summary>WebSearch options</summary>
+                <p className="muted small">
+                  Public pages are read on this device. Your question is sent to
+                  Google as a public search query. Reading up to two results can
+                  take several minutes.
+                </p>
+                <label>
+                  Public Google query (optional)
+                  <input
+                    maxLength={200}
+                    value={w.webQuery}
+                    onChange={(event) => w.setWebQuery(event.target.value)}
+                    placeholder="Defaults to your question"
+                    disabled={busy || w.asking}
+                  />
+                </label>
+                <label>
+                  Selected result URLs (optional)
+                  <textarea
+                    value={w.webUrls}
+                    onChange={(event) => w.setWebUrls(event.target.value)}
+                    placeholder="If Google blocks automation, paste up to two public result URLs."
+                    disabled={busy || w.asking}
+                  />
+                </label>
+                <p className="muted small">
+                  Pasted URLs are read directly and labelled as your selected
+                  sources; they are not claimed as an automated Google search.
+                </p>
+              </details>
+            )}
+            {w.webSearch && w.asking && (
+              <p role="status" className="muted small">
+                WebSearch is running locally: browser search, source reading,
+                vision, then AI synthesis. Please keep this page open.
+              </p>
+            )}
+          </div>
+          <div
+            className="query-scope"
+            role="group"
+            aria-label="Retrieval scope"
           >
-            Enable WebSearch{" "}
-            <span aria-hidden="true">{w.webSearch ? "On" : "Off"}</span>
-          </button>
-          {w.webSearch && (
-            <details className="websearch-options">
-              <summary>WebSearch options</summary>
-              <p className="muted small">
-                Puppeteer and vision run on this device. Your question is sent
-                to Google as a public search query. Reading up to two results
-                can take several minutes.
-              </p>
-              <label>
-                Public Google query (optional)
-                <input
-                  maxLength={200}
-                  value={w.webQuery}
-                  onChange={(event) => w.setWebQuery(event.target.value)}
-                  placeholder="Defaults to your question"
-                  disabled={busy || w.asking}
-                />
-              </label>
-              <label>
-                Selected result URLs (optional)
-                <textarea
-                  value={w.webUrls}
-                  onChange={(event) => w.setWebUrls(event.target.value)}
-                  placeholder="If Google blocks automation, paste up to two public result URLs."
-                  disabled={busy || w.asking}
-                />
-              </label>
-              <p className="muted small">
-                Pasted URLs are read directly and labelled as your selected
-                sources; they are not claimed as an automated Google search.
-              </p>
-            </details>
-          )}
-          {w.webSearch && w.asking && (
-            <p role="status" className="muted small">
-              WebSearch is running locally: browser search, source reading,
-              vision, then AI synthesis. Please keep this page open.
-            </p>
-          )}
-        </div>
-        <div className="query-scope" role="group" aria-label="Retrieval scope">
-          {filters}
-        </div>
+            {filters}
+          </div>
+        </details>
         {!selection && (
           <div className="intent-suggestions" aria-label="Suggested requests">
-            <span className="suggestion-label">Try a workspace</span>
-            {PROMPTS.map((prompt) => (
+            <span className="suggestion-label">Try asking</span>
+            {(PROMPTS[w.user.role_id] || PROMPTS.employee).map((prompt) => (
               <button
                 key={prompt}
                 type="button"
@@ -257,8 +278,8 @@ export function AskGenerativeArea({
           </div>
         )}
         {w.history.length > 0 && (
-          <section className="intent-history">
-            <SectionHeader title="Recent knowledge questions" />
+          <details className="intent-history">
+            <summary>Recent questions</summary>
             <QuestionHistory
               items={w.history}
               open={async (id) => {
@@ -277,7 +298,7 @@ export function AskGenerativeArea({
               disabled={busy || w.asking}
               limit={5}
             />
-          </section>
+          </details>
         )}
       </aside>
       <div className="generated-column">

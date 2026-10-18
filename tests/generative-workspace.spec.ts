@@ -57,6 +57,7 @@ test("employee knowledge prompt uses AG-UI and grounded AnswerCard", async ({
   await expect(
     workspace.getByText("VERIFIED", { exact: false }).first(),
   ).toBeVisible();
+  await workspace.getByText(/View sources/).click();
   await expect(
     workspace.getByRole("button", { name: /Annual Leave Policy v2.0/ }).first(),
   ).toBeVisible();
@@ -92,6 +93,7 @@ test("finance prompt opens source backed investment analysis", async ({
       .getByRole("heading", { name: "Investment Analysis", exact: true })
       .first(),
   ).toBeVisible();
+  await workspace.getByRole("button", { name: "Review assumptions" }).click();
   await expect(
     workspace.getByRole("heading", { name: "Source-backed assumptions" }),
   ).toBeVisible();
@@ -189,7 +191,7 @@ test("role change clears generated Impact data and reauthorizes", async ({
   await expect(
     page
       .getByRole("region", { name: "Generated workspace" })
-      .getByRole("heading", { name: "Impact" }),
+      .getByRole("heading", { name: "Impact", exact: true }),
   ).toBeVisible();
   await page
     .getByRole("combobox", { name: "Demo role" })

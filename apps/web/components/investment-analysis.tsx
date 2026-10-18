@@ -44,6 +44,9 @@ export function InvestmentAnalysis({
   const router = useRouter();
   const { users } = useSession();
   const [source, setSource] = useState<Source | null>(null);
+  const [stage, setStage] = useState<
+    "sources" | "assumptions" | "analysis" | "submit"
+  >("sources");
   const [active, setActive] = useState<string | null>(null);
   const openDocument = (id: string, versionId?: string) =>
     router.push(
@@ -74,7 +77,7 @@ export function InvestmentAnalysis({
         <span>Updated {dateLabel(analysis.updated_at)}</span>
         <span>Illustrative synthetic data</span>
       </div>
-      {headline && (
+      {stage === "analysis" && headline && (
         <dl className="regulatory-summary" aria-label="Headline results">
           {headline.map((metric) => (
             <div key={metric.key}>
@@ -84,28 +87,69 @@ export function InvestmentAnalysis({
           ))}
         </dl>
       )}
-      <section
-        className="comparison-section-block"
-        aria-labelledby="assumptions-heading"
-      >
-        <div className="section-header">
-          <div>
-            <h2 id="assumptions-heading">Source-backed assumptions</h2>
-            <p>
-              Extracted from{" "}
-              {[
-                analysis.proposal_title,
-                ...analysis.supporting.map((d) => d.title),
-              ].join(", ")}
-              . Every value links to the exact source section.
-            </p>
+      <nav className="journey-tabs" aria-label="Investment analysis stages">
+        {(["sources", "assumptions", "analysis", "submit"] as const).map(
+          (item, index) => (
+            <button
+              key={item}
+              type="button"
+              aria-current={stage === item ? "step" : undefined}
+              onClick={() => setStage(item)}
+            >
+              {index + 1}.{" "}
+              {item === "submit"
+                ? "Submit for approval"
+                : item[0].toUpperCase() + item.slice(1)}
+            </button>
+          ),
+        )}
+      </nav>
+      {stage === "sources" && (
+        <section className="comparison-section-block">
+          <SectionHeader
+            title="Sources"
+            detail="Documents supporting this analysis."
+          />
+          <ul>
+            {[
+              analysis.proposal_title,
+              ...analysis.supporting.map((document) => document.title),
+            ].map((title) => (
+              <li key={title}>{title}</li>
+            ))}
+          </ul>
+          <button
+            className="button primary"
+            onClick={() => setStage("assumptions")}
+          >
+            Review assumptions
+          </button>
+        </section>
+      )}
+      {stage === "assumptions" && (
+        <section
+          className="comparison-section-block"
+          aria-labelledby="assumptions-heading"
+        >
+          <div className="section-header">
+            <div>
+              <h2 id="assumptions-heading">Source-backed assumptions</h2>
+              <p>
+                Extracted from{" "}
+                {[
+                  analysis.proposal_title,
+                  ...analysis.supporting.map((d) => d.title),
+                ].join(", ")}
+                . Every value links to the exact source section.
+              </p>
+            </div>
           </div>
-        </div>
-        <AssumptionTable inputs={analysis.inputs} onSource={setSource} />
-      </section>
+          <AssumptionTable inputs={analysis.inputs} onSource={setSource} />
+        </section>
+      )}
       <div className="case-layout">
         <div className="case-execution">
-          {editable && choices.length > 0 && (
+          {stage === "assumptions" && editable && choices.length > 0 && (
             <section
               className="gap-section"
               aria-labelledby="conflicts-heading"
@@ -137,95 +181,104 @@ export function InvestmentAnalysis({
               ))}
             </section>
           )}
-          <section className="gap-section" aria-labelledby="analysis-heading">
-            <div className="section-header">
-              <div>
-                <h2 id="analysis-heading">Financial analysis</h2>
-                <p>
-                  Deterministic formulas on the values above. Unit, period and
-                  formula are shown for every result.
-                </p>
+          {stage === "analysis" && (
+            <section className="gap-section" aria-labelledby="analysis-heading">
+              <div className="section-header">
+                <div>
+                  <h2 id="analysis-heading">Financial analysis</h2>
+                  <p>
+                    Deterministic formulas on the values above. Unit, period and
+                    formula are shown for every result.
+                  </p>
+                </div>
               </div>
-            </div>
-            {analysis.calculation ? (
-              <FinancialAnalysis calculation={analysis.calculation} />
-            ) : (
-              <EmptyState
-                title="Results wait for complete, unambiguous inputs."
-                description="Resolve conflicting values and make sure every required input has a source."
-              />
-            )}
-          </section>
-          <section className="gap-section" aria-labelledby="memo-heading">
-            <div className="section-header">
-              <div>
-                <h2 id="memo-heading">Draft memo</h2>
-                <p>
-                  A draft for the approver. The decision stays with the
-                  authorized reviewer.
-                </p>
+              {analysis.calculation ? (
+                <FinancialAnalysis calculation={analysis.calculation} />
+              ) : (
+                <EmptyState
+                  title="Results wait for complete, unambiguous inputs."
+                  description="Resolve conflicting values and make sure every required input has a source."
+                />
+              )}
+            </section>
+          )}
+          {stage === "submit" && (
+            <section className="gap-section" aria-labelledby="memo-heading">
+              <div className="section-header">
+                <div>
+                  <h2 id="memo-heading">Draft memo</h2>
+                  <p>
+                    A draft for the approver. The decision stays with the
+                    authorized reviewer.
+                  </p>
+                </div>
               </div>
-            </div>
-            {analysis.allowed_actions.includes("edit_memo") ? (
-              <MemoEditor
-                key={analysis.revision}
-                memo={analysis.memo}
-                edited={analysis.memo_edited}
-                busy={w.busy}
-                error={active === "memo" ? w.error : ""}
-                onSave={(memo) => run("memo", "memo", { memo })}
+              {analysis.allowed_actions.includes("edit_memo") ? (
+                <MemoEditor
+                  key={analysis.revision}
+                  memo={analysis.memo}
+                  edited={analysis.memo_edited}
+                  busy={w.busy}
+                  error={active === "memo" ? w.error : ""}
+                  onSave={(memo) => run("memo", "memo", { memo })}
+                />
+              ) : (
+                <MemoText memo={analysis.memo} />
+              )}
+            </section>
+          )}
+          {stage === "submit" && (
+            <section className="regulatory-close" aria-label="Approval">
+              <SectionHeader
+                title="Approval"
+                detail={SUBMIT_HINTS[analysis.phase]}
               />
-            ) : (
-              <MemoText memo={analysis.memo} />
-            )}
-          </section>
-          <section className="regulatory-close" aria-label="Approval">
-            <SectionHeader
-              title="Approval"
-              detail={SUBMIT_HINTS[analysis.phase]}
-            />
-            {analysis.approval_route && (
-              <p className="workflow-note">
-                <strong>Approval route:</strong> {analysis.approval_route.label}
-                .{" "}
+              {analysis.approval_route && (
+                <p className="workflow-note">
+                  <strong>Approval route:</strong>{" "}
+                  {analysis.approval_route.label}.{" "}
+                  <button
+                    className="text-button"
+                    onClick={() => setSource(analysis.approval_route!.source)}
+                  >
+                    Inspect authority source [
+                    {analysis.approval_route.source.citation_id}]
+                  </button>
+                </p>
+              )}
+              {analysis.reviewer_id && (
+                <p className="muted small">
+                  Waiting for {personName(analysis.reviewer_id, users)}
+                  {analysis.submitted_at
+                    ? ` · submitted ${dateLabel(analysis.submitted_at)}`
+                    : ""}
+                </p>
+              )}
+              {analysis.allowed_actions.includes("submit") && (
                 <button
-                  className="text-button"
-                  onClick={() => setSource(analysis.approval_route!.source)}
+                  className="button primary"
+                  disabled={w.busy}
+                  onClick={() => void run("submit", "submit", {})}
                 >
-                  Inspect authority source [
-                  {analysis.approval_route.source.citation_id}]
+                  Submit for approval
                 </button>
-              </p>
-            )}
-            {analysis.reviewer_id && (
-              <p className="muted small">
-                Waiting for {personName(analysis.reviewer_id, users)}
-                {analysis.submitted_at
-                  ? ` · submitted ${dateLabel(analysis.submitted_at)}`
-                  : ""}
-              </p>
-            )}
-            {analysis.allowed_actions.includes("submit") && (
-              <button
-                className="button primary"
-                disabled={w.busy}
-                onClick={() => void run("submit", "submit", {})}
-              >
-                Submit for approval
-              </button>
-            )}
-            {analysis.allowed_actions.includes("provide_information") && (
-              <Link
-                className="button primary"
-                href={`/cases?case=${encodeURIComponent(analysis.id)}`}
-              >
-                Provide information
-              </Link>
-            )}
-            {active === "submit" && w.error && <ErrorState message={w.error} />}
-          </section>
+              )}
+              {analysis.allowed_actions.includes("provide_information") && (
+                <Link
+                  className="button primary"
+                  href={`/cases?case=${encodeURIComponent(analysis.id)}`}
+                >
+                  Provide information
+                </Link>
+              )}
+              {active === "submit" && w.error && (
+                <ErrorState message={w.error} />
+              )}
+            </section>
+          )}
         </div>
-        <aside className="case-evidence" aria-label="Reliability and activity">
+        <details className="case-evidence">
+          <summary>Evidence & reliability</summary>
           <SectionHeader
             title="Source reliability"
             detail="Checks on the sources and the calculation inputs."
@@ -256,7 +309,7 @@ export function InvestmentAnalysis({
               ))}
             </ol>
           </section>
-        </aside>
+        </details>
       </div>
       {source && (
         <SourcePanel

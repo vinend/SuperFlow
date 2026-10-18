@@ -103,19 +103,36 @@ const run = {
 } as WorkflowView;
 
 test("navigation exposes only implemented jobs appropriate to each role", () => {
-  assert.deepEqual(
-    navigationFor("employee").map((n) => n.title),
-    ["Home", "Ask SuperFlow", "Knowledge", "My Work"],
-  );
-  for (const role of ["manager", "compliance", "finance"])
-    assert.ok(
-      navigationFor(role).some((item) => item.title === "Reviews / Approvals"),
+  const common = ["Home", "Ask SuperFlow", "Work", "Knowledge Library"];
+  const expected: Record<string, string[]> = {
+    employee: common,
+    manager: common,
+    sme: common,
+    compliance: [
+      "Home",
+      "Ask SuperFlow",
+      "Regulatory Review",
+      "Work",
+      "Knowledge Library",
+    ],
+    finance: [
+      "Home",
+      "Ask SuperFlow",
+      "Investment Analysis",
+      "Work",
+      "Knowledge Library",
+    ],
+    governance: ["Home", "Work", "Knowledge Library"],
+  };
+  for (const [role, labels] of Object.entries(expected)) {
+    const items = navigationFor(role);
+    assert.deepEqual(
+      items.map((item) => item.title),
+      labels,
     );
-  assert.ok(navigationFor("sme").some((item) => item.title === "Reviews"));
-  assert.deepEqual(
-    navigationFor("governance").map((n) => n.title),
-    ["Home", "Knowledge", "My Work", "Reviews / Approvals", "Impact"],
-  );
+    assert.ok(items.every((item) => item.href !== "/impact"));
+    assert.ok(items.every((item) => item.section !== "INSIGHTS"));
+  }
   assert.equal(canViewImpact("employee"), false);
   assert.equal(canViewImpact("manager"), true);
 });
@@ -315,16 +332,7 @@ test("people and activity use readable names without exposing event schema", () 
 test("Compliance alone gets regulatory and investigation workspaces", () => {
   assert.deepEqual(
     navigationFor("compliance").map((n) => n.title),
-    [
-      "Home",
-      "Ask SuperFlow",
-      "Knowledge",
-      "Regulatory Review",
-      "Investigation Review",
-      "My Work",
-      "Reviews / Approvals",
-      "Impact",
-    ],
+    ["Home", "Ask SuperFlow", "Regulatory Review", "Work", "Knowledge Library"],
   );
   for (const role of ["employee", "manager", "sme", "finance", "governance"])
     assert.ok(
@@ -425,11 +433,9 @@ test("Finance alone gets Investment Analysis; analyses open their workspace", ()
     [
       "Home",
       "Ask SuperFlow",
-      "Knowledge",
       "Investment Analysis",
-      "My Work",
-      "Reviews / Approvals",
-      "Impact",
+      "Work",
+      "Knowledge Library",
     ],
   );
   assert.ok(

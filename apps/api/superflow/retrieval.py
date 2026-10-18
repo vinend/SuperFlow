@@ -45,9 +45,10 @@ CONCEPTS = {
 
 
 def tokens(value: str) -> Counter:
+    value = re.sub(r"\btime off\b", "leave", value.lower())
     return Counter(
         CONCEPTS.get(word, word)
-        for word in re.findall(r"[a-z0-9]+", value.lower())
+        for word in re.findall(r"[a-z0-9]+", value)
         if word not in STOP_WORDS and len(word) > 1
     )
 
@@ -199,6 +200,25 @@ class HybridRetriever:
         ranks = {
             key: 0.65 * lexical_scores.get(key, 0) + 0.35 * semantic_scores[key] for key in keys
         }
+        # Broad Ask must not promote a semantically adjacent regulation or public
+        # guide solely because it shares a generic banking term. Keep explicitly
+        # scoped searches fully semantic so paraphrases still work there.
+        if not query.domain and not query.document_ids:
+            query_terms = set(tokens(query.question))
+            if len(query_terms) >= 3:
+                candidate_text = {
+                    chunk.id: set(
+                        tokens(document.title + " " + chunk.section_path + " " + chunk.text)
+                    )
+                    for document, _, chunk in candidates
+                    if chunk.id in ranks
+                }
+
+                def topical_match(key: str) -> bool:
+                    coverage = len(query_terms & candidate_text[key]) / len(query_terms)
+                    return coverage >= 0.5 or (coverage >= 0.33 and semantic_scores[key] >= 0.6)
+
+                ranks = {key: score for key, score in ranks.items() if topical_match(key)}
         return [
             Hit(key, score)
             for key, score in sorted(ranks.items(), key=lambda item: (-item[1], item[0]))[

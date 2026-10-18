@@ -24,7 +24,14 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
       return route.fulfill({ response });
     });
     await page.goto("/ask#role=employee");
-    await page.getByLabel("Question domain").selectOption("People");
+    await page.waitForLoadState("networkidle");
+    const domain = page.getByLabel("Question domain");
+    await expect(async () => {
+      if (!(await domain.isVisible()))
+        await page.locator("details.search-options > summary").click();
+      await expect(domain).toBeVisible();
+    }).toPass({ timeout: 10_000 });
+    await domain.selectOption("People");
     await page
       .getByRole("textbox", { name: "Your question" })
       .fill("How many annual leave days do I get?");
@@ -48,11 +55,13 @@ for (const reducedMotion of ["no-preference", "reduce"] as const) {
         ).toBe("none");
       }
       await page.setViewportSize({ width: 390, height: 844 });
-      expect(
-        await page.evaluate(
-          () => document.documentElement.scrollWidth <= innerWidth,
-        ),
-      ).toBe(true);
+      await expect
+        .poll(() =>
+          page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        )
+        .toBe(true);
     } finally {
       finish();
     }

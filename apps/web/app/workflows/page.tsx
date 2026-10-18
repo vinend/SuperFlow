@@ -1,9 +1,5 @@
-import { Suspense } from "react";
-import { ActionConsole } from "@/components/action-console";
+import { redirect } from "next/navigation";
+
 export default function WorkflowsPage() {
-  return (
-    <Suspense fallback={<p role="status">Loading your work…</p>}>
-      <ActionConsole view="workflows" />
-    </Suspense>
-  );
+  redirect("/cases");
 }

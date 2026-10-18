@@ -21,7 +21,10 @@ test("governance composes approved QCD views from recorded activity", async ({
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("governance");
-  await page.getByRole("link", { name: "Impact", exact: true }).click();
+  await expect(
+    page.getByRole("navigation", { name: "Main navigation" }),
+  ).not.toContainText("Impact");
+  await page.goto("/impact");
   await expect(
     page.getByRole("heading", { name: "Impact", exact: true }),
   ).toBeVisible();

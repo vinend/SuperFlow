@@ -4,7 +4,8 @@ test("headless Google failure is actionable and does not invent sources", async 
   page,
 }) => {
   await page.goto("/knowledge");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await page
     .getByRole("button", { name: "Import website", exact: true })
     .click();
@@ -47,7 +48,8 @@ test("real OJK PDF reaches document management and the CopilotKit regulatory car
   );
   test.setTimeout(360_000);
   await page.goto("/knowledge");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await page
     .getByRole("button", { name: "Import website", exact: true })
     .click();

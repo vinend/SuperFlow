@@ -124,7 +124,7 @@ export function SourcePanel({
                       source.extraction_method === "vision"
                         ? "Unverified vision observation"
                         : source.extraction_method === "web_capture"
-                          ? "Puppeteer webpage text"
+                          ? "Captured webpage text"
                           : source.extraction_method === "pdf_text"
                             ? "PDF text"
                             : source.extraction_method === "ocr"

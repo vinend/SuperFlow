@@ -226,7 +226,7 @@ def resolve_workspace(
         intent=choice.intent,
         view=choice.view,
         message={
-            WorkspaceKind.KNOWLEDGE_QA: "Searching the sources available to your role.",
+            WorkspaceKind.KNOWLEDGE_QA: "Answers use sources available to your role.",
             WorkspaceKind.REGULATORY_REVIEW: (
                 "Opening Regulatory Review with current source versions."
             ),

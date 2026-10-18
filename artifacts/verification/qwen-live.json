@@ -1,0 +1,28 @@
+{
+  "checked_at": "2026-10-18T08:23:17.404Z",
+  "model": "qwen3.5:0.8b",
+  "retrieval_provider": "hybrid",
+  "retrieval_engine": "llamaindex",
+  "results": [
+    {
+      "scenario": "employee-policy",
+      "run_id": "92c6773d-5da8-4b58-b382-3509a44f1909",
+      "provider": "ollama-grounded-v1",
+      "reliability": "REVIEW_REQUIRED",
+      "source_count": 3,
+      "first_source": "Annual Leave Policy",
+      "first_section": "Leave entitlement",
+      "answer": "Based on the provided text excerpt from the Annual Leave Policy, employees are entitled to receive 15 days of annual leave per calendar year. This entitlement is effective immediately upon January 1, 2026, and applies to all eligible employees. [1]\n\nThe policy also includes provisions for carry forward unused leave days, allowing up to five unused days to be carried into the next calendar year. These days must be utilized by March 31st of that following year. [2]\n\nRegarding the request procedure, employees are required to submit a leave request to their line manager at least three working days before the planned leave date. [3]"
+    },
+    {
+      "scenario": "official-ojk",
+      "run_id": "14dc62de-6ea6-4108-a97e-e31fe25f57ba",
+      "provider": "ollama-grounded-v1",
+      "reliability": "REVIEW_REQUIRED",
+      "source_count": 6,
+      "first_source": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+      "first_section": "Page 5 / Pasal 9",
+      "answer": "Menurut POJK 21 Tahun 2023 Pasal 9, Bank wajib menerapkan paling sedikit 2 (dua) faktor autentikasi untuk verifikasi transaksi keuangan. Hal ini merupakan kewajiban utama yang harus dipenuhi oleh bank dalam menjalankan layanan digital. [1]\n\nPenerapan kedua faktor autentikasi dapat dilakukan secara individu maupun dengan pembatasan tertentu, tergantung pada analisis risiko yang dilakukan Bank serta persetujuan nasabah. [1]"
+    }
+  ]
+}

@@ -141,7 +141,7 @@ export function OjkDiscovery({
         </label>
         <label>
           <input name="review" type="checkbox" required disabled={busy} />{" "}
-          Import as a public demo reference for all roles. Legal applicability
+          Import as a public reference for all roles. Legal applicability
           still requires review.
         </label>
         <button className="button primary" disabled={busy}>

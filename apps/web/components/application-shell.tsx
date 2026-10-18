@@ -5,7 +5,6 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
   BookOpen,
-  ChartNoAxesCombined,
   Calculator,
   Check,
   ChevronRight,
@@ -14,14 +13,13 @@ import {
   Layers3,
   Menu,
   Scale,
-  ShieldCheck,
   Sparkles,
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { useSession } from "./session";
 import { Dialog } from "./ui/dialog";
-import { navigationFor, roleLabel, reviewsLabel } from "@/lib/product-view";
+import { navigationFor, roleLabel } from "@/lib/product-view";
 
 export type KnowledgeView = "home" | "ask" | "knowledge";
 export type View =
@@ -32,20 +30,18 @@ export type View =
   | "regulatory"
   | "investigation"
   | "investment"
-  | "demo"
   | "impact";
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
-  knowledge: "Knowledge",
-  cases: "My Work",
-  workflows: "My Work",
-  decisions: "Reviews / Approvals",
+  knowledge: "Knowledge Library",
+  cases: "Work",
+  workflows: "Work",
+  decisions: "Work",
   regulatory: "Regulatory Review",
   investigation: "Investigation Review",
   investment: "Investment Analysis",
   impact: "Impact",
-  demo: "Demo walkthrough",
 };
 const ICONS = {
   home: Home,
@@ -54,9 +50,7 @@ const ICONS = {
   cases: FolderKanban,
   decisions: Check,
   regulatory: Scale,
-  investigation: ShieldCheck,
   investment: Calculator,
-  impact: ChartNoAxesCombined,
 };
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.
@@ -71,7 +65,14 @@ export function ApplicationShell({
   const [menuOpen, setMenuOpen] = useState(false);
   const reduced = useReducedMotion();
   const nav = navigationFor(user.role_id);
-  const activeView = view === "workflows" ? "cases" : view;
+  const activeView =
+    view === "workflows" || view === "decisions" ? "cases" : view;
+  const demoUsers = users.filter((person) =>
+    ["employee", "manager", "compliance", "finance", "governance"].includes(
+      person.id,
+    ),
+  );
+  if (!demoUsers.some((person) => person.id === user.id)) demoUsers.push(user);
   const navigation = (
     <>
       <Link href="/" className="brand" onClick={() => setMenuOpen(false)}>
@@ -88,7 +89,6 @@ export function ApplicationShell({
           Superbank<small>Internal knowledge workspace</small>
         </span>
       </div>
-      <p className="nav-label">Workspace</p>
       <nav aria-label="Main navigation">
         {nav.map((item) => {
           const Icon = ICONS[item.view as keyof typeof ICONS];
@@ -148,12 +148,10 @@ export function ApplicationShell({
             </button>
             <span>Superbank</span>
             <ChevronRight size={13} />
-            <strong>
-              {view === "decisions" ? reviewsLabel(user.role_id) : TITLES[view]}
-            </strong>
+            <strong>{TITLES[view]}</strong>
           </div>
           <div className="session-controls">
-            <span className="demo-label">Demo role</span>
+            <span className="demo-label">Demo role · prototype only</span>
             <span className="avatar">
               {user.name
                 .split(" ")
@@ -168,7 +166,7 @@ export function ApplicationShell({
                 value={user.id}
                 onChange={(event) => selectUser(event.target.value)}
               >
-                {users.map((person) => (
+                {demoUsers.map((person) => (
                   <option key={person.id} value={person.id}>
                     {person.id === "compliance_checker"
                       ? "Compliance Checker"
@@ -191,7 +189,6 @@ export function ApplicationShell({
         </motion.div>
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
-          <Link href="/demo">Demo walkthrough</Link>
           <span>Knowledge → Evidence → Decision → Action</span>
         </footer>
       </div>

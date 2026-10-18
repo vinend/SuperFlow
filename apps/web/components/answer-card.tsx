@@ -67,12 +67,6 @@ export function AnswerCard({
           </p>
         </div>
       )}
-      <EvidenceChecklist
-        result={answer.reliability}
-        sources={answer.sources}
-        onSource={onSource}
-        onDocument={onDocument}
-      />
       <div className="answer-body">
         {citedParagraphs(answer.answer, answer.sources).map(
           ({ text, source }, index) => (
@@ -94,8 +88,13 @@ export function AnswerCard({
       {reliabilitySlot && (
         <div className="answer-reliability">{reliabilitySlot}</div>
       )}
+      <div className="answer-reliability">
+        <StatusBadge status={answer.reliability.status} />
+        <span>{answer.reliability.next_step}</span>
+      </div>
       {answer.sources.length > 0 && (
-        <div className="answer-sources">
+        <details className="answer-sources">
+          <summary>View sources ({answer.sources.length})</summary>
           <div className="section-header">
             <h3>Evidence</h3>
             <span className="muted small">
@@ -130,9 +129,16 @@ export function AnswerCard({
               </motion.button>
             ))}
           </div>
-        </div>
+        </details>
       )}
-      <div className="answer-metadata">
+      <details className="answer-metadata">
+        <summary>Why this reliability status?</summary>
+        <EvidenceChecklist
+          result={answer.reliability}
+          sources={answer.sources}
+          onSource={onSource}
+          onDocument={onDocument}
+        />
         <FileText size={14} />
         <span>
           {answer.provider.startsWith("ollama-")
@@ -149,7 +155,7 @@ export function AnswerCard({
             ? "Inspect the cited section"
             : "No conclusion generated"}
         </span>
-      </div>
+      </details>
       <div className="answer-next">
         <div>
           <span className="context-label">Next action</span>
@@ -179,7 +185,7 @@ export function AnswerCard({
           </button>
         ) : (
           <a className="button secondary" href="/knowledge">
-            Browse Knowledge <ChevronRight size={15} />
+            Browse Knowledge Library <ChevronRight size={15} />
           </a>
         )}
       </div>

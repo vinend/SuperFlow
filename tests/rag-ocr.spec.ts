@@ -59,7 +59,9 @@ sys.stdout.buffer.write(buffer.getvalue())
   );
   expect(await original.body()).toEqual(pdf);
   await page.goto("/ask");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
+  if (await page.locator("details.search-options:not([open])").count()) await page.locator("details.search-options > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption(document.id);

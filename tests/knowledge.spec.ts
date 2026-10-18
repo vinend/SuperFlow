@@ -4,17 +4,21 @@ test("compact Ask and repository filters preserve source inspection", async ({
   page,
 }) => {
   await page.goto("/ask");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await expect(
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
   await expect(page.locator(".question-history")).toHaveCount(0);
   const composer = await page.locator(".question-form").boundingBox();
   expect(composer!.height).toBeLessThan(120);
+  await page.locator("details.search-options > summary").click();
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Knowledge Library", exact: true })
+    .click();
   await page
     .getByRole("combobox", { name: "Knowledge domain" })
     .selectOption("People");
@@ -65,12 +69,14 @@ test("role-aware knowledge inventory and application navigation", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Your workspace" }),
+    page.getByRole("heading", { name: "Hello, Maya" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "My Work", exact: true }),
+    page.getByRole("link", { name: "Work", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Knowledge Library", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: /^Annual Leave Policy/ }).first(),
   ).toBeVisible();
@@ -107,6 +113,8 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
   page,
 }) => {
   await page.goto("/ask");
+  if (await page.locator("details.search-options:not([open])").count())
+    await page.locator("details.search-options > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("leave-policy");
@@ -139,12 +147,14 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
   await expect(page.getByRole("region", { name: "Answer Card" })).toContainText(
     "12 days",
   );
+  await page.locator("details.search-options > summary").click();
   await expect(
     page.getByRole("checkbox", { name: /Include historical versions/ }),
   ).toBeChecked();
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toHaveValue("leave-policy");
+  await answer.getByText(/View sources/).click();
   await answer
     .getByRole("button", { name: /Annual Leave Policy.*v1.0/ })
     .first()
@@ -164,6 +174,7 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
   await page.getByRole("button", { name: "Close document details" }).click();
   await page.getByRole("button", { name: "Close source panel" }).click();
   await page.reload();
+  await page.getByText("Recent questions").click();
   await expect(
     page
       .getByRole("button", { name: /How many annual leave days do I get/ })
@@ -188,6 +199,8 @@ test("unsupported questions fail without fabricated evidence and source state cl
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("finance");
+  if (await page.locator("details.search-options:not([open])").count())
+    await page.locator("details.search-options > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("proposal-a");
@@ -266,6 +279,8 @@ test("governance uploads, edits metadata, versions, reindexes, and retrieves the
   await page.getByRole("button", { name: "Close document details" }).click();
   // Governance navigation is control-focused; its existing Ask route remains available.
   await page.goto("/ask");
+  if (await page.locator("details.search-options:not([open])").count())
+    await page.locator("details.search-options > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption({ label: `${title} Updated` });
@@ -287,8 +302,12 @@ test("mobile navigation and actionable API connection failure", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Knowledge" })).toBeVisible();
+  await page
+    .getByRole("link", { name: "Knowledge Library", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Knowledge Library" }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,
@@ -362,6 +381,7 @@ test("document dialogs support keyboard focus, historical refresh, and source-sc
   await expect(
     page.getByRole("heading", { name: "Ask SuperFlow", exact: true }),
   ).toBeVisible();
+  await page.locator("details.search-options > summary").click();
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toHaveValue("leave-policy");
@@ -387,6 +407,8 @@ test("mobile Source Panel is a keyboard-accessible sheet without page overflow",
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/ask");
+  if (await page.locator("details.search-options:not([open])").count())
+    await page.locator("details.search-options > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("leave-policy");
@@ -425,6 +447,8 @@ test("a delayed Ask response cannot restore another role's content or URL contex
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("finance");
+  if (await page.locator("details.search-options:not([open])").count())
+    await page.locator("details.search-options > summary").click();
   await page
     .getByRole("combobox", { name: "Question source" })
     .selectOption("proposal-a");
@@ -473,6 +497,7 @@ test("a delayed Ask response cannot restore another role's content or URL contex
         requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
       ),
   );
+  await page.locator("details.search-options > summary").click();
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toBeEnabled();

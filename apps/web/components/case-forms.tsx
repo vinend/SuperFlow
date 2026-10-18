@@ -164,7 +164,7 @@ export function CaseCreateForm({
         </label>
       </div>
       <p className="muted small">
-        Your request will appear in My Work. An independent reviewer decides
+        Your request will appear in Work. An independent reviewer decides
         after the required supporting information has been checked.
       </p>
       {answer?.reliability.status === "BLOCKED" && (

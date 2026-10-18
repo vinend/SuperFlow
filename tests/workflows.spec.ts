@@ -5,10 +5,13 @@ async function askCase(page: Page, question: string, source?: string) {
   await expect(
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
-  if (source)
+  if (source) {
+    if (await page.locator("details.search-options:not([open])").count())
+      await page.locator("details.search-options > summary").click();
     await page
       .getByRole("combobox", { name: "Question source" })
       .selectOption(source);
+  }
   await page.getByRole("textbox", { name: "Your question" }).fill(question);
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
   await page
@@ -28,7 +31,14 @@ async function askCase(page: Page, question: string, source?: string) {
 }
 
 async function role(page: Page, value: string) {
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption(value);
+  if (value === "sme") {
+    await page.evaluate(() =>
+      localStorage.setItem("superflow.demo-user", "sme"),
+    );
+    await page.reload();
+  } else {
+    await page.getByRole("combobox", { name: "Demo role" }).selectOption(value);
+  }
   await expect(
     page.getByRole("region", { name: "Review request" }),
   ).toBeVisible();

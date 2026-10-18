@@ -10,17 +10,21 @@ async function ask(
   await expect(
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
-  if (source)
+  if (source) {
+    if (await page.locator("details.search-options:not([open])").count())
+      await page.locator("details.search-options > summary").click();
     await page
       .getByRole("combobox", { name: "Question source" })
       .selectOption(source);
+  }
   if (historical)
     await page
       .getByRole("checkbox", { name: /Include historical versions/ })
       .check();
   await page.getByRole("textbox", { name: "Your question" }).fill(question);
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
-  const guard = page.getByRole("region", { name: "SuperFlow Guard" });
+  await page.getByText("Why this reliability status?").click();
+  const guard = page.getByRole("region", { name: "Reliability details" });
   await expect(guard).toBeVisible();
   return guard;
 }
@@ -55,6 +59,7 @@ test("VERIFIED current policy has exact evidence, checks and persisted reliabili
     "Not applicable: this context involves no calculation",
   );
   await page.reload();
+  await page.getByText("Why this reliability status?").click();
   await expect(guard.locator(".reliability-status")).toHaveText("VERIFIED");
 });
 
@@ -98,6 +103,7 @@ test("ACCESS RESTRICTED returns safe guidance with no citations or restricted co
   ).toHaveCount(0);
   await expect(guard).toContainText("unavailable to your role");
   await page.reload();
+  await page.getByText("Why this reliability status?").click();
   await expect(guard.locator(".reliability-status")).toHaveText(
     "ACCESS RESTRICTED",
   );
@@ -164,6 +170,7 @@ test("REVIEW REQUIRED retains both conflicting references and works on mobile", 
   await expect(source).toContainText("REVIEW REQUIRED");
   await page.keyboard.press("Escape");
   await page.reload();
+  await page.getByText("Why this reliability status?").click();
   await expect(guard.locator(".reliability-status")).toHaveText(
     "REVIEW REQUIRED",
   );

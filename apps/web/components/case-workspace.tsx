@@ -55,7 +55,7 @@ export function CaseWorkspace({
         <span>Owner: {personName(current.owner_id, users)}</span>
         <span>{WORK_TYPES[current.type]}</span>
         <span>Updated {dateLabel(current.updated_at)}</span>
-        <Link href="/cases">My Work</Link>
+        <Link href="/cases">Work</Link>
       </div>
       <div className="case-layout">
         <div className="case-execution">

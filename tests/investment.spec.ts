@@ -12,8 +12,8 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await page.goto("/");
   await role(page, "finance");
   await expect(
-    page.getByRole("region", { name: "Work needing attention" }),
-  ).toContainText("not yet analysed");
+    page.getByRole("region", { name: "Needs your attention" }),
+  ).toContainText("Investment analysis");
   await page
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "Investment Analysis" })
@@ -29,6 +29,7 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
     .click();
   await expect(page).toHaveURL(/\/investment\?analysis=/);
   const analysisUrl = page.url();
+  await page.getByRole("button", { name: "Review assumptions" }).click();
 
   // Conflicting values are surfaced; nothing is calculated until a human selects.
   const assumptions = page.getByRole("region", {
@@ -37,9 +38,9 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   });
   await expect(assumptions).toContainText("Sources conflict");
   await expect(assumptions).toContainText("Synthetic Cash Flow Projection");
-  await expect(
-    page.getByRole("heading", { name: /Results wait/ }),
-  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Results wait/ })).toHaveCount(
+    0,
+  );
   await expect(page.locator(".case-context-bar")).toContainText(
     "Needs your input",
   );
@@ -57,6 +58,7 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await decision.getByRole("button", { name: "Use selected value" }).click();
 
   // Deterministic results with formula, unit and period.
+  await page.getByRole("button", { name: "3. Analysis" }).click();
   await expect(page.getByLabel("Deterministic results")).toContainText(
     "IDR 11,041,254",
   );
@@ -74,6 +76,7 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await expect(page.getByLabel("Deterministic results")).toContainText(
     "NPV = Σ CFₜ",
   );
+  await page.getByRole("button", { name: "4. Submit for approval" }).click();
   await expect(page.getByLabel("Investment memo")).toContainText(
     "committed implementation price",
   );
@@ -94,7 +97,9 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await expect(page.getByRole("region", { name: "Approval" })).toContainText(
     "Department manager approval",
   );
-  await page.getByRole("button", { name: "Submit for approval" }).click();
+  await page
+    .getByRole("button", { name: "Submit for approval", exact: true })
+    .click();
   await expect(page.locator(".case-context-bar")).toContainText(
     "Waiting for approval",
   );
@@ -129,6 +134,7 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await role(page, "finance");
   await page.goto(analysisUrl);
   await expect(page.locator(".case-context-bar")).toContainText("Approved");
+  await page.getByText("Evidence & reliability").click();
   await expect(page.getByRole("region", { name: "Activity" })).toContainText(
     "Submitted for approval",
   );

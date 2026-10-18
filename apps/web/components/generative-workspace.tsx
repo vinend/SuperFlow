@@ -82,7 +82,7 @@ export function GenerativeWorkspace({
     <section className="generated-surface" aria-label="Generated workspace">
       <header className="generated-heading">
         <div>
-          <span className="context-label">Selected workspace</span>
+          <span className="context-label">Your result</span>
           <h2>
             {selection.intent
               ? WORKSPACE_LABELS[selection.intent]

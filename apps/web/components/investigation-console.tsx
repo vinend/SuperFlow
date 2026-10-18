@@ -97,7 +97,7 @@ export function InvestigationConsole({
         />
         <EmptyState
           title="Investigation Review is available to Compliance."
-          description="Switch the demo role to Compliance to try the synthetic investigation flow."
+          description="Choose Compliance in the role menu to open this synthetic investigation."
         />
       </div>
     );

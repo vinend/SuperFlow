@@ -24,7 +24,7 @@ export function WorkItemRows({
 }) {
   return (
     <DataTable
-      label="My Work"
+      label="My Tasks"
       caption="Your requests, supporting information and review progress"
     >
       <thead>
@@ -98,15 +98,29 @@ export function ActionLists({
   view,
   w,
 }: {
-  view: "cases" | "workflows" | "decisions";
+  view: "cases" | "decisions";
   w: ReturnType<typeof useActionWorkspace>;
 }) {
   const { user, users } = useSession();
   const work = workItemsFor(w.cases, w.runs, w.approvals, user);
   const queue = reviewItemsFor(w.approvals, work, user.role_id);
+  const decisionIds = new Set(queue.map(({ approval }) => approval.case_id));
+  const tasks = work.filter(
+    (item) =>
+      !decisionIds.has(item.id) ||
+      item.ownerId === user.id ||
+      w.cases.some(
+        (entry) => entry.id === item.id && entry.created_by === user.id,
+      ) ||
+      w.runs.some(
+        (run) =>
+          run.case_id === item.id &&
+          run.tasks.some((task) => task.allowed_actions.length > 0),
+      ),
+  );
   if (view !== "decisions")
-    return work.length ? (
-      <WorkItemRows items={work} users={users} />
+    return tasks.length ? (
+      <WorkItemRows items={tasks} users={users} />
     ) : (
       <EmptyState
         title="No active work right now."

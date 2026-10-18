@@ -1,0 +1,68 @@
+﻿
+QUERY: How many annual leave days do I get?
+  People       Annual Leave Policy                        cos=0.748 bm25=25.19 cov=1.00 rank=0.912 Leave entitlement
+  People       Annual Leave Policy                        cos=0.688 bm25=24.55 cov=1.00 rank=0.874 Carry forward
+  People       Annual Leave Policy                        cos=0.509 bm25=23.21 cov=1.00 rank=0.777 Request procedure
+
+QUERY: What is the annual leave policy for employees?
+  People       Annual Leave Policy                        cos=0.730 bm25=28.78 cov=1.00 rank=0.905 Leave entitlement
+  People       Annual Leave Policy                        cos=0.608 bm25=21.18 cov=0.75 rank=0.691 Request procedure
+  People       Annual Leave Policy                        cos=0.523 bm25=22.45 cov=0.75 rank=0.690 Carry forward
+  People       ILO — Employers' Guide on Working from Hom cos=0.623 bm25=9.23 cov=0.75 rank=0.427 Page 8
+  People       ILO — Employers' Guide on Working from Hom cos=0.428 bm25=8.27 cov=0.50 rank=0.336 Page 23
+  People       ILO — Employers' Guide on Working from Hom cos=0.363 bm25=7.87 cov=0.75 rank=0.305 Page 16
+
+QUERY: Apa kewajiban autentikasi dua faktor untuk layanan digital bank menurut POJK 21 Tahun 2023?
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.656 bm25=28.96 cov=0.79 rank=0.880 Page 5 / Pasal 9
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.681 bm25=23.74 cov=0.79 rank=0.771 Page 27
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.652 bm25=21.98 cov=0.71 rank=0.722 Page 10 / Pasal 28
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.494 bm25=21.31 cov=0.71 rank=0.651 Page 4
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.493 bm25=21.25 cov=0.71 rank=0.649 Page 24 / Pasal 28
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.383 bm25=22.74 cov=0.64 rank=0.644 Page 18
+
+QUERY: What does the uploaded scanned travel policy say about receipts?
+  People       Scanned travel reimbursement policy        cos=0.677 bm25=30.13 cov=0.67 rank=0.887 Image 1
+  People       Scanned travel reimbursement policy        cos=0.677 bm25=30.13 cov=0.67 rank=0.887 Image 1
+  People       Scanned travel reimbursement policy        cos=0.677 bm25=30.13 cov=0.67 rank=0.887 Image 1
+
+QUERY: What is the purpose of Example Domain?
+
+QUERY: What is the secret policy for quantum mango banking?
+
+QUERY: What does NIST Cybersecurity Framework 2.0 say about governance?
+  Operations   NIST — Cybersecurity Framework 2.0 (public cos=0.728 bm25=16.88 cov=0.80 rank=0.857 Page 2
+  Operations   NIST — Cybersecurity Framework 2.0 (public cos=0.584 bm25=18.21 cov=0.80 rank=0.854 Page 4
+  Operations   NIST — Cybersecurity Framework 2.0 (public cos=0.664 bm25=16.99 cov=0.80 rank=0.839 Page 13
+  Operations   NIST — Cybersecurity Framework 2.0 (public cos=0.608 bm25=17.52 cov=0.80 rank=0.838 Page 17
+  Operations   NIST — Cybersecurity Framework 2.0 (public cos=0.664 bm25=16.40 cov=0.80 rank=0.818 Page 6
+  Operations   NIST — Cybersecurity Framework 2.0 (public cos=0.742 bm25=15.46 cov=0.80 rank=0.811 Page 30
+
+QUERY: What does the FDIC guide say about cash flow?
+  Finance      FDIC — Managing Cash Flow (public business cos=0.650 bm25=23.11 cov=0.80 rank=0.869 Page 4
+  Finance      FDIC — Managing Cash Flow (public business cos=0.613 bm25=23.43 cov=0.80 rank=0.864 Page 14
+  Finance      FDIC — Managing Cash Flow (public business cos=0.664 bm25=22.57 cov=0.80 rank=0.858 Page 1
+  Finance      FDIC — Managing Cash Flow (public business cos=0.636 bm25=22.02 cov=0.80 rank=0.834 Page 7
+  Finance      FDIC — Managing Cash Flow (public business cos=0.583 bm25=22.42 cov=0.80 rank=0.826 Page 13
+  Finance      FDIC — Managing Cash Flow (public business cos=0.538 bm25=22.58 cov=0.80 rank=0.815 Page 3
+
+QUERY: What does the ILO say about working from home?
+  People       ILO — Employers' Guide on Working from Hom cos=0.619 bm25=11.71 cov=0.75 rank=0.856 Page 33
+  People       ILO — Teleworking Practical Guide (2020 pu cos=0.627 bm25=11.64 cov=1.00 rank=0.855 Page 17
+  People       ILO — Employers' Guide on Working from Hom cos=0.598 bm25=11.74 cov=0.75 rank=0.850 Page 5
+  People       ILO — Employers' Guide on Working from Hom cos=0.697 bm25=10.98 cov=0.75 rank=0.843 Page 3
+  People       ILO — Employers' Guide on Working from Hom cos=0.530 bm25=11.91 cov=0.75 rank=0.835 Page 1
+  People       ILO — Employers' Guide on Working from Hom cos=0.556 bm25=11.35 cov=0.75 rank=0.814 Page 6
+
+QUERY: Compare OJK digital banking requirements with internal digital operations policy.
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.651 bm25=9.93 cov=0.38 rank=0.878 Page 15
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.646 bm25=8.49 cov=0.38 rank=0.782 Page 20
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.654 bm25=8.44 cov=0.38 rank=0.781 Page 32
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.670 bm25=7.85 cov=0.38 rank=0.748 Page 16 / Pasal 2
+  Compliance   OJK POJK 11 Tahun 2022 — Penyelenggaraan T cos=0.634 bm25=7.95 cov=0.38 rank=0.742 Page 44
+  Compliance   OJK POJK 21 Tahun 2023 — Layanan Digital o cos=0.608 bm25=7.95 cov=0.38 rank=0.733 Page 26
+
+QUERY: How do I take time off?
+  People       Annual Leave Policy                        cos=0.425 bm25=9.37 cov=0.50 rank=0.795 Request procedure
+  People       Annual Leave Policy                        cos=0.414 bm25=9.42 cov=0.50 rank=0.795 Leave entitlement
+  People       Annual Leave Policy                        cos=0.389 bm25=8.57 cov=0.50 rank=0.727 Carry forward
+  People       ILO — Teleworking Practical Guide (2020 pu cos=0.440 bm25=0.00 cov=0.00 rank=0.154 Page 11

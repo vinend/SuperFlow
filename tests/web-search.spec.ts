@@ -39,6 +39,7 @@ test("Enable WebSearch sends explicit opt-in and shows blocked Google without cl
     });
   });
   await page.goto("/ask");
+  await page.locator("details.search-options > summary").click();
   const toggle = page.getByRole("button", {
     name: "Enable WebSearch",
     exact: true,

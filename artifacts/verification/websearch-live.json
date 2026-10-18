@@ -1,0 +1,58 @@
+{
+  "checked_at": "2026-10-18T08:28:34.093Z",
+  "run_id": "f49ff170-00de-4104-9ce9-2dc6e5dfd9aa",
+  "provider": "ollama-grounded-v1",
+  "reliability": "REVIEW_REQUIRED",
+  "web_search": {
+    "status": "complete",
+    "query": "What does Example Domain say about its use in documentation?",
+    "search_url": "https://www.google.com/search?q=What%20does%20Example%20Domain%20say%20about%20its%20use%20in%20documentation%3F",
+    "engine": "google-puppeteer-local",
+    "vision_model": "qwen3.5:0.8b",
+    "sources_read": 1,
+    "failures": [],
+    "message": "Read 1 public source(s) on this device. Using your selected URLs; Google discovery was skipped. Web/vision observations require review.",
+    "search_capture_id": null,
+    "discovery": "user-selected-urls"
+  },
+  "internet_sources": [
+    {
+      "title": "Example Domain website reference",
+      "url": "https://example.com/",
+      "extraction_method": "web_capture"
+    },
+    {
+      "title": "Example Domain website reference",
+      "url": "https://example.com/",
+      "extraction_method": "web_capture"
+    },
+    {
+      "title": "Example Domain website reference",
+      "url": "https://example.com/",
+      "extraction_method": "web_capture"
+    },
+    {
+      "title": "Example Domain website reference",
+      "url": "https://example.com/",
+      "extraction_method": "web_capture"
+    },
+    {
+      "title": "example.com",
+      "url": "https://example.com/",
+      "extraction_method": "web_capture"
+    },
+    {
+      "title": "example.com",
+      "url": "https://example.com/",
+      "extraction_method": "vision"
+    }
+  ],
+  "answer": "Example Domain is explicitly designated for use in documentation examples without requiring prior authorization. [1]\n\nThis domain serves as a reference tool rather than a functional service, meaning it cannot be relied upon for testing or monitoring purposes. [2]",
+  "google_discovery": {
+    "run_id": "ea5e0d96-cac9-47aa-b951-b49d7a3cdeee",
+    "status": "blocked",
+    "http_status": 429,
+    "sources_read": 0,
+    "internet_sources": 0
+  }
+}

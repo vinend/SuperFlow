@@ -1,0 +1,22 @@
+import { resolve } from "node:path";
+process.env.PLAYWRIGHT_BROWSERS_PATH = resolve(".runtime/playwright");
+const { chromium } = await import("@playwright/test");
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+const events = [];
+page.on("pageerror", (error) => events.push(`pageerror ${error.message}`));
+page.on("requestfailed", (request) => events.push(`failed ${request.url()} ${request.failure()?.errorText}`));
+page.on("framenavigated", (frame) => {
+  if (frame === page.mainFrame()) events.push(`navigated ${frame.url()}`);
+});
+await page.goto("http://127.0.0.1:3000/");
+await page.getByRole("combobox", { name: "Viewing as" }).selectOption("compliance");
+await page.getByRole("region", { name: "Work needing attention" }).getByText("not yet reviewed against v1.0").waitFor();
+events.push(`before click ${page.url()}`);
+await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Regulatory Review" }).click();
+events.push(`after click ${page.url()}`);
+await page.waitForTimeout(12000);
+events.push(`after wait ${page.url()}`);
+events.push(`heading ${await page.getByRole("main").locator("h1").first().innerText()}`);
+console.log(JSON.stringify(events, null, 2));
+await browser.close();

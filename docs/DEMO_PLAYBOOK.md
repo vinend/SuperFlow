@@ -1,5 +1,22 @@
 # Panduan Demo Terintegrasi SuperFlow
 
+Panduan ini adalah naskah presenter di luar antarmuka produk. Halaman `/demo` telah dihapus agar pengguna masuk melalui Home, Ask, Knowledge, My Work, dan pengalaman lain sesuai perannya. Untuk setiap langkah di bawah, pilih identitas sintetis melalui **Viewing as** pada header, lalu buka halaman yang disebutkan. Pemilihan peran di prototype bukan autentikasi produksi; API tetap memeriksa izin sumber dan tindakan. [Alur final 4:03 menit](FINAL_DEMO_FLOW.md) dan [peta fitur](FEATURE_MAP.md) merangkum cerita produk.
+
+Rekaman lengkap 4:03 menit tersedia di `artifacts/demo/superflow-demo.webm`, dengan [naskah pendek](../artifacts/demo/DEMO_SCRIPT.md) dan [hasil verifikasi](../artifacts/verification/FEATURE_VERIFICATION.md). Rekaman itu dibuat sebelum Impact dikeluarkan dari navigasi; pada build kini presenter membuka `/impact` langsung. Rekaman memakai Qwen lokal, corpus OJK/public yang sudah diimpor, OCR, website vision, dan WebSearch URL terpilih. Dataset rekaman disiapkan di database lokal `superflow_final` (27 dokumen, 1.437 vektor sebelum interaksi; satu percobaan rekaman sebelumnya meninggalkan satu scan dan satu website sehingga dua sumber itu sudah terlihat saat rekaman final dimulai). Untuk merekam ulang pada checkout ini, ikuti perintah laporan verifikasi dan **jangan jalankan `demo:reset` pada database final**, karena reset menghapus corpus impor. Bagian persiapan di bawah hanya untuk walkthrough dataset sintetis dengan provider deterministik.
+
+## Peta presentasi
+
+| Langkah | Peran dan halaman | Tindakan yang ditunjukkan | Bukti yang diperiksa |
+| --- | --- | --- | --- |
+| Temukan jawaban terpercaya | Employee · `/ask` | Tanyakan jumlah cuti tahunan; buka citation dan versi aktif. | Jawaban bersumber dan reliability terlihat. |
+| Lanjutkan menjadi pekerjaan | Employee · `/cases` (My Work) | Buka Annual Leave Review; lengkapi evidence, lalu bandingkan permintaan dengan evidence hilang atau konflik. | Tindakan berikutnya dan progress yang persisten. |
+| Ubah regulasi menjadi remediasi | Compliance · `/regulatory` | Bandingkan regulasi historis/aktif, periksa gap SOP, konfirmasi temuan dengan owner dan due date. | Keputusan manusia menciptakan pekerjaan remediasi yang terlacak. |
+| Selesaikan asumsi investasi | Finance · `/investment` | Buka Proposal A, pilih sumber biaya dengan alasan, lihat formula dan sensitivitas, kirim memo. | Asumsi bersumber dan perhitungan deterministik. |
+| Tinjau sebelum memutuskan | Manager · `/decisions` (Reviews / Approvals) | Periksa permintaan, evidence dan reliability sebelum keputusan; buka My Work sesudahnya. | Otoritas manusia independen dan aktivitas tercatat. |
+| Ukur dampak platform | Governance Admin · `/impact` (buka URL langsung) | Lihat Quality, Cost / Capacity, Delivery setelah langkah lain. | Aktivitas nyata dibedakan dari **Illustrative simulation**. |
+
+Proof point opsional: Compliance membuka `/investigations` untuk alert sintetis, mengumpulkan evidence, lalu Compliance Checker yang berbeda melakukan review independen. Fitur ini memakai fondasi yang sama dan tidak mengakses data FIU nyata.
+
 ## Persiapan
 
 Gunakan data sintetis dan provider `LLM_PROVIDER=deterministic` untuk demo tanpa kredensial AI. CopilotKit memiliki fallback deterministik; inference Ollama opsional dan tidak diperlukan untuk alur utama. PostgreSQL harus berjalan sebelum migrasi.
@@ -24,7 +41,7 @@ npm.cmd run build
 npm.cmd run start
 ```
 
-Buka [walkthrough lokal](http://127.0.0.1:3000/demo). Tautan **Demo walkthrough** di footer selalu membuka panduan kembali. Link langkah mengganti identitas demo secara eksplisit; mock identity bukan autentikasi produksi. Permission tetap diperiksa backend pada setiap sumber dan tindakan.
+Buka [aplikasi lokal](http://127.0.0.1:3000/) dan ikuti peta presentasi di atas. Panduan ini tetap tersedia sebagai Markdown; tidak ada tautan presenter pada shell pengguna.
 
 `demo:reset` **menghapus seluruh data aplikasi pada database demo lokal yang dikonfigurasi**, termasuk upload, pertanyaan, keputusan, dan hasil demo sebelumnya. Perintah hanya menerima PostgreSQL loopback bernama `superflow` atau `superflow_test`, memakai konfirmasi sintetis existing, dan tidak tersedia melalui endpoint web. Reset mempertahankan schema. Migrasi harus dijalankan terlebih dahulu.
 
@@ -45,7 +62,7 @@ Compliance membuka **Investigation Review** untuk alert sintetis. Jalankan pengu
 
 ## Pemulihan dan batasan
 
-- Kembali ke `/demo` tidak melakukan reset, mengeksekusi alat, atau mengirim keputusan.
+- Membaca ulang panduan ini tidak melakukan reset, mengeksekusi alat, atau mengirim keputusan.
 - Jika sumber/provider/API gagal, gunakan error dan retry yang tersedia. Untuk presentasi tanpa Ollama, jalankan ulang API dengan provider deterministik; tidak perlu mengubah sumber atau kontrol.
 - Jika versi sumber berubah selama demo, Guard dapat memerlukan pemeriksaan ulang. Gunakan `demo:reset` hanya untuk kembali ke kondisi awal; jangan menyamarkan kegagalan dengan approval otomatis.
 - Dataset presentasi tidak memalsukan event, durasi historis, savings, atau hasil keputusan. Waktu dan dampak observed berasal dari interaksi demo yang benar-benar dijalankan.
@@ -53,6 +70,6 @@ Compliance membuka **Investigation Review** untuk alert sintetis. Jalankan pengu
 
 ## Verifikasi
 
-`tests/demo.spec.ts` mempersiapkan dataset presentasi hanya pada database test, mengecek role switching, data prepared, refresh, skip link, mobile navigation/Escape, overflow, serta simulasi Impact, lalu memulihkan seed standar agar suite existing tidak berubah.
+`tests/demo.spec.ts` mempersiapkan dataset presentasi hanya pada database test, mengecek ketiadaan halaman presenter pada UI, akses langsung ke pekerjaan lintas peran, refresh, navigasi mobile, dan simulasi Impact, lalu memulihkan seed standar agar suite existing tidak berubah.
 
 Backend `test_presentation_demo.py` membuktikan reset berulang, idempotensi persiapan, keputusan manusia yang masih terbuka, serta rollback seluruh reset saat persiapan gagal. Journey domain existing tetap menjadi pengujian utama mutasi, permission, evidence, approval, dan audit.

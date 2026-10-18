@@ -1,0 +1,900 @@
+{
+  "model": "qwen3.5:0.8b",
+  "retrieval": "llamaindex",
+  "requests": [
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/copilotkit/agent/workspace/run"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/290173ae-b4c3-4643-a262-b5c39e6d01b2"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/copilotkit/agent/workspace/run"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/cd9bf661-5cfd-48c2-99d3-bd16acf66bea"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/cd9bf661-5cfd-48c2-99d3-bd16acf66bea"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "POST",
+      "path": "/api/copilotkit/agent/workspace/run"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/5090384d-c14c-408a-9793-e66a67d45af6"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/web-sources/preview"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/web-sources"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/backend/api/documents/0dc95e98-cda7-457f-acc0-9988d237c8ff/versions/207e2c99-c2bf-4afe-996b-bb942af05849"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/829de0f9-75b0-4935-8667-e38ddf05b547"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/web-search/asks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask/37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/web-search/asks"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/web-search/asks/f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/copilotkit/agent/workspace/run"
+    },
+    {
+      "method": "POST",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask-progress/07cae6bd-d679-47c4-96f9-01fd7ed05b10"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/copilotkit/info"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/documents"
+    },
+    {
+      "method": "GET",
+      "path": "/api/backend/api/ask"
+    }
+  ],
+  "answers": [
+    {
+      "run_id": "abb3ccd1-d559-4d77-a78c-d3bfad50daee",
+      "question": "How many annual leave days do I get?",
+      "provider": "ollama-grounded-v1",
+      "reliability": "REVIEW_REQUIRED",
+      "sources": [
+        {
+          "title": "Annual Leave Policy",
+          "section": "Leave entitlement",
+          "origin": "knowledge_base",
+          "method": "native"
+        },
+        {
+          "title": "Annual Leave Policy",
+          "section": "Carry forward",
+          "origin": "knowledge_base",
+          "method": "native"
+        },
+        {
+          "title": "Annual Leave Policy",
+          "section": "Request procedure",
+          "origin": "knowledge_base",
+          "method": "native"
+        }
+      ]
+    },
+    {
+      "run_id": "8e49cca3-12c8-4065-8718-48af01a1df07",
+      "question": "Apa kewajiban autentikasi dua faktor untuk layanan digital bank menurut POJK 21 Tahun 2023?",
+      "provider": "ollama-grounded-v1",
+      "reliability": "REVIEW_REQUIRED",
+      "sources": [
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 5 / Pasal 9",
+          "origin": "knowledge_base",
+          "method": "pdf_text"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 27",
+          "origin": "knowledge_base",
+          "method": "pdf_text"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 10 / Pasal 28",
+          "origin": "knowledge_base",
+          "method": "pdf_text"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 4",
+          "origin": "knowledge_base",
+          "method": "pdf_text"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 24 / Pasal 28",
+          "origin": "knowledge_base",
+          "method": "pdf_text"
+        },
+        {
+          "title": "OJK POJK 21 Tahun 2023 — Layanan Digital oleh Bank Umum",
+          "section": "Page 18",
+          "origin": "knowledge_base",
+          "method": "pdf_text"
+        }
+      ]
+    },
+    {
+      "run_id": "06b48ffd-5d2c-4e71-8500-c238cb8318b7",
+      "question": "Within how many days must the receipt be submitted under the scanned travel policy?",
+      "provider": "ollama-grounded-v1",
+      "reliability": "REVIEW_REQUIRED",
+      "sources": [
+        {
+          "title": "Scanned travel reimbursement policy",
+          "section": "Image 1",
+          "origin": "knowledge_base",
+          "method": "ocr"
+        }
+      ]
+    },
+    {
+      "run_id": "fb54586e-ea4e-4090-9a99-0e5f7c0e00a1",
+      "question": "What is the Example Domain website intended for?",
+      "provider": "ollama-grounded-v1",
+      "reliability": "REVIEW_REQUIRED",
+      "sources": [
+        {
+          "title": "Example Domain website reference",
+          "section": "Visible website text",
+          "origin": "internet",
+          "method": "web_capture"
+        },
+        {
+          "title": "Example Domain website reference",
+          "section": "Visible website text",
+          "origin": "internet",
+          "method": "web_capture"
+        },
+        {
+          "title": "Example Domain website reference",
+          "section": "Visible website text",
+          "origin": "internet",
+          "method": "web_capture"
+        },
+        {
+          "title": "Example Domain website reference",
+          "section": "Visible website text",
+          "origin": "internet",
+          "method": "web_capture"
+        },
+        {
+          "title": "Example Domain website reference",
+          "section": "Visible website text",
+          "origin": "internet",
+          "method": "web_capture"
+        },
+        {
+          "title": "Example Domain website reference",
+          "section": "Visible website text",
+          "origin": "internet",
+          "method": "web_capture"
+        }
+      ]
+    },
+    {
+      "run_id": "12c16ec3-52b3-4f3a-894a-283690c50d89",
+      "question": "How do I cultivate extraterrestrial spaghetti on Neptune?",
+      "provider": "ollama-grounded-v1",
+      "reliability": "BLOCKED",
+      "sources": []
+    }
+  ],
+  "captures": [
+    {
+      "kind": "ocr",
+      "document_id": "d5d2dfbb-7803-428d-94fe-9ce5f761d2ac"
+    },
+    {
+      "kind": "website",
+      "url": "https://example.com/",
+      "vision_model": "qwen3.5:0.8b",
+      "screenshot_count": 1
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "httpErrors": [],
+  "http4xx": [],
+  "scenes": [
+    {
+      "label": "Role-aware product entry without presenter page",
+      "path": "artifacts/demo/screenshots/01-home.png",
+      "url": "http://127.0.0.1:3000/"
+    },
+    {
+      "label": "Qwen, local RAG, evidence and reliability",
+      "path": "artifacts/demo/screenshots/02-qwen-policy.png",
+      "url": "http://127.0.0.1:3000/ask#role=employee&run=abb3ccd1-d559-4d77-a78c-d3bfad50daee"
+    },
+    {
+      "label": "Current policy version and exact citation",
+      "path": "artifacts/demo/screenshots/03-policy-source.png",
+      "url": "http://127.0.0.1:3000/ask#role=employee&run=abb3ccd1-d559-4d77-a78c-d3bfad50daee"
+    },
+    {
+      "label": "Qwen grounds the answer in an official OJK PDF",
+      "path": "artifacts/demo/screenshots/04-qwen-ojk.png",
+      "url": "http://127.0.0.1:3000/ask#role=compliance&run=8e49cca3-12c8-4065-8718-48af01a1df07"
+    },
+    {
+      "label": "Official PDF page, article and provenance",
+      "path": "artifacts/demo/screenshots/05-ojk-source.png",
+      "url": "http://127.0.0.1:3000/ask#role=compliance&run=8e49cca3-12c8-4065-8718-48af01a1df07"
+    },
+    {
+      "label": "CopilotKit selects a controlled comparison",
+      "path": "artifacts/demo/screenshots/06-generative-comparison.png",
+      "url": "http://127.0.0.1:3000/ask#role=compliance&run=8e49cca3-12c8-4065-8718-48af01a1df07"
+    },
+    {
+      "label": "Scanned image becomes indexed knowledge",
+      "path": "artifacts/demo/screenshots/07-ocr-upload.png",
+      "url": "http://127.0.0.1:3000/knowledge#role=sme&document=d5d2dfbb-7803-428d-94fe-9ce5f761d2ac"
+    },
+    {
+      "label": "OCR text is searchable and requires review",
+      "path": "artifacts/demo/screenshots/08-ocr-answer.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=06b48ffd-5d2c-4e71-8500-c238cb8318b7"
+    },
+    {
+      "label": "Original image and OCR provenance",
+      "path": "artifacts/demo/screenshots/09-ocr-source.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=06b48ffd-5d2c-4e71-8500-c238cb8318b7"
+    },
+    {
+      "label": "Puppeteer capture and Qwen visual observation",
+      "path": "artifacts/demo/screenshots/10-website-vision.png",
+      "url": "http://127.0.0.1:3000/knowledge"
+    },
+    {
+      "label": "Website evidence saved as a governed draft",
+      "path": "artifacts/demo/screenshots/11-website-draft.png",
+      "url": "http://127.0.0.1:3000/knowledge#role=sme&document=0dc95e98-cda7-457f-acc0-9988d237c8ff"
+    },
+    {
+      "label": "Website text has Internet and browser provenance",
+      "path": "artifacts/demo/screenshots/12-website-answer.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=fb54586e-ea4e-4090-9a99-0e5f7c0e00a1"
+    },
+    {
+      "label": "Real retrieval, browser and Qwen progress",
+      "path": "artifacts/demo/screenshots/13-live-activity.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&webjob=37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "label": "Selected URL gives private Internet evidence",
+      "path": "artifacts/demo/screenshots/14-websearch-grounded.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "label": "Internet evidence remains distinct from KB",
+      "path": "artifacts/demo/screenshots/15-websearch-source.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=37820c90-2e37-4d96-8ba3-cb05fee7a88c"
+    },
+    {
+      "label": "Google 429 is reported without invented results",
+      "path": "artifacts/demo/screenshots/16-google-blocked.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=f6c8c8a0-c263-4fbd-a0a3-cbeea133f779"
+    },
+    {
+      "label": "No evidence means no conclusion",
+      "path": "artifacts/demo/screenshots/17-insufficient-evidence.png",
+      "url": "http://127.0.0.1:3000/ask#role=sme&run=12c16ec3-52b3-4f3a-894a-283690c50d89"
+    },
+    {
+      "label": "Knowledge continues into persistent work",
+      "path": "artifacts/demo/screenshots/18-my-work.png",
+      "url": "http://127.0.0.1:3000/cases"
+    },
+    {
+      "label": "Employee evidence moves to independent review",
+      "path": "artifacts/demo/screenshots/18b-review-ready.png",
+      "url": "http://127.0.0.1:3000/cases?case=12488cfb-e18f-4bc1-8a18-12235101de66"
+    },
+    {
+      "label": "Compliance review and remediation",
+      "path": "artifacts/demo/screenshots/19-regulatory-review.png",
+      "url": "http://127.0.0.1:3000/regulatory?review=e6343d95-9079-42b4-83b7-dd94e3919297"
+    },
+    {
+      "label": "Human source choice persists in the analysis",
+      "path": "artifacts/demo/screenshots/20-investment-assumptions.png",
+      "url": "http://127.0.0.1:3000/investment?analysis=da1610cc-ab95-4b9a-ab2d-87a9171a5ad9"
+    },
+    {
+      "label": "Source-backed deterministic calculations",
+      "path": "artifacts/demo/screenshots/21-investment-analysis.png",
+      "url": "http://127.0.0.1:3000/investment?analysis=da1610cc-ab95-4b9a-ab2d-87a9171a5ad9"
+    },
+    {
+      "label": "Evidence before human decisions",
+      "path": "artifacts/demo/screenshots/22-human-reviews.png",
+      "url": "http://127.0.0.1:3000/decisions"
+    },
+    {
+      "label": "Public knowledge inventory for Finance",
+      "path": "artifacts/demo/screenshots/23-public-finance.png",
+      "url": "http://127.0.0.1:3000/knowledge"
+    },
+    {
+      "label": "Public knowledge inventory for Operations",
+      "path": "artifacts/demo/screenshots/24-public-operations.png",
+      "url": "http://127.0.0.1:3000/knowledge"
+    },
+    {
+      "label": "Public knowledge inventory for People",
+      "path": "artifacts/demo/screenshots/25-public-people.png",
+      "url": "http://127.0.0.1:3000/knowledge"
+    },
+    {
+      "label": "Grounded action becomes measurable activity",
+      "path": "artifacts/demo/screenshots/26-impact.png",
+      "url": "http://127.0.0.1:3000/impact"
+    }
+  ]
+}

@@ -36,6 +36,7 @@ export function GapFinding({
 }) {
   const reassign = finding.allowed_actions.includes("reassign");
   const [decision, setDecision] = useState<Decision>("confirm");
+  const [assigning, setAssigning] = useState(false);
   const [summary, setSummary] = useState(
     finding.reviewer_summary || finding.proposed_summary,
   );
@@ -101,7 +102,8 @@ export function GapFinding({
           </li>
         ))}
       </ul>
-      <section className="gap-evidence" aria-label="Evidence">
+      <details className="gap-evidence">
+        <summary>View sources</summary>
         {[finding.requirement, finding.impacted].map((source) => (
           <button
             key={source.chunk_id}
@@ -118,7 +120,7 @@ export function GapFinding({
             </span>
           </button>
         ))}
-      </section>
+      </details>
       <p className="workflow-note">
         <strong>
           {finding.status === "PROPOSED"
@@ -173,113 +175,125 @@ export function GapFinding({
         </div>
       )}
       {finding.allowed_actions.length > 0 && (
-        <form
-          className="workflow-form gap-decision"
-          aria-label={`Decision for ${finding.impacted.title}`}
-          onSubmit={(event) => {
-            event.preventDefault();
-            void submit();
-          }}
-        >
-          {!reassign && (
-            <fieldset className="decision-choice">
-              <legend>Decision</legend>
-              {(["confirm", "reject"] as const).map((item) => (
-                <label key={item}>
-                  <input
-                    type="radio"
-                    name={`decision-${finding.id}`}
-                    value={item}
-                    checked={decision === item}
-                    disabled={busy}
-                    onChange={() => {
-                      setDecision(item);
-                      setError("");
-                    }}
-                  />
-                  {item === "confirm"
-                    ? "Confirm gap and assign remediation"
-                    : "Not a gap"}
-                </label>
-              ))}
-            </fieldset>
+        <>
+          {!reassign && !assigning && (
+            <div className="tag-row">
+              <button
+                className="button primary"
+                onClick={() => {
+                  setDecision("confirm");
+                  setAssigning(true);
+                }}
+              >
+                Confirm gap
+              </button>
+              <button
+                className="button secondary"
+                onClick={() => {
+                  setDecision("reject");
+                  setAssigning(true);
+                }}
+              >
+                Not a gap
+              </button>
+            </div>
           )}
-          {decision === "confirm" && (
-            <>
-              {!reassign && (
-                <label>
-                  Gap statement
-                  <textarea
-                    aria-label="Gap statement"
-                    rows={3}
-                    maxLength={2000}
-                    value={summary}
-                    disabled={busy}
-                    onChange={(event) => setSummary(event.target.value)}
-                  />
-                </label>
+          {(reassign || assigning) && (
+            <form
+              className="workflow-form gap-decision"
+              aria-label={`Decision for ${finding.impacted.title}`}
+              onSubmit={(event) => {
+                event.preventDefault();
+                void submit();
+              }}
+            >
+              <h4>
+                {decision === "confirm"
+                  ? "Assign remediation"
+                  : "Record why this is not a gap"}
+              </h4>
+              {decision === "confirm" && (
+                <>
+                  {!reassign && (
+                    <label>
+                      Gap statement
+                      <textarea
+                        aria-label="Gap statement"
+                        rows={3}
+                        maxLength={2000}
+                        value={summary}
+                        disabled={busy}
+                        onChange={(event) => setSummary(event.target.value)}
+                      />
+                    </label>
+                  )}
+                  <div className="form-columns">
+                    <label>
+                      Remediation owner
+                      <select
+                        aria-label="Remediation owner"
+                        value={owner}
+                        disabled={busy}
+                        onChange={(event) => setOwner(event.target.value)}
+                      >
+                        {users.map((person) => (
+                          <option key={person.id} value={person.id}>
+                            {person.name} — {roleLabel(person.role_id)}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      Due date
+                      <input
+                        aria-label="Remediation due date"
+                        type="date"
+                        value={dueDate}
+                        disabled={busy}
+                        required
+                        onChange={(event) => setDueDate(event.target.value)}
+                      />
+                    </label>
+                  </div>
+                </>
               )}
-              <div className="form-columns">
-                <label>
-                  Remediation owner
-                  <select
-                    aria-label="Remediation owner"
-                    value={owner}
-                    disabled={busy}
-                    onChange={(event) => setOwner(event.target.value)}
-                  >
-                    {users.map((person) => (
-                      <option key={person.id} value={person.id}>
-                        {person.name} — {roleLabel(person.role_id)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Due date
-                  <input
-                    aria-label="Remediation due date"
-                    type="date"
-                    value={dueDate}
-                    disabled={busy}
-                    required
-                    onChange={(event) => setDueDate(event.target.value)}
-                  />
-                </label>
-              </div>
-            </>
+              <label>
+                {decision === "reject"
+                  ? "Reason (required)"
+                  : "Reason (optional)"}
+                <textarea
+                  aria-label={
+                    decision === "reject"
+                      ? "Rejection reason"
+                      : "Decision reason"
+                  }
+                  rows={2}
+                  maxLength={2000}
+                  value={reason}
+                  disabled={busy}
+                  required={decision === "reject"}
+                  onChange={(event) => setReason(event.target.value)}
+                />
+              </label>
+              {(error || requestError) && (
+                <ErrorState message={error || requestError} />
+              )}
+              <button className="button primary" type="submit" disabled={busy}>
+                {busy
+                  ? "Recording decision…"
+                  : reassign
+                    ? "Reassign remediation"
+                    : decision === "confirm"
+                      ? "Create remediation"
+                      : "Record not a gap"}
+              </button>
+              <p className="muted small">
+                The owner must be able to access the regulation and procedure.
+                An independent approver accepts the completed remediation.
+              </p>
+            </form>
           )}
-          <label>
-            {decision === "reject" ? "Reason (required)" : "Reason (optional)"}
-            <textarea
-              aria-label={
-                decision === "reject" ? "Rejection reason" : "Decision reason"
-              }
-              rows={2}
-              maxLength={2000}
-              value={reason}
-              disabled={busy}
-              required={decision === "reject"}
-              onChange={(event) => setReason(event.target.value)}
-            />
-          </label>
-          {(error || requestError) && (
-            <ErrorState message={error || requestError} />
-          )}
-          <button className="button primary" type="submit" disabled={busy}>
-            {busy
-              ? "Recording decision…"
-              : reassign
-                ? "Reassign remediation"
-                : decision === "confirm"
-                  ? "Confirm gap"
-                  : "Record not a gap"}
-          </button>
-          <p className="muted small">
-            The owner must be able to access the regulation and procedure. An
-            independent approver accepts the completed remediation.
-          </p>
-        </form>
+        </>
       )}
     </article>
   );

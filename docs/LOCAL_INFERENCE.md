@@ -1,6 +1,44 @@
-# Inference AI Lokal melalui Docker
+# Inference AI Lokal (Windows native atau Docker)
 
-SuperFlow dapat memakai Ollama di Docker sebagai provider inference lokal untuk **Ask SuperFlow**. Konfigurasi default tetap deterministik agar aplikasi tetap dapat didemokan tanpa model. Provider Ollama hanya aktif jika `LLM_PROVIDER=ollama`.
+SuperFlow dapat memakai Ollama native Windows atau Docker sebagai provider inference lokal untuk **Ask SuperFlow**. Konfigurasi default tetap deterministik agar aplikasi tetap dapat didemokan tanpa model. Provider Ollama hanya aktif jika `LLM_PROVIDER=ollama`.
+
+## Windows native tanpa Docker (terverifikasi pada checkout ini)
+
+Pada workstation x64 ini, runtime Ollama portable **v0.40.4** dipasang di `.runtime/ollama/bin` dan model multimodal `qwen3.5:0.8b` disimpan di `.runtime/ollama/models`. Keduanya diabaikan Git. Arsip resmi tersedia di [rilis Ollama v0.40.4](https://github.com/ollama/ollama/releases/tag/v0.40.4); SHA-256 `ollama-windows-amd64.zip` adalah `7485a1172f8527db4342a63521b9342fc466185ff0855da378cc864ecf6354cf`. Verifikasi checksum sebelum ekstraksi.
+
+```powershell
+New-Item -ItemType Directory -Force '.runtime/ollama/models'
+curl.exe -L --fail --output '.runtime/ollama/ollama-windows-amd64.zip' 'https://github.com/ollama/ollama/releases/download/v0.40.4/ollama-windows-amd64.zip'
+Get-FileHash '.runtime/ollama/ollama-windows-amd64.zip' -Algorithm SHA256
+Expand-Archive '.runtime/ollama/ollama-windows-amd64.zip' '.runtime/ollama/bin'
+```
+
+Jalankan server pada terminal sendiri, lalu unduh model dari terminal kedua. `OLLAMA_MODELS` diarahkan ke `.runtime` agar tidak memenuhi profil pengguna.
+
+```powershell
+$env:OLLAMA_HOST='127.0.0.1:11434'
+$env:OLLAMA_MODELS=(Resolve-Path '.runtime/ollama/models').Path
+& '.runtime/ollama/bin/ollama.exe' serve
+```
+
+```powershell
+& '.runtime/ollama/bin/ollama.exe' pull qwen3.5:0.8b
+Invoke-RestMethod 'http://127.0.0.1:11434/api/tags'
+```
+
+Aktifkan pada proses API (atau file `.env` lokal yang diabaikan Git):
+
+```powershell
+$env:LLM_PROVIDER='ollama'
+$env:OLLAMA_MODEL='qwen3.5:0.8b'
+$env:VISION_MODEL='qwen3.5:0.8b'
+$env:OLLAMA_BASE_URL='http://127.0.0.1:11434'
+$env:OLLAMA_TIMEOUT_SECONDS='300'
+$env:WEB_BROWSER_EXECUTABLE=(Resolve-Path '.runtime/playwright/chromium-1243/chrome-win64/chrome.exe').Path
+npm.cmd run dev:api
+```
+
+Qwen menyintesis jawaban Ask dari kutipan yang sudah lolos permission dan membaca screenshot publik untuk Import website/WebSearch. Model embedding RAG dan RapidOCR adalah runtime terpisah. Status API harus menunjukkan `ollama-grounded-v1`, sedangkan jawaban pada layar berlabel **AI synthesis from cited sources**. Model 0.8B menjaga kebutuhan memori rendah tetapi tidak menjamin ketepatan; Guard tetap memberi `REVIEW_REQUIRED` pada sintesis dan observasi vision. Jika Ollama berhenti, mode deterministik dapat diaktifkan kembali dengan `LLM_PROVIDER=deterministic`.
 
 ## Arsitektur
 
@@ -8,7 +46,7 @@ SuperFlow dapat memakai Ollama di Docker sebagai provider inference lokal untuk 
 Pengguna
   → permission filter backend
   → retrieval sumber yang diizinkan
-  → Ollama/Qwen di Docker
+  → Ollama/Qwen lokal (native Windows atau Docker)
   → structured output Pydantic
   → validasi citation ID
   → SuperFlow Guard
@@ -19,7 +57,7 @@ Model tidak menerima sumber yang ditolak permission. Model juga tidak menentukan
 
 Jawaban hasil model selalu `REVIEW_REQUIRED` karena validasi saat ini dapat membuktikan bahwa setiap paragraf menunjuk citation yang diizinkan, tetapi belum membuktikan semantic entailment setiap klaim. Citation yang hilang/tidak dikenal membuat hasil `BLOCKED`.
 
-## Prasyarat Windows
+## Prasyarat Docker di Windows
 
 - Docker Desktop memakai backend WSL 2.
 - Driver NVIDIA dan kernel WSL terbaru.

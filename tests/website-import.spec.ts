@@ -11,7 +11,8 @@ test("public website is captured by Puppeteer, scanned by local vision, saved an
   );
   test.setTimeout(1_320_000);
   await page.goto("/knowledge");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await page
     .getByRole("button", { name: "Import website", exact: true })
     .click();

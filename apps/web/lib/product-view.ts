@@ -41,20 +41,20 @@ export function navigationFor(role: string) {
   return [
     { title: "Home", href: "/", view: "home" },
     ...(role !== "governance"
-      ? [{ title: "Ask SuperFlow", href: "/ask", view: "ask" }]
+      ? [
+          {
+            title: "Ask SuperFlow",
+            href: "/ask",
+            view: "ask",
+          },
+        ]
       : []),
-    { title: "Knowledge", href: "/knowledge", view: "knowledge" },
     ...(role === "compliance"
       ? [
           {
             title: "Regulatory Review",
             href: "/regulatory",
             view: "regulatory",
-          },
-          {
-            title: "Investigation Review",
-            href: "/investigations",
-            view: "investigation",
           },
         ]
       : []),
@@ -67,13 +67,8 @@ export function navigationFor(role: string) {
           },
         ]
       : []),
-    { title: "My Work", href: "/cases", view: "cases" },
-    ...(canReview(role)
-      ? [{ title: reviewsLabel(role), href: "/decisions", view: "decisions" }]
-      : []),
-    ...(canViewImpact(role)
-      ? [{ title: "Impact", href: "/impact", view: "impact" }]
-      : []),
+    { title: "Work", href: "/cases", view: "cases" },
+    { title: "Knowledge Library", href: "/knowledge", view: "knowledge" },
   ];
 }
 

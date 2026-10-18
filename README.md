@@ -11,11 +11,13 @@ Update UI: referensi jawaban kini berlabel **From Knowledge Base** atau **Intern
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Ask SuperFlow kini memakai **CopilotKit V2 + AG-UI** sebagai lapisan intent: permintaan bahasa alami membuka workspace Knowledge, Regulatory Review, Investment Analysis, Investigation Review, Impact, My Work, atau Reviews sesuai role. Komponen dan API domain yang sudah ada tetap menjadi sumber data dan kontrol. Mode deterministik tidak memerlukan Ollama.
+Ask SuperFlow kini memakai **CopilotKit V2 + AG-UI** sebagai lapisan intent: permintaan bahasa alami membuka workspace Knowledge, Regulatory Review, Investment Analysis, Investigation Review, Impact, Work, atau review sesuai role. Komponen dan API domain yang sudah ada tetap menjadi sumber data dan kontrol. Mode deterministik tidak memerlukan Ollama.
 
-Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi fondasi prototype sintetis. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Regulatory Review, Investment Analysis, Impact, dan **Investigation Review Fase 7** tersedia di atas fondasi yang sama. Governance penuh belum tersedia.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**. Pengguna memahami empat pekerjaan: Ask SuperFlow untuk bertanya, Knowledge Library untuk membaca sumber, Work untuk tugas dan keputusan, serta Regulatory Review atau Investment Analysis sesuai peran. Home hanya menampilkan perhatian utama dan pintu masuk. Role demo utama: Employee, Manager, Compliance, Finance, Governance Admin. SME dan Compliance Checker tetap tersedia untuk pengujian internal dan proof point AML/FIU. Backend, izin, dan route langsung lama tetap dipertahankan.
 
-**Demo terintegrasi:** buka `/demo` atau tautan **Demo walkthrough** di footer. Jalankan migrasi lalu `npm run demo:reset` untuk mengembalikan seluruh dataset presentasi sintetis secara atomik. Perintah ini menghapus data aplikasi pada database demo lokal yang dikonfigurasi. Walkthrough menghubungkan Ask, My Work, Regulatory Review, Investment Analysis, keputusan manusia, dan Impact; proof point investigasi tetap opsional. Persiapan, urutan presentasi, pemulihan, dan batasannya ada di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md).
+**Demo terintegrasi:** panduan presenter tersedia hanya di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md), dengan [alur video 4:03 menit](docs/FINAL_DEMO_FLOW.md) dan [peta fitur](docs/FEATURE_MAP.md); tidak ada halaman walkthrough di produk. Navigasi utama kini datar dan berpusat pada pekerjaan pengguna. Impact tidak tampil di menu utama; route `/impact` tetap tersedia langsung untuk analitik internal/manajemen dan demo. Route lama `/workflows` mengarah ke Work. Jalankan migrasi lalu `npm run demo:reset` bila ingin mengembalikan seluruh dataset presentasi sintetis secara atomik. Perintah ini menghapus data aplikasi pada database demo lokal yang dikonfigurasi. Presentasi membuka halaman pengguna sebenarnya: Ask, Work, Regulatory Review, dan Investment Analysis; proof point investigasi tetap opsional.
+
+Rekaman aplikasi produksi dengan Qwen, RAG/OJK, OCR, Puppeteer/vision, WebSearch URL terpilih, CopilotKit, provenance, activity dan alur pekerjaan: [video WebM](artifacts/demo/superflow-demo.webm), [naskah singkat](artifacts/demo/DEMO_SCRIPT.md), dan [hasil verifikasi](artifacts/verification/FEATURE_VERIFICATION.md). Rekaman dibuat sebelum penyederhanaan UX terbaru; gunakan sebagai bukti kapabilitas, bukan contoh navigasi terbaru. Route analitik `/impact` tetap tersedia langsung. Google discovery yang terkena HTTP 429 ditampilkan sebagai keterbatasan nyata.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -82,7 +84,7 @@ SuperFlow/
 
 Di workspace Windows ini tersedia runtime Python terisolasi `.runtime/python`, dependencies npm, Chromium, dan cluster PostgreSQL lokal. Berkas runtime diabaikan Git. Untuk checkout baru, ikuti setup berikut.
 
-Inference nyata bersifat opsional. Ollama dapat dijalankan melalui profile Docker dengan GPU NVIDIA dan API host-only `127.0.0.1:11434`; lihat [panduan inference lokal](docs/LOCAL_INFERENCE.md). Tanpa Ollama, provider extractive deterministik tetap digunakan.
+Inference nyata bersifat opsional. Ollama/Qwen dapat dijalankan secara native pada Windows atau melalui profile Docker dengan API loopback `127.0.0.1:11434`; lihat [panduan inference lokal](docs/LOCAL_INFERENCE.md). Pada workstation verifikasi, model `qwen3.5:0.8b` yang sama dapat dipakai untuk sintesis Ask dan vision website. Aktifkan dengan `LLM_PROVIDER=ollama`, `OLLAMA_MODEL=qwen3.5:0.8b`, dan `VISION_MODEL=qwen3.5:0.8b` pada proses API. Tanpa Ollama, provider extractive deterministik tetap tersedia.
 
 ## Setup
 
@@ -125,6 +127,7 @@ Launcher Python mencari `PYTHON`, lalu `.runtime/python/python.exe`, lalu `pytho
 | `LLM_PROVIDER`             | `deterministic`                                                          | `ollama` mengaktifkan inference lokal Ask dan usulan tindakan investigasi yang tetap divalidasi backend |
 | `OLLAMA_BASE_URL`          | `http://127.0.0.1:11434`                                                 | Endpoint Ollama dari proses FastAPI                    |
 | `OLLAMA_MODEL`             | `qwen3.5:9b`                                                             | Model lokal                                            |
+| `VISION_MODEL`             | `qwen3.5:0.8b`                                                           | Model multimodal lokal untuk screenshot website/WebSearch |
 | `OLLAMA_NUM_CTX`           | `8192`                                                                   | Batas context runtime                                  |
 | `OLLAMA_NUM_PREDICT`       | `512`                                                                    | Batas token keluaran untuk respons terkontrol          |
 | `PYTHON`                   | Opsional; path interpreter                                               | Mengganti interpreter launcher                         |
@@ -327,7 +330,7 @@ npm.cmd run db:seed
 npm.cmd run demo:workflow
 ```
 
-Seed demo opsional/idempotent menyediakan **Annual Leave Review**, **Supporting Evidence Request**, dan **Access Review Clarification**. Buka My Work sebagai Employee, pilih request, dan gunakan **Information checked**. Reviewer membuka Reviews / Approvals atau Reviews untuk SME. Reviewer dapat **Request More Information**; owner memilih **Provide supporting information**, menambahkan section/requirement, dan **Continue review**. Approval tetap independen, konflik tetap membutuhkan reason, dan refresh mempertahankan state. Governance Admin dapat override dengan reason setelah prerequisites lulus. Data demo lama tidak ditimpa atau diduplikasi; adapter menyajikan judul lamanya dalam bahasa pekerjaan.
+Seed demo opsional/idempotent menyediakan **Annual Leave Review**, **Supporting Evidence Request**, dan **Access Review Clarification**. Buka Work sebagai Employee, pilih request, dan gunakan **Information checked**. Reviewer membuka tab **Needs My Decision**; SME menggunakan route internal untuk pengujian. Reviewer dapat **Request More Information**; owner memilih **Provide supporting information**, menambahkan section/requirement, dan **Continue review**. Approval tetap independen, konflik tetap membutuhkan reason, dan refresh mempertahankan state. Governance Admin dapat override dengan reason setelah prerequisites lulus. Data demo lama tidak ditimpa atau diduplikasi; adapter menyajikan judul lamanya dalam bahasa pekerjaan.
 
 API execution:
 
@@ -349,31 +352,32 @@ node scripts/python.mjs scripts/generate-workflow.py --check
 
 Rincian state machine, permission/Guard, retry/fallback, audit, API, demo, dan batasan: [WORKFLOW_CORE.md](docs/WORKFLOW_CORE.md). Hasil quality gate aktual ada di IMPLEMENTATION_STATUS.md. Home/Ask/Knowledge existing dipertahankan; tidak ada fake KPI atau arbitrary AI HTML.
 
-## Pengalaman pengguna menurut PRD v2
+## Pengalaman pengguna menurut PRD v2 dan instruksi UX terbaru
 
-| Role                  | Navigasi yang tersedia sekarang                                                           |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                                   |
-| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals, Impact                      |
-| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews, Impact                                  |
-| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals, Impact   |
-| Finance               | Home, Ask SuperFlow, Knowledge, Investment Analysis, My Work, Reviews / Approvals, Impact |
-| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals, Impact                                     |
+| Role | Navigasi produk |
+| --- | --- |
+| Employee | Home, Ask SuperFlow, Work, Knowledge Library |
+| Manager | Home, Ask SuperFlow, Work, Knowledge Library |
+| Compliance | Home, Ask SuperFlow, Regulatory Review, Work, Knowledge Library |
+| Finance | Home, Ask SuperFlow, Investment Analysis, Work, Knowledge Library |
+| Governance Admin | Home, Work, Knowledge Library |
+
+SME dan Compliance Checker tetap merupakan peran backend untuk review dan proof point AML/FIU, tetapi tidak tampil dalam pemilih persona demo utama. `/impact` tetap dapat dibuka langsung sesuai izin.
 
 Modul yang belum tersedia tidak menjadi navigasi utama. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas control/review. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
 
-**My Work** menggabungkan proyeksi Case, workflow/tasks, approval, dan status kebutuhan informasi dari endpoint existing. Adapter frontend `product-view.ts` tidak menyimpan state execution baru. Work item menampilkan judul bisnis, status, langkah saat ini, next action, owner/reviewer, due date bila ada, reliability, dan pembaruan terakhir. **Progress** menyembunyikan routing/node types dan cabang yang tidak terpilih. **Activity** menerjemahkan AuditEvent tanpa memperlihatkan payload JSON/revision.
+**Work** menggabungkan proyeksi Case, workflow/tasks, approval, dan status kebutuhan informasi dari endpoint existing. Tab **My Tasks** menampilkan pekerjaan sendiri; **Needs My Decision** menampilkan keputusan yang berwenang. Adapter frontend `product-view.ts` tidak menyimpan state execution baru. Work item menampilkan judul bisnis, status, langkah saat ini, next action, owner/reviewer, due date bila ada, reliability, dan pembaruan terakhir. **Progress** menyembunyikan routing/node types dan cabang yang tidak terpilih. **Activity** menerjemahkan AuditEvent tanpa memperlihatkan payload JSON/revision.
 
 Detail pekerjaan mengambil konteks lengkap langsung dari Case API, sehingga tidak menunggu daftar pekerjaan/review lain. Daftar agregasi masih mengikuti endpoint existing tanpa pagination; waktu pemuatannya dapat bertambah bersama jumlah data.
 
-**Reviews / Approvals** hanya menampilkan pending request dengan `allowed_actions` dari backend. Employee tidak mendapat halaman keputusan atau kontrol approval. Backend tetap menentukan akses, independensi reviewer, kelengkapan evidence, dan concurrency.
+Tab **Needs My Decision** hanya menampilkan pending request dengan `allowed_actions` dari backend. Employee tidak mendapat tab keputusan atau kontrol approval. Backend tetap menentukan akses, independensi reviewer, kelengkapan evidence, dan concurrency.
 
-### Demo Ask menuju My Work
+### Demo Ask menuju Work
 
 1. Employee bertanya annual leave lalu memilih **Request Review**, atau bertanya konflik access review lalu **Start Review**.
 2. Periksa/edit judul bisnis dan pilih **Submit Request**. Frontend membuat Case dan memulai generic review memakai API existing; pengguna tidak memilih definisi workflow.
-3. Request muncul di My Work. Pilih **Information checked** untuk menjalankan pemeriksaan evidence dan routing reviewer existing.
-4. Manager/SME membuka Reviews, membaca evidence/source/reliability, lalu Approve/Reject/Request More Information/Escalate. Override hanya sesuai authority backend dan reason wajib.
+3. Request muncul di Work. Pilih **Information checked** untuk menjalankan pemeriksaan evidence dan routing reviewer existing.
+4. Manager membuka tab **Needs My Decision**, membaca evidence/source/reliability, lalu Approve/Reject/Request More Information/Escalate. SME memakai route internal untuk pengujian. Override hanya sesuai authority backend dan reason wajib.
 5. Refresh dan buka Activity untuk melihat keputusan/progress tersimpan.
 6. Pertanyaan receipt tanpa dokumen pendukung menyediakan **Request Exception** sebagai request pengumpulan informasi. Consent eksplisit wajib; status BLOCKED tidak menjadi approval otomatis.
 
@@ -427,7 +431,7 @@ Proposal B tidak memiliki konflik, jadi langsung **Ready to submit**. Dari Ask, 
 ### Demo Impact
 
 1. Buat beberapa hasil Ask dan pekerjaan/review agar state operasional mempunyai observasi nyata.
-2. Pilih **Governance — Alex Pratama**, lalu buka **Impact** untuk agregat platform sintetis. Manager, SME, Compliance, dan Finance melihat scope data yang dapat mereka akses; Employee tidak melihat menu maupun agregat Impact.
+2. Pilih **Governance — Alex Pratama**, lalu buka `/impact` secara langsung untuk agregat platform sintetis. Impact tidak tampil di navigasi utama. Manager, SME, Compliance, dan Finance hanya melihat scope data yang dapat mereka akses; Employee tidak mendapat agregat Impact.
 3. Periksa overview Quality, Cost / Capacity, dan Delivery. Metrik yang belum mempunyai observasi tampil sebagai **Not yet measured**, bukan nol rekaan.
 4. Tanyakan **Where does reliability need attention?** untuk komposisi Quality, **How much capacity could be released?** untuk capacity, atau **What is slowing delivery?** untuk Delivery.
 5. Pada Capacity, periksa semua asumsi dan label **Illustrative simulation**. Hours released dan illustrative cost avoidance adalah skenario soft-dollar, bukan penghematan terealisasi.
@@ -443,4 +447,4 @@ npm.cmd run db:seed
 npm.cmd run db:reset -- --confirm-synthetic-data
 ```
 
-Demo: pilih **Compliance — Raka Wijaya**, buka `/investigations`, lalu pilih alert `AML-2026-001` (lengkap), `AML-2026-002` (alat watchlist gagal), atau `AML-2026-003` (konflik). Jalankan pengumpulan bukti. Pada alert pertama, simpan rekomendasi dan kirim ke checker. Ganti ke **Compliance Checker — Sinta Mahardika**, buka Reviews / Approvals, inspeksi konteks sintetis, lalu putuskan. My Work dan Activity memakai state yang sama setelah refresh. Status Guard VERIFIED hanya berarti bukti wajib lulus; tidak ada kesimpulan AML atau keputusan pelaporan otomatis.
+Proof point internal: pilih Compliance — Raka Wijaya dan buka `/investigations` untuk alert sintetis. Checker Sinta tidak tersedia di pemilih demo biasa. Untuk pengujian terkontrol, set `localStorage.setItem("superflow.demo-user", "compliance_checker")` pada origin aplikasi lalu reload route `/investigations`; inspeksi bukti dan putuskan. Work dan Activity memakai state yang sama setelah refresh. Status reliability VERIFIED hanya berarti bukti wajib lulus; tidak ada kesimpulan AML atau keputusan pelaporan otomatis.

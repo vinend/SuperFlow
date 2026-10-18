@@ -242,11 +242,9 @@ export function DocumentEditor({
               />
             </label>
             <p className="muted small">
-              Scanned PDFs and images use local OCR when enabled. OCR text
-              requires review against the original. Future-effective versions
-              must remain draft. Adding a PDF refreshes embeddings for the full
-              knowledge base. Saving can take a little longer while the index is
-              rebuilt.
+              Text from scans requires review against the original.
+              Future-effective versions remain drafts. Saving a PDF can take a
+              little longer while knowledge search is updated.
             </p>
           </>
         )}

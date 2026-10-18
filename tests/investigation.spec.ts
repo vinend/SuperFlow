@@ -56,9 +56,10 @@ test("complete synthetic investigation persists through independent checker", as
   await expect(
     page.getByText("Waiting for checker", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("combobox", { name: "Demo role" })
-    .selectOption("compliance_checker");
+  await page.evaluate(() =>
+    localStorage.setItem("superflow.demo-user", "compliance_checker"),
+  );
+  await page.reload();
   await page.getByRole("link", { name: "Open checker review" }).click();
   await expect(
     page.getByText("Please review the recorded indicators"),

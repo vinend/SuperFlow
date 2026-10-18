@@ -31,7 +31,7 @@ export function EvidenceChecklist({
   const presentation = RELIABILITY_PRESENTATION[result.status];
   const evidence = visibleEvidence(result);
   return (
-    <section className="guard-result" aria-label="SuperFlow Guard">
+    <section className="guard-result" aria-label="Reliability details">
       <div className="guard-heading">
         <span className={`reliability-status ${presentation.tone}`}>
           {presentation.label}
@@ -95,7 +95,7 @@ export function EvidenceChecklist({
       )}
       <details className="guard-checks">
         <summary>
-          Guard checks <span>Deterministic controls</span>
+          Reliability checks <span>How this result was assessed</span>
         </summary>
         <dl>
           {Object.entries(result.checks).map(([name, check]) => {

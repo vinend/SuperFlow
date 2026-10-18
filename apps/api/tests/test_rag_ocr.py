@@ -170,6 +170,41 @@ def test_semantic_retrieval_finds_a_paraphrase_and_keeps_version_filter(db, vect
     )
 
 
+def test_broad_ask_rejects_generic_overlap_without_losing_leave_recall(db, monkeypatch):
+    from superflow.models import User
+
+    class UniformVectors:
+        model = "broad-relevance-test"
+
+        def documents(self, texts):
+            return [[1.0, 0.0] for _ in texts]
+
+        def query(self, text):
+            return [1.0, 0.0]
+
+    monkeypatch.setattr(embeddings, "embedding_provider", lambda: UniformVectors())
+    monkeypatch.setattr(settings, "semantic_min_score", 0.3)
+    embeddings.index_embeddings(list(db.scalars(select(DocumentChunk))))
+    db.flush()
+    user = db.get(User, "employee")
+    retriever = HybridRetriever()
+
+    # Dense similarity and the generic word "policy" alone are not evidence.
+    assert (
+        retriever.retrieve(db, user, AskInput(question="secret quantum mango banking policy")) == []
+    )
+
+    hits = retriever.retrieve(db, user, AskInput(question="annual leave days"))
+    assert hits
+    assert (
+        db.get(DocumentVersion, db.get(DocumentChunk, hits[0].chunk_id).version_id).document_id
+        == "leave-policy"
+    )
+
+    # Familiar phrasing remains searchable without requiring a source selector.
+    assert retriever.retrieve(db, user, AskInput(question="How do I take time off?"))
+
+
 def test_restricted_filter_does_not_call_model_or_require_restricted_vectors(db, vectors):
     from superflow.models import User
 

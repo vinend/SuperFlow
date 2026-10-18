@@ -1,5 +1,9 @@
 # Rencana Implementasi SuperFlow
 
+## Feature freeze dan finishing produk
+
+Perubahan fitur paralel selesai. Navigasi terkini memakai tiga kelompok sesuai peran: SuperFlow, Work, dan Solutions. Impact/INSIGHTS tidak tampil di shell utama; route `/impact` serta analytics tetap tersedia langsung untuk penggunaan internal/manajemen. Pass akhir juga menghapus layar walkthrough produk, menjaga route legacy sebagai redirect, dan memperbaiki relevansi Ask umum secara terukur tanpa mengubah fondasi permission/Guard. [Peta fitur](docs/FEATURE_MAP.md), [alur rekaman final](docs/FINAL_DEMO_FLOW.md), dan [laporan verifikasi](artifacts/verification/FEATURE_VERIFICATION.md) menjadi acuan handoff. Batasan yang belum menjadi fitur produksi tetap dicatat; tidak ada kapabilitas baru dalam pass ini.
+
 Ekstensi knowledge lintas divisi: importer PDF publik Finance/Operations/People, full shared-KB embedding refresh pada setiap PDF baru/versi baru, tahap Ask owner-scoped yang dilaporkan server, serta motion pada shell/kartu/loading. Tab dan permission existing dipertahankan. Rincian: `docs/PUBLIC_KNOWLEDGE.md`.
 
 Ekstensi Ask lokal: **Enable WebSearch**, Google Puppeteer + vision, pembacaan HTML/PDF, bukti per-answer, penggabungan context dan job background/polling. Batas akses dan kegagalan Google diuji; lihat `docs/WEBSEARCH.md`.
@@ -10,13 +14,13 @@ Pass UI/provenance selesai: hapus preamble review berulang dari body jawaban, pe
 
 SuperFlow adalah **Enterprise Knowledge-to-Action Platform** untuk workspace internal Superbank. Rantai produknya: Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact.
 
-Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi baseline prototype sintetis. Fase 7 memakai fondasi Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency untuk Investigation Review. Fase 8 menambahkan persiapan presentasi atomik dan walkthrough terintegrasi; hasil verifikasi dicatat di status implementasi.
+Sumber produk aktif adalah **SuperFlow_PRD_v2.md**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi baseline prototype sintetis. Fase 7 memakai fondasi Case, workflow, Guard, evidence, permission, audit, concurrency, dan idempotency untuk Investigation Review. Fase 8 menambahkan persiapan presentasi atomik. Panduan walkthrough kini hanya berupa Markdown atas permintaan pengguna; hasil verifikasi dicatat di status implementasi.
 
 ## Pass integrasi Generative Workspace
 
 Pass OJK/RPL (17 Oktober 2026): isi corpus resmi tanpa reset existing data; gunakan implementasi LlamaIndex, SentenceSplitter, multilingual vectors, BM25 + cosine fusion, provenance immutable dan index controls. Google discovery berada di dialog Knowledge existing; CopilotKit V2 memilih varian kartu `regulation_brief` pada Ask. Motion bersifat kecil/reduced-motion-aware. Jangan mengganti tab, shell, konsep produk atau modul di luar RAG. Detail dan hasil aktual di `docs/OJK_DEMO.md` dan status implementasi.
 
-Perluasan sumber atas permintaan pengguna: Puppeteer menangkap satu halaman publik dengan proxy DNS/IP terkontrol, lalu Ollama vision memindai screenshot. Knowledge menyediakan preview sebelum penyimpanan draft, bukti immutable, permission reader, provenance citation, dan human review wajib. Setup dan batasnya tercatat di `docs/WEBSITE_CAPTURE.md`; pengaktifan generator Ask/demo switch tetap pekerjaan terpisah yang dipause.
+Perluasan sumber atas permintaan pengguna: Puppeteer menangkap satu halaman publik dengan proxy DNS/IP terkontrol, lalu Ollama vision memindai screenshot. Knowledge menyediakan preview sebelum penyimpanan draft, bukti immutable, permission reader, provenance citation, dan human review wajib. Setup dan batasnya tercatat di `docs/WEBSITE_CAPTURE.md`. Provider Ask Ollama/Qwen sekarang aktif dan terverifikasi pada workstation lokal; sakelar demo/AI lama di stash tetap di luar cakupan.
 
 Tujuan: satu permintaan bahasa alami di Ask memilih workspace yang sudah ada tanpa menyalin logika domain. CopilotKit V2 dan AG-UI mengirim intent ke adapter Next.js/FastAPI; kontrak bertipe membatasi tujuh workspace, view, dan identifier. FastAPI melakukan klasifikasi deterministik atau memakai Ollama opsional, lalu memeriksa role dan akses investigation. Komponen domain existing mengambil ulang data dari API. Keputusan material tetap memerlukan interaksi manusia.
 
@@ -119,9 +123,9 @@ Dependency dan konfigurasi: [RAG_OCR.md](docs/RAG_OCR.md). Ini menjalankan model
 
 1. Reuse fondasi Fase 0–7 dan generative workspace dari `main` terbaru; pertahankan otorisasi, Guard, evidence, audit, revision/idempotency, formula, serta keputusan manusia existing.
 2. `demo:reset` menambahkan opsi dataset presentasi pada reset lokal terjaga. Persiapkan request pengetahuan, regulatory review, dan analisis investasi dengan service domain di transaksi reset yang sama; kegagalan persiapan harus rollback seluruhnya.
-3. `/demo` menyediakan cerita platform yang stabil, link beridentitas demo eksplisit, informasi langkah dan hasil yang perlu diperiksa, serta investigation opsional. Gunakan shell, header, button, dan design tokens existing.
+3. Cerita platform, peran presenter, langkah dan bukti yang perlu diperiksa berada di `docs/DEMO_PLAYBOOK.md`. Produk tidak menampilkan halaman walkthrough; presenter memakai halaman sesuai pekerjaan pengguna.
 4. Uji repeatability/idempotensi, rollback, identitas/navigasi/refresh, keyboard/Escape, responsive/overflow, dan disclosure Impact. Jalankan regresi backend/frontend/E2E, kontrak, lint, formatter, typecheck, build, serta smoke browser produksi.
-5. Dokumentasikan urutan presentasi, setup, batasan dan pemulihan di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md), dengan bukti desktop/mobile di `artifacts/screenshots/demo/` dan hasil aktual di status implementasi.
+5. Dokumentasikan urutan presentasi, setup, batasan dan pemulihan di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md), dengan video/screenshot aplikasi nyata di `artifacts/demo/` dan hasil aktual di status implementasi.
 
 Dependency: Fase 0–7, PostgreSQL/migrasi/seed, identitas sintetis, dan domain services existing. Tidak ada integrasi bank nyata, approval otomatis, atau metrik/savings rekaan.
 
