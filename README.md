@@ -1,5 +1,12 @@
 # SuperFlow
 
+**Staging / UAT candidate:** PostgreSQL password accounts, revocable sessions,
+real local Puppeteer/vision research and additive UAT samples are available.
+Staging rejects mock identity selection and synthetic screening. Deployment setup,
+known external-provider limits and Phase 0–8 coverage are documented in
+[STAGING.md](docs/STAGING.md) and [STAGING_READINESS.md](docs/STAGING_READINESS.md).
+Local verification is not a completed remote staging deployment.
+
 **Knowledge lintas divisi:** tambah enam PDF publik Finance, Operations/IT dan People di samping corpus OJK. Upload PDF baru atau versi PDF memaksa re-embedding seluruh shared knowledge base secara atomik, tanpa mengganti citation IDs. Ask menampilkan tahapan server, waktu berjalan, dan scope selama menunggu, dengan motion/reduced-motion pada workspace existing. Importer dan batas penggunaan referensi: [PUBLIC_KNOWLEDGE.md](docs/PUBLIC_KNOWLEDGE.md).
 
 **Enable WebSearch** pada Ask menjalankan Puppeteer/Chromium dan Ollama vision di perangkat lokal untuk menambahkan konteks Internet/PDF ke jawaban. Job background/polling mendukung scan yang lama. Google pada jaringan pengujian mengembalikan 429/reCAPTCHA; statusnya ditampilkan, tanpa hasil buatan. Detail: [WEBSEARCH.md](docs/WEBSEARCH.md).

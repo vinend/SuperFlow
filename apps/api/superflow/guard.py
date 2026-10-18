@@ -122,6 +122,7 @@ class SuperFlowGuard:
         conflict: str | None,
         failed_tools: list[str],
         template_valid: bool = True,
+        public_web: bool = False,
     ) -> GuardResult:
         """Use canonical Guard controls for synthetic tool evidence, without document citations.
 
@@ -185,13 +186,15 @@ class SuperFlowGuard:
             ),
             "source_validity": GuardCheckResult(
                 passed=not failed_tools,
-                details="Synthetic tool results are available."
+                details="Collected tool results are available."
                 if not failed_tools
                 else "Evidence collection failed: " + ", ".join(failed_tools),
             ),
             "source_authority": GuardCheckResult(
-                passed=True,
-                details="Only configured synthetic investigation adapters supply evidence.",
+                passed=not public_web,
+                details="Public web research requires source and identity verification."
+                if public_web
+                else "Only configured synthetic investigation adapters supply evidence.",
             ),
             "version_validity": GuardCheckResult(
                 passed=template_valid,
@@ -226,12 +229,16 @@ class SuperFlowGuard:
             ReliabilityStatus.BLOCKED
             if not complete or not provenance_valid or failed_tools or not template_valid
             else ReliabilityStatus.REVIEW_REQUIRED
-            if conflicting
+            if conflicting or public_web
             else ReliabilityStatus.VERIFIED
         )
         summary = {
             ReliabilityStatus.BLOCKED: "Required investigation evidence is missing or unavailable.",
-            ReliabilityStatus.REVIEW_REQUIRED: "Material evidence conflict needs human judgment.",
+            ReliabilityStatus.REVIEW_REQUIRED: (
+                "Public web evidence needs source and identity review."
+            )
+            if public_web
+            else "Material evidence conflict needs human judgment.",
             ReliabilityStatus.VERIFIED: (
                 "Configured evidence checks passed; human review is still required."
             ),

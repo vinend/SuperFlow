@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import select
 
 from .cases import context, log, references_allowed
+from .config import settings
 from .models import (
     Approval,
     CaseEvidence,
@@ -13,6 +14,7 @@ from .models import (
     StepAttempt,
     Task,
     User,
+    UserCredential,
     WorkflowRun,
     WorkflowStep,
     now,
@@ -70,6 +72,8 @@ def select_reviewer(db, case, role):
             .where(User.role_id == requested_role, User.active.is_(True))
             .order_by(User.id)
         ):
+            if settings.auth_mode == "password" and not db.get(UserCredential, candidate.id):
+                continue
             if candidate.id not in {case.created_by, case.owner_id} and references_allowed(
                 db, candidate, run
             ):

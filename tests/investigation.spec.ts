@@ -6,7 +6,7 @@ async function analyst(page: Page, alert = "AML-2026-001") {
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("compliance");
   await page
-    .getByRole("navigation", { name: "Synthetic investigations" })
+    .getByRole("navigation", { name: "Investigations", exact: true })
     .getByRole("link", { name: alert })
     .click();
   await expect(

@@ -23,6 +23,9 @@ for (const args of [
     env: {
       ...process.env,
       DATABASE_URL: database,
+      APP_ENVIRONMENT: "local",
+      AUTH_MODE: "local",
+      INVESTIGATION_PROVIDER: "synthetic",
       RETRIEVAL_PROVIDER: "keyword",
     },
   });

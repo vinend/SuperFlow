@@ -7,7 +7,7 @@ from pathlib import PurePath
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
@@ -35,9 +35,20 @@ from .knowledge import (
     document_payload,
     validate_metadata,
 )
-from .models import AuditEvent, Case, Document, DocumentVersion, QuestionRun, User, WebsiteCapture
+from .models import (
+    AuditEvent,
+    Case,
+    Document,
+    DocumentVersion,
+    QuestionRun,
+    User,
+    UserCredential,
+    WebsiteCapture,
+)
 from .ojk import router as ojk_router
 from .parsing import MAX_BYTES, ParseError, parse_file
+from .password_auth import router as auth_router
+from .password_auth import session_user, user_view
 from .providers import AnswerProvider, ProviderUnavailable, configured_answer_provider
 from .rag_api import router as rag_router
 from .regulatory_api import router as regulatory_router
@@ -62,7 +73,8 @@ app = FastAPI(
     lifespan=lifespan,
     title="SuperFlow Knowledge API",
     version="0.6.0",
-    description="Synthetic knowledge-to-action prototype. X-User-Id is mock authentication only.",
+    description="Knowledge-to-action API. PostgreSQL password sessions in staging; "
+    "test identity selection is restricted to explicit local mode.",
 )
 app.include_router(workflow_router)
 app.include_router(regulatory_router)
@@ -74,6 +86,7 @@ app.include_router(website_capture_router)
 app.include_router(ojk_router)
 app.include_router(rag_router)
 app.include_router(chat_router)
+app.include_router(auth_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins.split(","),
@@ -118,7 +131,10 @@ def health(db: Db):
         "status": "ok",
         "database": db.bind.dialect.name,
         "seeded_users": users,
-        "scope": "phase-0-7",
+        "scope": "phase-0-8",
+        "environment": settings.app_environment,
+        "authentication": settings.auth_mode,
+        "investigation_provider": settings.investigation_provider,
         "inference_provider": provider.name,
         "inference_model": settings.ollama_model if settings.llm_provider == "ollama" else None,
         "retrieval_provider": settings.retrieval_provider,
@@ -133,7 +149,20 @@ def health(db: Db):
 
 
 @app.get("/api/users")
-def users(db: Db):
+def users(db: Db, request: Request):
+    if settings.auth_mode == "password":
+        session_user(db, request)
+        # A staff directory supports assignment and readable reviewer names. It
+        # exposes neither credentials nor a way to change the authenticated actor.
+        return [
+            user_view(user)
+            for user in db.scalars(
+                select(User)
+                .join(UserCredential, UserCredential.user_id == User.id)
+                .where(User.active.is_(True))
+                .order_by(User.name)
+            )
+        ]
     # Public synthetic identities enable the explicitly mocked role switcher.
     return [
         {

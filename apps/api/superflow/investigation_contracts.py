@@ -23,10 +23,10 @@ class SyntheticToolRequest(BaseModel):
 
 class CustomerProfileResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    customer_name: str
-    occupation: str
-    declared_source_of_funds: str
-    profile_baseline: str
+    customer_name: str = Field(min_length=2, max_length=150)
+    occupation: str = Field(max_length=500)
+    declared_source_of_funds: str = Field(max_length=1000)
+    profile_baseline: str = Field(max_length=1000)
 
 
 class TransactionSample(BaseModel):
@@ -43,8 +43,8 @@ class TransactionSummaryResult(BaseModel):
     window_hours: int = Field(gt=0)
     alerted_value_idr: int = Field(ge=0)
     new_beneficiaries: int = Field(ge=0)
-    sample: list[TransactionSample]
-    narrative: str
+    sample: list[TransactionSample] = Field(max_length=200)
+    narrative: str = Field(max_length=4000)
 
 
 class WatchlistResult(BaseModel):
@@ -85,6 +85,42 @@ class RecommendationInput(Mutation):
 class InvestigationCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
     scenario: Literal["complete", "failed_evidence", "conflict"] = "complete"
+    intake: "InvestigationIntake | None" = None
+
+
+class InvestigationIntake(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    alert_reference: str = Field(min_length=3, max_length=60)
+    subject_reference: str = Field(min_length=3, max_length=80)
+    profile: CustomerProfileResult
+    transactions: TransactionSummaryResult
+    record_source: str = Field(min_length=10, max_length=500)
+    screening_urls: list[str] = Field(default_factory=list, max_length=2)
+    news_urls: list[str] = Field(default_factory=list, max_length=2)
+    indicators: list[str] = Field(default_factory=list, max_length=20)
+    sample_data: bool = False
+
+
+class BrowserSource(BaseModel):
+    url: str = Field(max_length=2048)
+    title: str = Field(max_length=300)
+    excerpt: str = Field(min_length=20, max_length=6000)
+    capture_id: str
+    checksum: str
+
+
+class BrowserScreeningResult(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    provider: Literal["google-puppeteer-vision"] = "google-puppeteer-vision"
+    query: str = Field(max_length=200)
+    search_capture_id: str | None = None
+    discovery: Literal["google", "analyst-selected-urls"]
+    candidate_count: int = Field(ge=0, le=2)
+    sources: list[BrowserSource] = Field(min_length=1, max_length=2)
+    identity_confirmed: Literal[False] = False
+    coverage: str = (
+        "Bounded public-web research; not exhaustive sanctions or adverse-media screening."
+    )
 
 
 class ToolInput(Mutation):

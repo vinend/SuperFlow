@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -9,6 +9,21 @@ ROOT = Path(__file__).resolve().parents[3]
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore")
+    app_environment: Literal["local", "staging", "production"] = "local"
+    auth_mode: Literal["local", "password"] = "local"
+    public_app_url: str = "http://127.0.0.1:3000"
+    session_hours: int = Field(default=8, ge=1, le=24)
+    investigation_provider: Literal["synthetic", "browser"] = "synthetic"
+
+    @model_validator(mode="after")
+    def staging_controls(self):
+        if self.app_environment != "local":
+            if self.auth_mode != "password" or self.investigation_provider != "browser":
+                raise ValueError("STG/PRD requires password authentication and browser screening.")
+            if not self.public_app_url.startswith("https://"):
+                raise ValueError("STG/PRD requires PUBLIC_APP_URL with HTTPS.")
+        return self
+
     database_url: str = "postgresql+psycopg://superflow:superflow_demo@127.0.0.1:5432/superflow"
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     llm_provider: Literal["deterministic", "ollama"] = "deterministic"

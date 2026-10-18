@@ -98,3 +98,9 @@ uvicorn==0.41.0
 win32_setctime==1.2.0
 wrapt==2.5.1
 yarl==1.25.1
+
+argon2-cffi==25.1.0
+argon2-cffi-bindings==26.1.0
+cffi==2.1.1
+pwdlib[argon2]==0.3.0
+pycparser==3.11

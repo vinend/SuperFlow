@@ -9,11 +9,11 @@ export type InvestigationView = {
     required: Record<string, string>;
     optional: Record<string, string>;
   };
-  scenario: "complete" | "failed_evidence" | "conflict";
+  scenario: "complete" | "failed_evidence" | "conflict" | "submitted";
   subject_reference: string;
   context: {
     customer_name: string;
-    triage_level: "HIGH" | "MEDIUM" | "LOW";
+    triage_level: "HIGH" | "MEDIUM" | "LOW" | "UNASSESSED";
     indicators: string[];
     synthetic: boolean;
   };

@@ -94,6 +94,8 @@ def seed(db, *, commit=True, include_investigations=False):
 
 
 def validate_reset_target(url: str, confirmed: bool) -> None:
+    if settings.app_environment != "local":
+        raise ValueError("Destructive synthetic reset is disabled outside local environments.")
     target = make_url(url)
     if not confirmed:
         raise ValueError(
@@ -148,7 +150,9 @@ def main():
         count = (
             reset_synthetic(session, presentation=args.presentation)
             if args.reset
-            else seed(session, include_investigations=True)
+            else seed(
+                session, include_investigations=settings.investigation_provider == "synthetic"
+            )
         )
         print(f"{'Reset' if args.reset else 'Seed'} complete: {count} synthetic documents created.")
 

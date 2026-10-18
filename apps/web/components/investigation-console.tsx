@@ -21,6 +21,8 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ApplicationShell } from "./application-shell";
+import { InvestigationIntake } from "./investigation-intake";
+import { BrowserScreeningEvidence } from "./screening-evidence";
 import { useSession } from "./session";
 import {
   EmptyState,
@@ -150,6 +152,12 @@ function InvestigationReviewState({
   const [notes, setNotes] = useState("");
   const [recommendation, setRecommendation] = useState("");
   const [showAllActivity, setShowAllActivity] = useState(false);
+  const imported = (item: InvestigationView) => {
+    setItems((previous) => [...previous, item]);
+    setCurrent(item);
+    setNotes(item.analyst_notes);
+    setRecommendation(item.analyst_recommendation);
+  };
   useEffect(() => {
     let live = true;
     api<InvestigationView[]>("/api/investigations", user)
@@ -229,8 +237,9 @@ function InvestigationReviewState({
         <PageHeader
           eyebrow="Compliance workspace"
           title="Investigation Review"
-          description="Synthetic Compliance investigation workspace."
+          description="Review submitted records and collect public-web screening evidence."
         />
+        <InvestigationIntake onCreated={imported} />
         {error ? (
           <ErrorState message={error} retry={() => window.location.reload()} />
         ) : (
@@ -254,6 +263,7 @@ function InvestigationReviewState({
   const news =
     evidence.adverse_news?.status === "available" ? "done" : "pending";
   const analyst = user.id === current.owner_id && !current.submitted_at;
+  const submittedRecords = current.scenario === "submitted";
   const transactionRun = current.tool_runs.find(
     (run) =>
       run.tool_name === "summarize_transactions" && run.status === "completed",
@@ -297,7 +307,11 @@ function InvestigationReviewState({
       aria-labelledby="page-title"
     >
       <PageHeader
-        eyebrow="Synthetic investigation alert"
+        eyebrow={
+          current.context.synthetic
+            ? "Sample investigation alert"
+            : "Submitted investigation alert"
+        }
         title={`Investigation Review — Alert ${current.alert_reference}`}
         description="Review collected evidence and record an analyst recommendation before independent checker review."
         action={
@@ -311,7 +325,7 @@ function InvestigationReviewState({
         }
       />
       {error && <ErrorState message={error} retry={refresh} />}
-      <nav aria-label="Synthetic investigations" className={styles.scenarioNav}>
+      <nav aria-label="Investigations" className={styles.scenarioNav}>
         {items.map((item) => (
           <Link
             key={item.id}
@@ -338,11 +352,33 @@ function InvestigationReviewState({
             )?.result.declared_source_of_funds || "Not collected",
           )}
         />
-        <Fact label="Alerted value" value="IDR 487.5M · synthetic" />
-        <Fact label="Transactions" value="18 in 36 hours" />
-        <Fact label="New beneficiaries" value="7 counterparties" />
-        <Fact label="Profile baseline" value="IDR 18–35M / month" />
+        <Fact
+          label="Alerted value"
+          value={`IDR ${Number(transactionRun?.result.alerted_value_idr || 0).toLocaleString()}`}
+        />
+        <Fact
+          label="Transactions"
+          value={`${transactionRun?.result.count ?? "—"} in ${transactionRun?.result.window_hours ?? "—"} hours`}
+        />
+        <Fact
+          label="New beneficiaries"
+          value={String(
+            transactionRun?.result.new_beneficiaries ?? "Not collected",
+          )}
+        />
+        <Fact
+          label="Profile baseline"
+          value={String(
+            current.tool_runs.find(
+              (run) => run.tool_name === "get_customer_profile",
+            )?.result.profile_baseline || "Not collected",
+          )}
+        />
       </section>
+      <details>
+        <summary>Import another investigation</summary>
+        <InvestigationIntake onCreated={imported} />
+      </details>
 
       <div className={styles.layout}>
         <div className={styles.primaryColumn}>
@@ -376,7 +412,7 @@ function InvestigationReviewState({
               >
                 <PanelHeading
                   title="Investigation draft summary"
-                  detail="Generated deterministically from persisted synthetic transaction evidence."
+                  detail="Generated from the persisted transaction evidence; inspect the source records."
                   badge={
                     <Badge
                       tone={
@@ -396,7 +432,7 @@ function InvestigationReviewState({
                       key={reason}
                       icon={ArrowUpRight}
                       title={reason}
-                      detail="Deterministic synthetic triage indicator."
+                      detail="Recorded triage indicator; not a final finding."
                       badge="Indicator"
                       tone="review"
                     />
@@ -456,15 +492,25 @@ function InvestigationReviewState({
               >
                 <PanelHeading
                   title="Screening and external context"
-                  detail="Synthetic adapter results remain unverified until a human inspects the recorded result."
+                  detail={
+                    submittedRecords
+                      ? "Public sources and vision observations require identity verification. This research cannot establish a clear screening result."
+                      : "Synthetic adapter results remain unverified until a human inspects the recorded result."
+                  }
                 />
                 <div className={styles.evidenceList} aria-live="polite">
                   <EvidenceRow
                     icon={ShieldCheck}
-                    title="Internal watchlist screening"
+                    title={
+                      submittedRecords
+                        ? "Public watchlist research"
+                        : "Internal watchlist screening"
+                    }
                     detail={
                       watchlistRun
-                        ? `${watchlistRun.result.exact_match ? "Exact match recorded" : "No exact match"} · ${watchlistRun.result.possible_name_similarity ? "possible name similarity" : "no name similarity"} · synthetic result`
+                        ? submittedRecords
+                          ? `${String(watchlistRun.result.candidate_count)} public sources · identity not confirmed`
+                          : `${watchlistRun.result.exact_match ? "Exact match recorded" : "No exact match"} · ${watchlistRun.result.possible_name_similarity ? "possible name similarity" : "no name similarity"} · synthetic result`
                         : "Not collected"
                     }
                     {...stateCopy(watchlist)}
@@ -474,11 +520,19 @@ function InvestigationReviewState({
                     title="Adverse news search"
                     detail={
                       newsRun
-                        ? `${String(newsRun.result.candidate_articles)} synthetic candidate articles · identity ${newsRun.result.identity_confirmed ? "confirmed" : "not confirmed"}`
+                        ? submittedRecords
+                          ? `${String(newsRun.result.candidate_count)} public sources · identity not confirmed`
+                          : `${String(newsRun.result.candidate_articles)} synthetic candidate articles · identity ${newsRun.result.identity_confirmed ? "confirmed" : "not confirmed"}`
                         : "Not collected"
                     }
                     {...stateCopy(news)}
                   />
+                  {submittedRecords && (
+                    <BrowserScreeningEvidence
+                      investigationId={current.id}
+                      runs={current.tool_runs}
+                    />
+                  )}
                   <EvidenceRow
                     icon={Globe2}
                     title="Phone intelligence"
@@ -499,7 +553,7 @@ function InvestigationReviewState({
               >
                 <PanelHeading
                   title="Evidence and provenance"
-                  detail="Every collected item refers to a persisted synthetic tool attempt."
+                  detail="Every collected item refers to a persisted collection attempt."
                 />
                 <div className={styles.evidenceList}>
                   {current.reliability.evidence.map((item) => (
@@ -511,7 +565,7 @@ function InvestigationReviewState({
                       title={item.label}
                       detail={
                         item.status === "available"
-                          ? `Synthetic ${current.provenance[item.key]?.tool_name || "authorized source"} · ${current.provenance[item.key]?.collected_at || "recorded"} · fingerprint ${current.provenance[item.key]?.fingerprint.slice(0, 12) || "unavailable"}`
+                          ? `${submittedRecords ? "Collected" : "Synthetic"} ${current.provenance[item.key]?.tool_name || "authorized source"} · ${current.provenance[item.key]?.collected_at || "recorded"} · fingerprint ${current.provenance[item.key]?.fingerprint.slice(0, 12) || "unavailable"}`
                           : item.details
                       }
                       tone={
@@ -534,8 +588,9 @@ function InvestigationReviewState({
                   ))}
                 </div>
                 <p className={styles.note}>
-                  Tool results and fingerprints are synthetic and remain
-                  available in the investigation history.
+                  Collected results and fingerprints remain available in the
+                  investigation history. Synthetic examples are labeled
+                  separately from submitted records and browser research.
                 </p>
                 <h3>Tool attempts</h3>
                 <ol className={styles.timeline}>
@@ -549,7 +604,7 @@ function InvestigationReviewState({
                         </strong>
                         <p>
                           {run.error_summary ||
-                            `Synthetic result recorded ${new Date(run.completed_at || run.started_at).toLocaleString("en-GB")}`}
+                            `${submittedRecords ? "Collection" : "Synthetic result"} recorded ${new Date(run.completed_at || run.started_at).toLocaleString("en-GB")}`}
                         </p>
                       </div>
                     </li>
@@ -613,7 +668,7 @@ function InvestigationReviewState({
           <section className={styles.panel} aria-label="Investigation risk">
             <PanelHeading
               title="Triage priority"
-              detail="Derived from explicit synthetic indicators; not an AML finding."
+              detail="Derived from recorded indicators; unassessed when none are provided. This is not an AML finding."
               badge={
                 <Badge
                   tone={
@@ -627,10 +682,20 @@ function InvestigationReviewState({
               }
             />
             <div className={styles.risk}>
-              <Badge tone="high">{current.context.triage_level} PRIORITY</Badge>
+              <Badge
+                tone={
+                  current.context.triage_level === "HIGH" ? "high" : "review"
+                }
+              >
+                {current.context.triage_level} PRIORITY
+              </Badge>
               <div>
                 <strong>Human investigation required</strong>
-                <p>{current.context.indicators.join("; ")}.</p>
+                <p>
+                  {current.context.indicators.length
+                    ? current.context.indicators.join("; ")
+                    : "No triage indicators have been supplied. Review the source records."}
+                </p>
               </div>
             </div>
             <p className={styles.note}>{current.reliability.summary}</p>
@@ -658,7 +723,9 @@ function InvestigationReviewState({
                   label={item.label}
                   detail={
                     item.status === "available"
-                      ? "Collected from synthetic source"
+                      ? submittedRecords
+                        ? "Collected from submitted records / public sources"
+                        : "Collected from synthetic source"
                       : item.status === "conflicting"
                         ? "Conflicting evidence"
                         : item.required

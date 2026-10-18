@@ -67,7 +67,8 @@ export function ApplicationShell({
   view: View;
   children: ReactNode;
 }) {
-  const { user, users, selectUser } = useSession();
+  const { user, users, selectUser, authenticated, environment, logout } =
+    useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const reduced = useReducedMotion();
   const nav = navigationFor(user.role_id);
@@ -159,7 +160,10 @@ export function ApplicationShell({
             </strong>
           </div>
           <div className="session-controls">
-            <span className="demo-label">Demo role</span>
+            <span className="demo-label">
+              {environment === "staging" ? "STG" : "Local"} ·{" "}
+              {authenticated ? roleLabel(user.role_id) : "Test identity"}
+            </span>
             <span className="avatar">
               {user.name
                 .split(" ")
@@ -167,23 +171,32 @@ export function ApplicationShell({
                 .slice(0, 2)
                 .join("")}
             </span>
-            <label className="role-picker">
-              <span className="sr-only">Demo role</span>
-              <select
-                aria-label="Demo role"
-                value={user.id}
-                onChange={(event) => selectUser(event.target.value)}
+            {authenticated ? (
+              <button
+                className="button secondary"
+                onClick={() => void logout()}
               >
-                {users.map((person) => (
-                  <option key={person.id} value={person.id}>
-                    {person.id === "compliance_checker"
-                      ? "Compliance Checker"
-                      : roleLabel(person.role_id)}{" "}
-                    — {person.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+                Sign out
+              </button>
+            ) : (
+              <label className="role-picker">
+                <span className="sr-only">Demo role</span>
+                <select
+                  aria-label="Demo role"
+                  value={user.id}
+                  onChange={(event) => selectUser(event.target.value)}
+                >
+                  {users.map((person) => (
+                    <option key={person.id} value={person.id}>
+                      {person.id === "compliance_checker"
+                        ? "Compliance Checker"
+                        : roleLabel(person.role_id)}{" "}
+                      — {person.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
         </header>
         <motion.div
@@ -197,7 +210,9 @@ export function ApplicationShell({
         </motion.div>
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
-          <Link href="/demo">Demo walkthrough</Link>
+          <Link href="/demo">
+            {environment === "staging" ? "UAT walkthrough" : "Demo walkthrough"}
+          </Link>
           <span>Knowledge → Evidence → Decision → Action</span>
         </footer>
       </div>

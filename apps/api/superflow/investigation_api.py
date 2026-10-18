@@ -22,7 +22,7 @@ from .investigations import (
     update_recommendation,
     view,
 )
-from .models import Case, Investigation, User
+from .models import Case, Investigation, User, WebsiteCapture
 
 router = APIRouter(prefix="/api/investigations", tags=["investigations"])
 Db = Annotated[Session, Depends(get_db)]
@@ -44,7 +44,7 @@ def list_investigations(db: Db, user: Actor):
 
 @router.post("", status_code=201)
 def create(value: InvestigationCreate, db: Db, user: Actor):
-    investigation = create_investigation(db, user, value.scenario)
+    investigation = create_investigation(db, user, value.scenario, intake=value.intake)
     case = db.get(Case, investigation.case_id)
     result = view(db, user, case, investigation)
     db.commit()
@@ -57,6 +57,23 @@ def read(investigation_id: str, db: Db, user: Actor):
     result = view(db, user, case, investigation)
     db.commit()
     return result
+
+
+@router.get("/{investigation_id}/captures/{capture_id}")
+def capture_evidence(investigation_id: str, capture_id: str, db: Db, user: Actor):
+    case, investigation = require_investigation(db, user, investigation_id)
+    current = view(db, user, case, investigation)
+    allowed = {
+        source["capture_id"]
+        for run in current["tool_runs"]
+        for source in run["result"].get("sources", [])
+    } | {run["result"].get("search_capture_id") for run in current["tool_runs"]}
+    if capture_id not in allowed:
+        raise HTTPException(404, "Capture unavailable.")
+    capture = db.get(WebsiteCapture, capture_id)
+    if not capture:
+        raise HTTPException(404, "Capture unavailable.")
+    return capture.payload
 
 
 def changed(db, user, case, investigation):

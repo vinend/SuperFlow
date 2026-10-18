@@ -39,7 +39,44 @@ function handlerFor(userId: string) {
   return handler;
 }
 
-function handle(request: NextRequest) {
+async function handle(request: NextRequest) {
+  const backend = process.env.SUPERFLOW_API_URL || "http://127.0.0.1:8000";
+  const config = await fetch(`${backend}/api/auth/config`, {
+    cache: "no-store",
+    signal: AbortSignal.timeout(5000),
+  })
+    .then((response) => response.json())
+    .catch(() => null);
+  if (!config)
+    return Response.json(
+      { error: "Authentication unavailable." },
+      { status: 503 },
+    );
+  if (config.mode === "password") {
+    const authHeaders = {
+      Cookie: request.headers.get("cookie") || "",
+      Origin: request.headers.get("origin") || "",
+    };
+    const response = await fetch(`${backend}/api/auth/me`, {
+      headers: authHeaders,
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    }).catch(() => null);
+    if (!response?.ok)
+      return Response.json({ error: "Sign in to SuperFlow." }, { status: 401 });
+    const user = await response.json();
+    // Never retain session cookies in the process-wide demo handler cache.
+    const handler = createCopilotRuntimeHandler({
+      runtime: new CopilotRuntime({
+        agents: {
+          workspace: new SuperFlowWorkspaceAgent(user.id, authHeaders),
+        },
+        runner: new InMemoryAgentRunner(),
+      }),
+      basePath: "/api/copilotkit",
+    });
+    return handler(request);
+  }
   const userId = request.headers.get("X-User-Id") || "";
   if (!DEMO_USERS.has(userId))
     return Response.json({ error: "Unknown demo identity." }, { status: 401 });

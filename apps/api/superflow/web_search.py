@@ -222,7 +222,7 @@ def collect(db: Session, user: User, run: QuestionRun, query: AskInput, start: i
                     "Google blocked this local browser search (HTTP 429). "
                     if search.get("http_status") == 429
                     else "Google returned no accessible result links. "
-                ) + "Vision inspected the returned page; no web results entered AI context."
+                ) + "No web results entered AI context."
                 run.web_search_result = dict(report)
                 record(
                     db,

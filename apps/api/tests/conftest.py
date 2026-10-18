@@ -14,6 +14,9 @@ from sqlalchemy.pool import StaticPool
 os.environ["RETRIEVAL_PROVIDER"] = "keyword"
 os.environ["RETRIEVAL_ENGINE"] = "native"
 os.environ["LLM_PROVIDER"] = "deterministic"
+os.environ["APP_ENVIRONMENT"] = "local"
+os.environ["AUTH_MODE"] = "local"
+os.environ["INVESTIGATION_PROVIDER"] = "synthetic"
 
 from superflow.audit import demo_reset_mode
 from superflow.config import ROOT

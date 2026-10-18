@@ -8,12 +8,14 @@ from fastapi import HTTPException
 from pydantic import ValidationError
 from sqlalchemy import select
 
+from .browser_screening import ScreeningUnavailable, collect_screening
 from .cases import activity, can_access_case, get_case, log, new_case
 from .config import settings
 from .guard import SuperFlowGuard
 from .investigation_contracts import (
     TOOL_RESULT_SCHEMAS,
     AgentAction,
+    InvestigationIntake,
     SyntheticToolRequest,
     ToolName,
 )
@@ -217,6 +219,7 @@ def evaluate_investigation_case(db, user, case) -> GuardResult:
         conflict=conflict,
         failed_tools=failed,
         template_valid=investigation.template_id == TEMPLATE["id"],
+        public_web=investigation.scenario == "submitted",
     )
     run = db.get(QuestionRun, case.context_run_id)
     result = persist_guard_result(db, user, run, result)
@@ -280,16 +283,26 @@ def execute_tool(db, user, case, investigation, tool_name: str, *, retry=False):
     if len(previous) >= MAX_TOOL_ATTEMPTS:
         raise HTTPException(409, "Tool retry limit reached; manual attention is required.")
     attempt = len(previous) + 1
-    request = SyntheticToolRequest(
-        subject_reference=investigation.subject_reference,
-        fixture=investigation.scenario,
+    submitted = investigation.scenario == "submitted"
+    request = (
+        {
+            "subject_reference": investigation.subject_reference,
+            "provider": "submitted-records"
+            if tool in {ToolName.CUSTOMER_PROFILE, ToolName.TRANSACTIONS}
+            else "google-puppeteer-vision",
+        }
+        if submitted
+        else SyntheticToolRequest(
+            subject_reference=investigation.subject_reference,
+            fixture=investigation.scenario,
+        ).model_dump(mode="json")
     )
     run = ToolRun(
         investigation_id=case.id,
         tool_name=tool.value,
         status="running",
         attempt_number=attempt,
-        request_metadata=request.model_dump(mode="json"),
+        request_metadata=request,
         result_metadata={},
     )
     db.add(run)
@@ -303,7 +316,25 @@ def execute_tool(db, user, case, investigation, tool_name: str, *, retry=False):
         attempt=attempt,
         tool_run_id=run.id,
     )
-    if investigation.scenario == "failed_evidence" and tool == ToolName.WATCHLIST:
+    if not submitted and settings.investigation_provider != "synthetic":
+        run.status, run.error_code, run.error_summary = (
+            "failed",
+            "SYNTHETIC_PROVIDER_DISABLED",
+            "Legacy synthetic adapters are disabled. "
+            "Import submitted records for browser screening.",
+        )
+        run.completed_at = now()
+        log(
+            db,
+            user,
+            case,
+            "tool_failed",
+            tool_name=tool.value,
+            tool_run_id=run.id,
+            error_code=run.error_code,
+            attempt=attempt,
+        )
+    elif investigation.scenario == "failed_evidence" and tool == ToolName.WATCHLIST:
         run.status, run.error_code, run.error_summary = (
             "failed",
             "SYNTHETIC_UNAVAILABLE",
@@ -331,16 +362,35 @@ def execute_tool(db, user, case, investigation, tool_name: str, *, retry=False):
             )
     else:
         try:
-            result = (
-                TOOL_RESULT_SCHEMAS[tool]
-                .model_validate(_tool_fixture(investigation, tool))
-                .model_dump(mode="json")
-            )
-        except ValidationError:
+            if submitted:
+                intake = InvestigationIntake.model_validate(investigation.context_data["intake"])
+                if tool == ToolName.CUSTOMER_PROFILE:
+                    result = intake.profile.model_dump(mode="json")
+                elif tool == ToolName.TRANSACTIONS:
+                    result = intake.transactions.model_dump(mode="json")
+                else:
+                    result = collect_screening(db, user, investigation, tool)
+            else:
+                result = (
+                    TOOL_RESULT_SCHEMAS[tool]
+                    .model_validate(_tool_fixture(investigation, tool))
+                    .model_dump(mode="json")
+                )
+        except (
+            ValidationError,
+            ScreeningUnavailable,
+            HTTPException,
+            httpx.HTTPError,
+            OSError,
+            ValueError,
+        ):
             run.status, run.error_code, run.error_summary = (
                 "failed",
-                "INVALID_SYNTHETIC_RESULT",
-                "Synthetic tool returned an invalid structured result.",
+                "BROWSER_EVIDENCE_UNAVAILABLE" if submitted else "INVALID_SYNTHETIC_RESULT",
+                "Browser/vision evidence could not be collected. Google may be blocked or a "
+                "source/provider unavailable. No negative screening finding was produced."
+                if submitted
+                else "Synthetic tool returned an invalid structured result.",
             )
             run.completed_at = now()
             log(
@@ -370,7 +420,10 @@ def execute_tool(db, user, case, investigation, tool_name: str, *, retry=False):
             row = next(row for row in _rows(db, case.id) if row.key == key)
             item = EvidenceItem.model_validate(row.item)
             item.status = "available"
-            item.details = f"Synthetic {tool.value} result; attempt {attempt}; run {run.id}."
+            item.details = (
+                f"{'Submitted record / browser research' if submitted else 'Synthetic'} "
+                f"{tool.value} result; attempt {attempt}; run {run.id}."
+            )
             row.item = item.model_dump(mode="json")
             provenance[key] = {
                 "tool_run_id": run.id,
@@ -490,12 +543,21 @@ def agent_step(db, user, case, investigation):
     return plan
 
 
-def create_investigation(db, user, scenario="complete", *, seed=False):
+def create_investigation(
+    db, user, scenario="complete", *, seed=False, alert_reference=None, intake=None
+):
     if user.role_id != "compliance" or user.id == "compliance_checker":
         raise HTTPException(403, "Only the Compliance analyst may open an investigation.")
+    if intake:
+        return create_submitted_investigation(db, user, intake)
+    if settings.investigation_provider != "synthetic":
+        raise HTTPException(
+            422, "Submit profile and transaction records; synthetic intake is disabled."
+        )
     fixture = SCENARIOS[scenario]
+    alert_reference = alert_reference or fixture["alert"]
     existing = db.scalar(
-        select(Investigation).where(Investigation.alert_reference == fixture["alert"])
+        select(Investigation).where(Investigation.alert_reference == alert_reference)
     )
     if existing:
         if seed:
@@ -505,7 +567,7 @@ def create_investigation(db, user, scenario="complete", *, seed=False):
         db,
         user,
         CaseCreate(
-            title=f"Investigation Review — Alert {fixture['alert']}",
+            title=f"Investigation Review — Alert {alert_reference}",
             description="Synthetic transaction alert requiring analyst and checker review.",
             type="aml_investigation",
         ),
@@ -513,7 +575,7 @@ def create_investigation(db, user, scenario="complete", *, seed=False):
     )
     investigation = Investigation(
         case_id=case.id,
-        alert_reference=fixture["alert"],
+        alert_reference=alert_reference,
         template_id=TEMPLATE["id"],
         scenario=scenario,
         subject_reference=fixture["subject"],
@@ -543,13 +605,72 @@ def create_investigation(db, user, scenario="complete", *, seed=False):
         user,
         case,
         "investigation_created",
-        alert_reference=fixture["alert"],
+        alert_reference=alert_reference,
         template_id=TEMPLATE["id"],
         scenario=scenario,
     )
     execute_tool(db, user, case, investigation, ToolName.CUSTOMER_PROFILE.value)
     execute_tool(db, user, case, investigation, ToolName.TRANSACTIONS.value)
     evaluate_investigation_case(db, user, case)
+    return investigation
+
+
+def create_submitted_investigation(db, user, value):
+    intake = InvestigationIntake.model_validate(value)
+    if db.scalar(
+        select(Investigation).where(Investigation.alert_reference == intake.alert_reference)
+    ):
+        raise HTTPException(409, "An investigation for this reference already exists.")
+    case = new_case(
+        db,
+        user,
+        CaseCreate(
+            title=f"Investigation — {intake.alert_reference}",
+            type="aml_investigation",
+            description="Analyst-submitted profile and transaction records "
+            "with public-web research.",
+        ),
+        may_assign=True,
+    )
+    investigation = Investigation(
+        case_id=case.id,
+        alert_reference=intake.alert_reference,
+        subject_reference=intake.subject_reference,
+        template_id=TEMPLATE["id"],
+        scenario="submitted",
+        context_data={
+            "customer_name": intake.profile.customer_name,
+            "synthetic": intake.sample_data,
+            "indicators": intake.indicators,
+            "intake": intake.model_dump(mode="json"),
+        },
+        provenance={},
+        analyst_notes="",
+        analyst_recommendation="",
+    )
+    db.add(investigation)
+    db.flush()
+    for key, label in {**TEMPLATE["required"], **TEMPLATE["optional"]}.items():
+        item = EvidenceItem(
+            key=key,
+            label=label,
+            required=key in TEMPLATE["required"],
+            status="missing",
+            details="Evidence has not been collected.",
+        )
+        db.add(CaseEvidence(case_id=case.id, key=key, item=item.model_dump(mode="json")))
+    db.flush()
+    log(
+        db,
+        user,
+        case,
+        "investigation_created",
+        alert_reference=intake.alert_reference,
+        template_id=TEMPLATE["id"],
+        scenario="submitted",
+    )
+    execute_tool(db, user, case, investigation, ToolName.CUSTOMER_PROFILE.value)
+    execute_tool(db, user, case, investigation, ToolName.TRANSACTIONS.value)
     return investigation
 
 
@@ -607,10 +728,11 @@ def view(db, user, case, investigation):
         None,
     )
     draft_summary = (
-        f"Synthetic alert shows {transaction['count']} transfers in "
+        f"{'Submitted' if investigation.scenario == 'submitted' else 'Synthetic'} alert shows "
+        f"{transaction['count']} transfers in "
         f"{transaction['window_hours']} hours "
         f"and {transaction['new_beneficiaries']} new beneficiaries. "
-        "The pattern differs from the declared salary baseline; analyst and "
+        "Inspect the submitted pattern against the declared baseline; analyst and "
         "checker review is required."
         if transaction
         else "Transaction evidence has not been collected."
@@ -624,7 +746,10 @@ def view(db, user, case, investigation):
         "subject_reference": investigation.subject_reference,
         "context": {
             **investigation.context_data,
-            "triage_level": triage_priority(investigation.context_data.get("indicators", [])),
+            "triage_level": "UNASSESSED"
+            if investigation.scenario == "submitted"
+            and not investigation.context_data.get("indicators")
+            else triage_priority(investigation.context_data.get("indicators", [])),
         },
         "draft_summary": draft_summary,
         "evidence": [item.model_dump(mode="json") for item in _evidence(db, investigation)],

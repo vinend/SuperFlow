@@ -1,0 +1,15 @@
+# Set SUPERFLOW_STAGING_HOST to the DNS name matching PUBLIC_APP_URL.
+{$SUPERFLOW_STAGING_HOST} {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy same-origin
+        X-Frame-Options DENY
+        -Server
+    }
+    reverse_proxy 127.0.0.1:3000 {
+        transport http {
+            read_timeout 10m
+        }
+    }
+}

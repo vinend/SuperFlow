@@ -11,7 +11,10 @@ const API_URL =
   "http://127.0.0.1:8000";
 
 export class SuperFlowWorkspaceAgent extends AbstractAgent {
-  constructor(private readonly userId: string) {
+  constructor(
+    private readonly userId: string,
+    private readonly authHeaders: Record<string, string> = {},
+  ) {
     super({
       agentId: "workspace",
       description: "Routes requests to approved SuperFlow workspaces.",
@@ -19,7 +22,7 @@ export class SuperFlowWorkspaceAgent extends AbstractAgent {
   }
 
   override clone() {
-    return new SuperFlowWorkspaceAgent(this.userId);
+    return new SuperFlowWorkspaceAgent(this.userId, this.authHeaders);
   }
 
   override run(input: RunAgentInput): Observable<BaseEvent> {
@@ -46,6 +49,7 @@ export class SuperFlowWorkspaceAgent extends AbstractAgent {
             headers: {
               "Content-Type": "application/json",
               "X-User-Id": this.userId,
+              ...this.authHeaders,
             },
             body: JSON.stringify({ prompt }),
             cache: "no-store",

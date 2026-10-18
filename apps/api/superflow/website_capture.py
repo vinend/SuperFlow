@@ -153,6 +153,11 @@ def scan_website(url: str, *, search_query: str | None = None, max_screenshots: 
             )
         try:
             result = json.loads(process.stdout)
+            if search_query and result.get("blocked"):
+                # A CAPTCHA or rate-limit page is not screening evidence. Avoid
+                # spending model memory and minutes analyzing a failed search.
+                result.update(vision_model=None, observations=[], vision_status="skipped-blocked")
+                return result
             observations = observe_screenshots(result["screenshots"])
             result.update(vision_model=settings.vision_model, observations=observations)
             return result

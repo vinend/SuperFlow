@@ -1,0 +1,25 @@
+{
+  "alert_reference": "UAT-IMPORT-001",
+  "subject_reference": "UAT-CUSTOMER-001",
+  "profile": {
+    "customer_name": "Sample Customer",
+    "occupation": "Sample business owner",
+    "declared_source_of_funds": "Business receipts",
+    "profile_baseline": "Illustrative monthly turnover IDR 100 million"
+  },
+  "transactions": {
+    "count": 3,
+    "window_hours": 24,
+    "alerted_value_idr": 150000000,
+    "new_beneficiaries": 2,
+    "sample": [
+      {"time": "2026-10-18T09:00:00+07:00", "type": "Outbound transfer", "amount": -50000000, "context": "Synthetic UAT record"}
+    ],
+    "narrative": "Synthetic UAT records for testing the import; replace with authorized records."
+  },
+  "record_source": "Synthetic UAT import template; not a core banking integration.",
+  "screening_urls": [],
+  "news_urls": [],
+  "indicators": [],
+  "sample_data": true
+}

@@ -50,6 +50,30 @@ class User(Base):
     role: Mapped[Role] = relationship()
 
 
+class UserCredential(Base):
+    __tablename__ = "user_credentials"
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    password_hash: Mapped[str] = mapped_column(Text)
+    failed_attempts: Mapped[int] = mapped_column(default=0)
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    changed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+
+
+class AuthSession(Base):
+    __tablename__ = "auth_sessions"
+    token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
+class LoginThrottle(Base):
+    __tablename__ = "login_throttles"
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    attempts: Mapped[int]
+    window_start: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class Document(Base):
     __tablename__ = "documents"
     __table_args__ = (CheckConstraint("authority_level BETWEEN 1 AND 5"),)

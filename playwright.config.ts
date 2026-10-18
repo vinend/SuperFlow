@@ -16,6 +16,7 @@ const database =
 export default defineConfig({
   testDir: "./tests",
   testMatch: "**/*.spec.ts",
+  testIgnore: "**/staging-auth.spec.ts",
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -40,6 +41,9 @@ export default defineConfig({
         RETRIEVAL_PROVIDER: "keyword",
         RETRIEVAL_ENGINE: "native",
         LLM_PROVIDER: "deterministic",
+        AUTH_MODE: "local",
+        APP_ENVIRONMENT: "local",
+        INVESTIGATION_PROVIDER: "synthetic",
       },
     },
     {
