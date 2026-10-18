@@ -45,6 +45,15 @@ sessions remain stored. The client stores only the selected session ID in the ro
 URL hash; chat content stays in the database. Identity changes unmount the old workspace
 and cancel polling. Existing mock identity authentication is unchanged.
 
+## Reading position
+
+Opening a chat or completing a reply positions the message pane at the beginning of
+the latest assistant response, rather than its evidence/process footer. Processing
+updates preserve the reading position. If the user scrolls to an earlier message,
+finishing the pending reply does not pull them away. Scrolling is confined to the
+message pane and respects reduced motion; native scroll anchoring is disabled there
+so replacing the activity card cannot override the intended response position.
+
 ## Branding
 
 The neon lime/deep teal theme, navigation wordmark, loading symbol, conversation symbol

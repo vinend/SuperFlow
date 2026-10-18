@@ -2,7 +2,13 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { MessageSquare, Plus, Search, Sparkles, Pencil } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import {
@@ -95,12 +101,15 @@ export function AskGenerativeArea({
     useState<WorkspaceResolution | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const nearBottom = useRef(true);
+  const lastScrollTarget = useRef({ chatId: "", turnId: "", status: "" });
   const dispatched = useRef("");
   const importedLegacy = useRef("");
   const restoredScope = useRef("");
   const reduced = useReducedMotion();
   const busy = c.sending || Boolean(c.pending);
   const latest = c.chat?.turns.at(-1);
+  const latestId = latest?.id;
+  const latestStatus = latest?.status;
   const legacyId = w.answer?.id;
   const chatId = c.chat?.id;
   const importAnswer = c.importAnswer;
@@ -191,11 +200,36 @@ export function AskGenerativeArea({
       });
   }, [copilotkit, isReady, latest]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = scroller.current;
-    if (element && nearBottom.current)
-      element.scrollTo({ top: element.scrollHeight, behavior: "instant" });
-  }, [c.chat?.id, c.chat?.turns.length, latest?.status, latest?.events.length]);
+    const previous = lastScrollTarget.current;
+    lastScrollTarget.current = {
+      chatId: chatId || "",
+      turnId: latestId || "",
+      status: latestStatus || "",
+    };
+    const reply = element?.querySelector<HTMLElement>(
+      ".chat-turn:last-child .chat-assistant-message",
+    );
+    if (!element || !reply || !latestId) return;
+    const viewport = element.getBoundingClientRect();
+    const bounds = reply.getBoundingClientRect();
+    const openingReply =
+      previous.chatId !== chatId || previous.turnId !== latestId;
+    const finished =
+      previous.status !== latestStatus &&
+      (latestStatus === "complete" || latestStatus === "failed");
+    const viewingReply =
+      bounds.top < viewport.bottom && bounds.bottom > viewport.top;
+    // Anchor to the answer's beginning, not its evidence/process footer. Progress
+    // updates leave the reader in place, as does finishing while they read older turns.
+    if (openingReply || (finished && (viewingReply || nearBottom.current))) {
+      element.scrollTo({
+        top: element.scrollTop + bounds.top - viewport.top - 24,
+        behavior: "instant",
+      });
+    }
+  }, [chatId, latestId, latestStatus]);
 
   function send(prompt: string) {
     nearBottom.current = true;

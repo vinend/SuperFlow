@@ -8,6 +8,11 @@
 
 **Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
 
+## Perbaikan scroll Ask — 18 Oktober 2026
+
+- Reply yang selesai dan chat yang dibuka diarahkan ke awal response, bukan footer evidence/process. Update tahap tidak terus memaksa scroll ke bawah. Saat pengguna membaca pesan lama, reply baru tidak menarik posisi baca. Scroll hanya mengubah pane pesan; native scroll anchoring dinonaktifkan pada pane tersebut.
+- Tiga browser regression tests lulus: long reply desktop, mobile dengan reduced motion, dan mempertahankan posisi saat membaca pesan lama. ESLint, TypeScript dan build produksi lulus. Demo direstart; sesi FDIC nyata dibuka ulang dan awal reply terakhir terlihat di dalam pane pesan. Bukti UI: `artifacts/screenshots/chat-reply-top-desktop.png`, `chat-reply-top-mobile.png` dan `chat-reply-top-live.png`.
+
 ## Ask conversations dan identitas Superbank — 18 Oktober 2026
 
 - Atas permintaan eksplisit pengguna, Ask memakai composer multiline yang lebih besar, sesi percakapan tersimpan, follow-up kontekstual, pencarian/rename sesi, dan process history di bawah setiap reply. Ini pengecualian terarah terhadap default UX non-chat PRD; tab, evidence, Guard dan controlled domain actions tetap dipertahankan.
