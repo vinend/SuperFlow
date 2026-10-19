@@ -1826,6 +1826,84 @@ select {
     display: none;
   }
 }
+
+/* Clear entry points and progressive detail on shared workspaces. */
+.home-ask-entry {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: var(--space-5) 0;
+  padding: var(--space-5);
+}
+.home-ask-entry p {
+  color: var(--muted);
+  max-width: 60ch;
+}
+.home-attention .attention-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--space-3);
+}
+.home-attention .attention-list li {
+  min-width: 0;
+}
+.work-tabs,
+.stage-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+.work-tabs button,
+.stage-tabs button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  padding: var(--space-2) var(--space-3);
+}
+.work-tabs button[aria-selected="true"],
+.stage-tabs button[aria-current="step"] {
+  border-color: var(--accent);
+  font-weight: 700;
+}
+.work-tabs button:focus-visible,
+.stage-tabs button:focus-visible,
+details > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.change-highlights {
+  display: grid;
+  gap: var(--space-3);
+  padding-left: var(--space-5);
+}
+.change-highlights span {
+  display: block;
+  color: var(--muted);
+}
+.answer-status {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+.answer-sources > summary,
+.answer-technical > summary,
+.case-evidence > details > summary {
+  cursor: pointer;
+  padding: var(--space-2) 0;
+}
+@media (max-width: 700px) {
+  .home-attention .attention-list {
+    grid-template-columns: 1fr;
+  }
+  .stage-tabs button {
+    flex: 1 1 45%;
+  }
+}
 @media (max-width: 1350px) {
   .home-workspace {
     grid-template-columns: minmax(0, 1fr) 250px;

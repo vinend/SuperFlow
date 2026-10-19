@@ -18,11 +18,11 @@ Update UI: referensi jawaban kini berlabel **From Knowledge Base** atau **Intern
 
 SuperFlow menghubungkan pengetahuan perusahaan dengan jawaban yang dapat ditelusuri, reliability, tindakan terkontrol, keputusan manusia, dan dampak bisnis. Workspace ini memakai data sintetis untuk memperagakan fondasi platform bagi Superbank.
 
-Ask SuperFlow kini memakai **CopilotKit V2 + AG-UI** sebagai lapisan intent: permintaan bahasa alami membuka workspace Knowledge, Regulatory Review, Investment Analysis, Investigation Review, Impact, My Work, atau Reviews sesuai role. Komponen dan API domain yang sudah ada tetap menjadi sumber data dan kontrol. Mode deterministik tidak memerlukan Ollama.
+Ask SuperFlow memakai **CopilotKit V2 + AG-UI** untuk memilih tampilan jawaban dan workspace yang sesuai dari komponen yang dikendalikan. Komponen dan API domain tetap menjadi sumber data serta kontrol. Mode deterministik tidak memerlukan Ollama.
 
-Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience sudah menjadi fondasi prototype sintetis. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Knowledge, My Work, dan Reviews / Approvals sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Regulatory Review, Investment Analysis, Impact, dan **Investigation Review Fase 7** tersedia di atas fondasi yang sama. Governance penuh belum tersedia.
+Sumber produk aktif adalah **[SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md)**, menggantikan PRD v1. Fase 0–7 dan rekonsiliasi Product Experience menjadi fondasi prototype sintetis. Pengguna melihat **Ask → Understand → Review → Act** melalui Home, Ask SuperFlow, Work, dan Knowledge Library sesuai role. Case, workflow, task, approval, Guard, evidence, dan audit tetap menjadi model internal. Regulatory Review, Investment Analysis, dan Investigation Review tersedia sebagai workspace spesialis. Impact tetap tersedia secara internal. Governance penuh belum tersedia.
 
-**Demo terintegrasi:** buka `/demo` atau tautan **Demo walkthrough** di footer. Jalankan migrasi lalu `npm run demo:reset` untuk mengembalikan seluruh dataset presentasi sintetis secara atomik. Perintah ini menghapus data aplikasi pada database demo lokal yang dikonfigurasi. Walkthrough menghubungkan Ask, My Work, Regulatory Review, Investment Analysis, keputusan manusia, dan Impact; proof point investigasi tetap opsional. Persiapan, urutan presentasi, pemulihan, dan batasannya ada di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md).
+**Pengalaman produk:** lima persona demo melihat Home, Ask SuperFlow, Work, Knowledge Library, dan workspace spesialis sesuai role. Work menyatukan tugas dan keputusan. Impact tetap dapat dibuka langsung untuk analitik internal, sedangkan panduan presenter ada di [DEMO_PLAYBOOK.md](docs/DEMO_PLAYBOOK.md); halaman `/demo` telah dihapus. `npm run demo:reset` hanya untuk database demo lokal dan menghapus data aplikasi pada database tersebut.
 
 Rantai produk: **Governed Knowledge → AI Agent → Reliability Layer → Controlled Action → Business Impact**.
 
@@ -358,29 +358,28 @@ Rincian state machine, permission/Guard, retry/fallback, audit, API, demo, dan b
 
 ## Pengalaman pengguna menurut PRD v2
 
-| Role                  | Navigasi yang tersedia sekarang                                                           |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| Employee              | Home, Ask SuperFlow, Knowledge, My Work                                                   |
-| Manager               | Home, Ask SuperFlow, Knowledge, My Work, Reviews / Approvals, Impact                      |
-| Subject Matter Expert | Home, Ask SuperFlow, Knowledge, My Work, Reviews, Impact                                  |
-| Compliance            | Home, Ask SuperFlow, Knowledge, Regulatory Review, My Work, Reviews / Approvals, Impact   |
-| Finance               | Home, Ask SuperFlow, Knowledge, Investment Analysis, My Work, Reviews / Approvals, Impact |
-| Governance Admin      | Home, Knowledge, My Work, Reviews / Approvals, Impact                                     |
+| Persona demo | Navigasi produk |
+| --- | --- |
+| Employee | Home, Ask SuperFlow, Work, Knowledge Library |
+| Manager | Home, Ask SuperFlow, Work, Knowledge Library |
+| Compliance | Home, Ask SuperFlow, Regulatory Review, Investigation Review, Work, Knowledge Library |
+| Finance | Home, Ask SuperFlow, Investment Analysis, Work, Knowledge Library |
+| Governance Admin | Home, Knowledge Library, Work |
 
-Modul yang belum tersedia tidak menjadi navigasi utama. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas control/review. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
+Subject Matter Expert dan Compliance Checker tetap ada untuk eskalasi dan review independen, tetapi tidak muncul dalam pemilih persona demo. Impact tersedia lewat rute langsung untuk analitik internal, tanpa item navigasi. Governance Admin tetap mempunyai akses API Ask existing; navigasi mengikuti tugas pemeliharaan sumber. Knowledge memakai permission `knowledge:write` existing untuk membatasi upload/edit/version/re-index.
 
-**My Work** menggabungkan proyeksi Case, workflow/tasks, approval, dan status kebutuhan informasi dari endpoint existing. Adapter frontend `product-view.ts` tidak menyimpan state execution baru. Work item menampilkan judul bisnis, status, langkah saat ini, next action, owner/reviewer, due date bila ada, reliability, dan pembaruan terakhir. **Progress** menyembunyikan routing/node types dan cabang yang tidak terpilih. **Activity** menerjemahkan AuditEvent tanpa memperlihatkan payload JSON/revision.
+**Work** menyatukan **My Tasks** dan **Needs My Decision** sesuai wewenang pengguna. Proyeksi Case, workflow/tasks, approval, dan kebutuhan informasi tetap berasal dari endpoint existing; adapter frontend `product-view.ts` tidak menyimpan state execution baru. Detail pekerjaan menampilkan status, tindakan berikutnya, sumber, serta progress dan aktivitas bila diminta.
 
 Detail pekerjaan mengambil konteks lengkap langsung dari Case API, sehingga tidak menunggu daftar pekerjaan/review lain. Daftar agregasi masih mengikuti endpoint existing tanpa pagination; waktu pemuatannya dapat bertambah bersama jumlah data.
 
-**Reviews / Approvals** hanya menampilkan pending request dengan `allowed_actions` dari backend. Employee tidak mendapat halaman keputusan atau kontrol approval. Backend tetap menentukan akses, independensi reviewer, kelengkapan evidence, dan concurrency.
+**Needs My Decision** hanya menampilkan permintaan yang membutuhkan keputusan dengan `allowed_actions` dari backend. Employee tidak mendapat tab keputusan atau kontrol approval. Backend tetap menentukan akses, independensi reviewer, kelengkapan evidence, dan concurrency.
 
-### Demo Ask menuju My Work
+### Demo Ask menuju Work
 
 1. Employee bertanya annual leave lalu memilih **Request Review**, atau bertanya konflik access review lalu **Start Review**.
 2. Periksa/edit judul bisnis dan pilih **Submit Request**. Frontend membuat Case dan memulai generic review memakai API existing; pengguna tidak memilih definisi workflow.
-3. Request muncul di My Work. Pilih **Information checked** untuk menjalankan pemeriksaan evidence dan routing reviewer existing.
-4. Manager/SME membuka Reviews, membaca evidence/source/reliability, lalu Approve/Reject/Request More Information/Escalate. Override hanya sesuai authority backend dan reason wajib.
+3. Request muncul di Work → My Tasks. Pilih **Information checked** untuk menjalankan pemeriksaan evidence dan routing reviewer existing.
+4. Manager atau SME internal membuka Work → Needs My Decision, membaca evidence/source/reliability, lalu Approve/Reject/Request More Information/Escalate. Override hanya sesuai authority backend dan reason wajib.
 5. Refresh dan buka Activity untuk melihat keputusan/progress tersimpan.
 6. Pertanyaan receipt tanpa dokumen pendukung menyediakan **Request Exception** sebagai request pengumpulan informasi. Consent eksplisit wajib; status BLOCKED tidak menjadi approval otomatis.
 

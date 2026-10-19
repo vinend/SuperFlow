@@ -50,6 +50,10 @@ export function AnswerCard({
         </span>
       </div>
       <h2>{answer.question}</h2>
+      <div className="answer-status">
+        <StatusBadge status={answer.reliability.status} />
+        <span>{answer.reliability.summary}</span>
+      </div>
       <WebSearchResult answer={answer} />
       {officialSources.length > 0 && (
         <div className="notice" aria-label="Official source context">
@@ -67,12 +71,6 @@ export function AnswerCard({
           </p>
         </div>
       )}
-      <EvidenceChecklist
-        result={answer.reliability}
-        sources={answer.sources}
-        onSource={onSource}
-        onDocument={onDocument}
-      />
       <div className="answer-body">
         {citedParagraphs(answer.answer, answer.sources).map(
           ({ text, source }, index) => (
@@ -95,7 +93,8 @@ export function AnswerCard({
         <div className="answer-reliability">{reliabilitySlot}</div>
       )}
       {answer.sources.length > 0 && (
-        <div className="answer-sources">
+        <details className="answer-sources">
+          <summary>View sources ({answer.sources.length})</summary>
           <div className="section-header">
             <h3>Evidence</h3>
             <span className="muted small">
@@ -130,26 +129,38 @@ export function AnswerCard({
               </motion.button>
             ))}
           </div>
-        </div>
+        </details>
       )}
-      <div className="answer-metadata">
-        <FileText size={14} />
-        <span>
-          {answer.provider.startsWith("ollama-")
-            ? "AI synthesis from cited sources"
-            : "Source extracts"}{" "}
-          ·{" "}
-          {answer.filters.include_outdated
-            ? "Historical versions included"
-            : "Active versions only"}{" "}
-          · {answer.filters.domain || "All domains"}
-        </span>
-        <span>
-          {answer.sources.length
-            ? "Inspect the cited section"
-            : "No conclusion generated"}
-        </span>
-      </div>
+      <details className="answer-technical">
+        <summary>Why this needs review</summary>
+        <EvidenceChecklist
+          result={answer.reliability}
+          sources={answer.sources}
+          onSource={onSource}
+          onDocument={onDocument}
+        />
+      </details>
+      <details className="answer-technical">
+        <summary>Search details</summary>
+        <div className="answer-metadata">
+          <FileText size={14} />
+          <span>
+            {answer.provider.startsWith("ollama-")
+              ? "AI synthesis from cited sources"
+              : "Source extracts"}{" "}
+            ·{" "}
+            {answer.filters.include_outdated
+              ? "Historical versions included"
+              : "Active versions only"}{" "}
+            · {answer.filters.domain || "All domains"}
+          </span>
+          <span>
+            {answer.sources.length
+              ? "Inspect the cited section"
+              : "No conclusion generated"}
+          </span>
+        </div>
+      </details>
       <div className="answer-next">
         <div>
           <span className="context-label">Next action</span>
@@ -179,7 +190,7 @@ export function AnswerCard({
           </button>
         ) : (
           <a className="button secondary" href="/knowledge">
-            Browse Knowledge <ChevronRight size={15} />
+            Browse Knowledge Library <ChevronRight size={15} />
           </a>
         )}
       </div>

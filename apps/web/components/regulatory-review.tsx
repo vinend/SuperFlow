@@ -42,6 +42,9 @@ export function RegulatoryReview({
   const [source, setSource] = useState<Source | null>(null);
   // Decision errors render beside the finding or action that produced them.
   const [active, setActive] = useState<string | null>(null);
+  const [stage, setStage] = useState<"changes" | "gaps" | "remediation">(
+    "changes",
+  );
   const openDocument = (id: string, versionId?: string) =>
     router.push(
       `/knowledge#document=${encodeURIComponent(id)}${versionId ? `&version=${encodeURIComponent(versionId)}` : ""}`,
@@ -86,120 +89,195 @@ export function RegulatoryReview({
           </dd>
         </div>
       </dl>
-      <section
-        className="comparison-section-block"
-        aria-labelledby="comparison-heading"
-      >
-        <div className="section-header">
-          <div>
-            <h2 id="comparison-heading">What changed</h2>
-            <p>
-              Section-by-section comparison. The previous version is shown as a
-              baseline only, not as current authority.
-            </p>
-          </div>
-        </div>
-        <ComparisonTable
-          changes={review.changes}
-          previousLabel={`Previous · v${review.previous.version}`}
-          currentLabel={`Current · v${review.current.version}`}
-          onSource={setSource}
-        />
-      </section>
-      <div className="case-layout">
-        <div className="case-execution">
-          <section aria-labelledby="gaps-heading">
-            <div className="section-header">
-              <div>
-                <h2 id="gaps-heading">Gap review</h2>
-                <p>
-                  SuperFlow proposes gaps from deterministic rules. Confirm,
-                  edit or reject each one; confirmed gaps become remediation
-                  work.
-                </p>
-              </div>
+      <nav className="stage-tabs" aria-label="Regulatory review stages">
+        <button
+          type="button"
+          aria-current={stage === "changes" ? "step" : undefined}
+          onClick={() => setStage("changes")}
+        >
+          1. Changes
+        </button>
+        <button
+          type="button"
+          aria-current={stage === "gaps" ? "step" : undefined}
+          onClick={() => setStage("gaps")}
+        >
+          2. Potential gaps
+        </button>
+        <button
+          type="button"
+          aria-current={stage === "remediation" ? "step" : undefined}
+          onClick={() => setStage("remediation")}
+        >
+          3. Remediation
+        </button>
+      </nav>
+      {stage === "changes" && (
+        <section
+          className="comparison-section-block"
+          aria-labelledby="comparison-heading"
+        >
+          <div className="section-header">
+            <div>
+              <h2 id="comparison-heading">What changed</h2>
+              <p>What changed in the current regulation?</p>
             </div>
-            {review.findings.length === 0 ? (
-              <EmptyState
-                title="No gaps proposed."
-                description="Mapped procedures already reflect the changed requirements, or no accessible procedure is mapped."
-              />
-            ) : (
-              [...pending, ...decided].map((finding) => (
-                <GapFinding
-                  key={`${finding.id}:${review.revision}`}
-                  finding={finding}
-                  users={users}
-                  busy={w.busy}
-                  error={active === finding.id ? w.error : ""}
-                  onSource={setSource}
-                  onDecision={(action, values) => {
-                    setActive(finding.id);
-                    return w.mutate(`findings/${finding.id}/${action}`, values);
-                  }}
-                />
-              ))
-            )}
-          </section>
-          <section className="regulatory-close" aria-label="Close review">
-            <SectionHeader
-              title="Outcome"
-              detail={CLOSING_HINTS[review.phase]}
-            />
-            {review.allowed_actions.includes("complete") && (
-              <button
-                className="button primary"
-                disabled={w.busy}
-                onClick={() => {
-                  setActive("complete");
-                  void w.mutate("complete");
-                }}
-              >
-                Close regulatory review
-              </button>
-            )}
-            {active === "complete" && w.error && (
-              <ErrorState message={w.error} />
-            )}
-          </section>
-        </div>
-        <aside className="case-evidence" aria-label="Reliability and activity">
-          <SectionHeader
-            title="Source reliability"
-            detail="Checks on the current regulation and mapped procedures."
-          />
-          <EvidenceChecklist
-            result={review.reliability}
-            sources={citations}
-            onSource={setSource}
-            onDocument={openDocument}
-          />
-          <section className="case-audit" aria-label="Activity">
-            <SectionHeader
-              title="Activity"
-              detail="Review decisions and remediation hand-offs."
-            />
-            <ol>
-              {review.activity.map((event) => (
-                <li key={event.id}>
-                  <strong>{activityLabel(event)}</strong>
-                  <span>
-                    {personName(event.actor_id, users)} ·{" "}
-                    {new Date(event.created_at).toLocaleString()}
-                  </span>
-                  {typeof event.payload.reason === "string" && (
-                    <p>{event.payload.reason}</p>
-                  )}
+          </div>
+          <ul className="change-highlights">
+            {review.changes
+              .filter((change) => change.material)
+              .slice(0, 4)
+              .map((change) => (
+                <li key={change.key}>
+                  <strong>{change.section}</strong>
+                  <span>{change.summary}</span>
                 </li>
               ))}
-            </ol>
-          </section>
-          <p className="muted small">
-            Review status: {businessStatus(review.status)}. Comparison and gap
-            proposals are deterministic extracts, not legal advice.
-          </p>
-        </aside>
-      </div>
+          </ul>
+          <details>
+            <summary>View full comparison</summary>
+            <ComparisonTable
+              changes={review.changes}
+              previousLabel={`Previous · v${review.previous.version}`}
+              currentLabel={`Current · v${review.current.version}`}
+              onSource={setSource}
+            />
+          </details>
+          <button
+            type="button"
+            className="button primary"
+            onClick={() => setStage("gaps")}
+          >
+            Review gaps
+          </button>
+        </section>
+      )}
+      {stage !== "changes" && (
+        <div className="case-layout">
+          <div className="case-execution">
+            {stage === "gaps" && (
+              <section aria-labelledby="gaps-heading">
+                <div className="section-header">
+                  <div>
+                    <h2 id="gaps-heading">Potential gaps</h2>
+                    <p>
+                      Confirm whether each affected procedure needs remediation.
+                    </p>
+                  </div>
+                </div>
+                {review.findings.length === 0 ? (
+                  <EmptyState
+                    title="No gaps proposed."
+                    description="Mapped procedures already reflect the changed requirements, or no accessible procedure is mapped."
+                  />
+                ) : (
+                  [...pending, ...decided].map((finding) => (
+                    <GapFinding
+                      key={`${finding.id}:${review.revision}`}
+                      finding={finding}
+                      users={users}
+                      busy={w.busy}
+                      error={active === finding.id ? w.error : ""}
+                      onSource={setSource}
+                      onDecision={(action, values) => {
+                        setActive(finding.id);
+                        return w.mutate(
+                          `findings/${finding.id}/${action}`,
+                          values,
+                        );
+                      }}
+                    />
+                  ))
+                )}
+              </section>
+            )}
+            {stage === "remediation" && (
+              <section className="regulatory-close" aria-label="Close review">
+                <h2>Remediation</h2>
+                <p>
+                  {review.remediation_total} confirmed{" "}
+                  {review.remediation_total === 1 ? "gap" : "gaps"} assigned ·{" "}
+                  {review.remediation_completed} approved
+                </p>
+                <ul>
+                  {review.findings
+                    .filter((finding) => finding.remediation)
+                    .map((finding) => (
+                      <li key={finding.id}>
+                        <a
+                          href={`/cases?case=${encodeURIComponent(finding.remediation!.case_id)}`}
+                        >
+                          {finding.impacted.title} · Open work
+                        </a>
+                      </li>
+                    ))}
+                </ul>
+                <SectionHeader
+                  title="Outcome"
+                  detail={CLOSING_HINTS[review.phase]}
+                />
+                {review.allowed_actions.includes("complete") && (
+                  <button
+                    className="button primary"
+                    disabled={w.busy}
+                    onClick={() => {
+                      setActive("complete");
+                      void w.mutate("complete");
+                    }}
+                  >
+                    Close regulatory review
+                  </button>
+                )}
+                {active === "complete" && w.error && (
+                  <ErrorState message={w.error} />
+                )}
+              </section>
+            )}
+          </div>
+          <aside
+            className="case-evidence"
+            aria-label="Reliability and activity"
+          >
+            <details>
+              <summary>View evidence and activity</summary>
+              <SectionHeader
+                title="Source reliability"
+                detail="Checks on the current regulation and mapped procedures."
+              />
+              <EvidenceChecklist
+                result={review.reliability}
+                sources={citations}
+                onSource={setSource}
+                onDocument={openDocument}
+              />
+              <section className="case-audit" aria-label="Activity">
+                <SectionHeader
+                  title="Activity"
+                  detail="Review decisions and remediation hand-offs."
+                />
+                <ol>
+                  {review.activity.map((event) => (
+                    <li key={event.id}>
+                      <strong>{activityLabel(event)}</strong>
+                      <span>
+                        {personName(event.actor_id, users)} ·{" "}
+                        {new Date(event.created_at).toLocaleString()}
+                      </span>
+                      {typeof event.payload.reason === "string" && (
+                        <p>{event.payload.reason}</p>
+                      )}
+                    </li>
+                  ))}
+                </ol>
+              </section>
+              <p className="muted small">
+                Review status: {businessStatus(review.status)}. Comparison and
+                gap proposals are deterministic extracts, not legal advice.
+              </p>
+            </details>
+          </aside>
+        </div>
+      )}
       {source && (
         <SourcePanel
           source={source}

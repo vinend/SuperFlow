@@ -13,7 +13,7 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await role(page, "finance");
   await expect(
     page.getByRole("region", { name: "Work needing attention" }),
-  ).toContainText("not yet analysed");
+  ).toContainText("Investment Analysis");
   await page
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "Investment Analysis" })
@@ -35,10 +35,11 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
     name: "Assumptions",
     exact: true,
   });
+  await page.getByText("View all assumptions").click();
   await expect(assumptions).toContainText("Sources conflict");
   await expect(assumptions).toContainText("Synthetic Cash Flow Projection");
   await expect(
-    page.getByRole("heading", { name: /Results wait/ }),
+    page.getByRole("heading", { name: "Resolve conflicting values" }),
   ).toBeVisible();
   await expect(page.locator(".case-context-bar")).toContainText(
     "Needs your input",
@@ -57,6 +58,8 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await decision.getByRole("button", { name: "Use selected value" }).click();
 
   // Deterministic results with formula, unit and period.
+  await page.getByRole("button", { name: "Review results" }).click();
+  await page.getByText("View calculation details").click();
   await expect(page.getByLabel("Deterministic results")).toContainText(
     "IDR 11,041,254",
   );
@@ -74,6 +77,8 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
   await expect(page.getByLabel("Deterministic results")).toContainText(
     "NPV = Σ CFₜ",
   );
+  await page.getByRole("button", { name: "Prepare recommendation" }).click();
+  await page.getByText("Preview decision memo").click();
   await expect(page.getByLabel("Investment memo")).toContainText(
     "committed implementation price",
   );
@@ -128,6 +133,8 @@ test("Finance turns a proposal into a source-backed analysis that a manager appr
 
   await role(page, "finance");
   await page.goto(analysisUrl);
+  await page.getByRole("button", { name: "4. Submit" }).click();
+  await page.getByText("View sources and activity").click();
   await expect(page.locator(".case-context-bar")).toContainText("Approved");
   await expect(page.getByRole("region", { name: "Activity" })).toContainText(
     "Submitted for approval",

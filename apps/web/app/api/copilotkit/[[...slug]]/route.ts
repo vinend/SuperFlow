@@ -33,6 +33,7 @@ function handlerFor(userId: string) {
         runner: new InMemoryAgentRunner(),
       }),
       basePath: "/api/copilotkit",
+      mode: "single-route",
     });
     handlers.set(userId, handler);
   }
@@ -74,6 +75,7 @@ async function handle(request: NextRequest) {
         runner: new InMemoryAgentRunner(),
       }),
       basePath: "/api/copilotkit",
+      mode: "single-route",
     });
     return handler(request);
   }

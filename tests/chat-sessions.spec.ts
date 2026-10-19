@@ -107,7 +107,7 @@ test("Superbank brand, tab icon and roomy composer fit mobile and keep chats pri
     .selectOption("employee");
   await expect(page.getByRole("article")).toHaveCount(0);
   await expect(
-    page.getByRole("heading", { name: "What can we work through?" }),
+    page.getByRole("heading", { name: "Ask a question" }),
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   expect(

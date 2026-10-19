@@ -25,20 +25,30 @@ import {
 } from "@/lib/workspace-catalog";
 import { isPending, type ChatTurn } from "@/lib/chat";
 import type { useKnowledgeWorkspace } from "./use-knowledge-workspace";
+import type { Source } from "@/lib/api";
+import type { GuardResult } from "@/lib/reliability-contracts";
 import { useChatSessions } from "./use-chat-sessions";
 import { QuestionComposer } from "./question-composer";
 import { GenerativeWorkspace } from "./generative-workspace";
 import { AnswerCard } from "./answer-card";
 import { AskActivity } from "./ask-activity";
 
-const PROMPTS = [
-  "Apa persyaratan autentikasi dalam POJK 21 Tahun 2023?",
-  "How do cash flow actuals differ from projections in the FDIC guide?",
-  "How does NIST connect incident response to cybersecurity risk management?",
-  "What does the ILO recommend for well-being while teleworking?",
-  "Analyze proposal A.",
-  "What do I need to do?",
-];
+const PROMPTS: Record<string, string[]> = {
+  employee: [
+    "How many annual leave days do I get?",
+    "What documents do I need for expense reimbursement?",
+    "How do I request system access?",
+  ],
+  manager: [
+    "What needs my decision?",
+    "What is the expense reimbursement policy?",
+  ],
+  compliance: [
+    "What changed in the latest regulation?",
+    "Which investigations need evidence?",
+  ],
+  finance: ["Analyze proposal A.", "Which investment assumptions conflict?"],
+};
 
 function ProcessHistory({ turn }: { turn: ChatTurn }) {
   const last = turn.events.at(-1);
@@ -86,9 +96,11 @@ function ProcessHistory({ turn }: { turn: ChatTurn }) {
 export function AskGenerativeArea({
   w,
   filters,
+  openAnswerSource,
 }: {
   w: ReturnType<typeof useKnowledgeWorkspace>;
   filters: ReactNode;
+  openAnswerSource: (source: Source, reliability: GuardResult) => void;
 }) {
   const c = useChatSessions(w.user);
   const { isReady } = useAgent({ agentId: "workspace" });
@@ -334,16 +346,14 @@ export function AskGenerativeArea({
           </details>
         )}
         <Link className="text-link chat-source-link" href="/knowledge">
-          Browse knowledge base →
+          Browse Knowledge Library →
         </Link>
       </aside>
 
       <section className="chat-workspace" aria-label="Conversation">
         <header className="chat-heading">
           <div>
-            <span className="context-label">
-              Ask → Understand → Review → Act
-            </span>
+            <span className="context-label">Ask SuperFlow</span>
             {renaming ? (
               <form
                 onSubmit={(event) => {
@@ -367,9 +377,7 @@ export function AskGenerativeArea({
                 </button>
               </form>
             ) : (
-              <h2>
-                {c.chat?.title || "A little clarity. A lot of possibility."}
-              </h2>
+              <h2>{c.chat?.title || "What would you like to know?"}</h2>
             )}
           </div>
           {c.chat && (
@@ -411,14 +419,10 @@ export function AskGenerativeArea({
                 alt="Superbank"
                 priority
               />
-              <span className="context-label">Your knowledge, connected</span>
-              <h3>What can we work through?</h3>
-              <p>
-                Ask a question, inspect the evidence, then keep the conversation
-                going. Every reply keeps its sources and process with it.
-              </p>
+              <h3>Ask a question</h3>
+              <p>Get an answer grounded in sources available to you.</p>
               <div className="chat-prompts" aria-label="Suggested requests">
-                {PROMPTS.map((prompt) => (
+                {(PROMPTS[w.user.role_id] || PROMPTS.employee).map((prompt) => (
                   <button
                     key={prompt}
                     disabled={busy || w.loading}
@@ -512,7 +516,9 @@ export function AskGenerativeArea({
                     {turn.answer && !turn.error && (
                       <AnswerCard
                         answer={turn.answer}
-                        onSource={w.setSource}
+                        onSource={(source) =>
+                          openAnswerSource(source, turn.answer!.reliability)
+                        }
                         onDocument={w.openDocument}
                         view={
                           selected?.view === "regulation_brief"
@@ -584,7 +590,7 @@ export function AskGenerativeArea({
             }
           >
             <summary>
-              Sources & search{" "}
+              Search options{" "}
               <span>
                 {w.domain || "All accessible knowledge"}
                 {w.webSearch ? " · WebSearch on" : ""}
@@ -593,29 +599,28 @@ export function AskGenerativeArea({
             <div
               className="query-scope"
               role="group"
-              aria-label="Retrieval scope"
+              aria-label="Search options"
             >
               {filters}
             </div>
             <div className="websearch-controls">
               <button
                 type="button"
-                aria-label="Enable WebSearch"
+                aria-label="Web search"
                 className={`button secondary websearch-toggle ${w.webSearch ? "enabled" : ""}`}
                 aria-pressed={w.webSearch}
                 disabled={busy}
                 onClick={() => w.setWebSearch(!w.webSearch)}
               >
-                Enable WebSearch{" "}
+                Web search{" "}
                 <span aria-hidden="true">{w.webSearch ? "On" : "Off"}</span>
               </button>
               {w.webSearch && (
                 <details className="websearch-options">
-                  <summary>WebSearch options</summary>
+                  <summary>Web search details</summary>
                   <p className="muted small">
-                    Puppeteer and vision run on this device. Your public search
-                    query is sent to Google. Browser scans can take several
-                    minutes.
+                    Public search may take several minutes. Check Internet
+                    sources before relying on them.
                   </p>
                   <label>
                     Public Google query (optional)

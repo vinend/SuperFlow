@@ -105,16 +105,14 @@ const run = {
 test("navigation exposes only implemented jobs appropriate to each role", () => {
   assert.deepEqual(
     navigationFor("employee").map((n) => n.title),
-    ["Home", "Ask SuperFlow", "Knowledge", "My Work"],
+    ["Home", "Ask SuperFlow", "Work", "Knowledge Library"],
   );
   for (const role of ["manager", "compliance", "finance"])
-    assert.ok(
-      navigationFor(role).some((item) => item.title === "Reviews / Approvals"),
-    );
-  assert.ok(navigationFor("sme").some((item) => item.title === "Reviews"));
+    assert.ok(navigationFor(role).some((item) => item.title === "Work"));
+  assert.ok(navigationFor("sme").some((item) => item.title === "Work"));
   assert.deepEqual(
     navigationFor("governance").map((n) => n.title),
-    ["Home", "Knowledge", "My Work", "Reviews / Approvals", "Impact"],
+    ["Home", "Knowledge Library", "Work"],
   );
   assert.equal(canViewImpact("employee"), false);
   assert.equal(canViewImpact("manager"), true);
@@ -318,12 +316,10 @@ test("Compliance alone gets regulatory and investigation workspaces", () => {
     [
       "Home",
       "Ask SuperFlow",
-      "Knowledge",
       "Regulatory Review",
       "Investigation Review",
-      "My Work",
-      "Reviews / Approvals",
-      "Impact",
+      "Work",
+      "Knowledge Library",
     ],
   );
   for (const role of ["employee", "manager", "sme", "finance", "governance"])
@@ -425,11 +421,9 @@ test("Finance alone gets Investment Analysis; analyses open their workspace", ()
     [
       "Home",
       "Ask SuperFlow",
-      "Knowledge",
       "Investment Analysis",
-      "My Work",
-      "Reviews / Approvals",
-      "Impact",
+      "Work",
+      "Knowledge Library",
     ],
   );
   assert.ok(

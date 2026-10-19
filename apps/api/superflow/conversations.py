@@ -74,7 +74,11 @@ def turn_payload(db: Session, user: User, turn: ChatTurn):
     answer = None
     error = turn.error
     resolution = turn.resolution
-    if resolution and resolution.get("intent") != "knowledge_answer":
+    if (
+        resolution
+        and resolution.get("status") == "ready"
+        and resolution.get("intent") not in (None, "knowledge_answer")
+    ):
         # Re-evaluate role and case access; saved routing is not authority.
         resolution = resolve_workspace(
             db,

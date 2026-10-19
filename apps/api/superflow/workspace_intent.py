@@ -189,10 +189,14 @@ def resolve_workspace(
 ) -> WorkspaceResolution:
     deterministic = deterministic_intent(prompt)
     choice = deterministic
-    # Explicit protected-domain words are never overridden by a model suggestion.
+    # Explicit, backend-validated workspace requests may switch intent. The LLM
+    # may only refine a view unless deterministic language identified the intent.
     if provider and deterministic.intent == WorkspaceKind.KNOWLEDGE_QA and not deterministic.view:
         suggested = provider.choose(prompt)
-        if suggested:
+        if suggested and (
+            not isinstance(provider, OllamaIntentProvider)
+            or suggested.intent == deterministic.intent
+        ):
             choice = suggested
     if not allowed_for_role(choice.intent, user):
         return WorkspaceResolution(

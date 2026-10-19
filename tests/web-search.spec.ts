@@ -49,10 +49,10 @@ test("Enable WebSearch sends opt-in and shows blocked Google without claiming we
   });
   await page.goto("/ask");
   await page.locator(".chat-scope > summary").click();
-  const toggle = page.getByRole("button", { name: /Enable WebSearch/ });
+  const toggle = page.getByRole("button", { name: "Web search" });
   await expect(toggle).toHaveAttribute("aria-pressed", "false");
   await toggle.click();
-  await page.getByText("WebSearch options", { exact: true }).click();
+  await page.getByText("Web search details", { exact: true }).click();
   await page
     .getByLabel("Public Google query (optional)")
     .fill("public leave guidance");

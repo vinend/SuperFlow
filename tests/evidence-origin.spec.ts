@@ -61,7 +61,8 @@ test("website preview separates Internet/Puppeteer capture from vision observati
     }),
   );
   await page.goto("/knowledge");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await page
     .getByRole("button", { name: "Import website", exact: true })
     .click();

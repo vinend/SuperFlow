@@ -78,6 +78,7 @@ export function InvestigationConsole({
   initialTab?: "overview" | "evidence";
 } = {}) {
   const { user } = useSession();
+  const Container = embedded ? "div" : "main";
   const content =
     user.role_id === "compliance" ? (
       <InvestigationReview
@@ -86,7 +87,7 @@ export function InvestigationConsole({
         initialTab={initialTab}
       />
     ) : (
-      <div
+      <Container
         className="main-content"
         id={embedded ? undefined : "workspace-main"}
         tabIndex={-1}
@@ -101,7 +102,7 @@ export function InvestigationConsole({
           title="Investigation Review is available to Compliance."
           description="Switch the demo role to Compliance to try the synthetic investigation flow."
         />
-      </div>
+      </Container>
     );
   return embedded ? (
     content
@@ -143,6 +144,7 @@ function InvestigationReviewState({
   initialTab: "overview" | "evidence";
 }) {
   const { user } = useSession();
+  const Container = embedded ? "div" : "main";
   const [activeTab, setActiveTab] = useState<Tab>(initialTab);
   const [items, setItems] = useState<InvestigationView[]>([]);
   const [current, setCurrent] = useState<InvestigationView | null>(null);
@@ -164,10 +166,9 @@ function InvestigationReviewState({
       .then((result) => {
         if (!live) return;
         setItems(result);
-        const item =
-          result.find((entry) => entry.id === selected) ||
-          (selected ? null : result[0]) ||
-          null;
+        const item = selected
+          ? result.find((entry) => entry.id === selected) || null
+          : null;
         setCurrent(item);
         setNotes(item?.analyst_notes || "");
         setRecommendation(item?.analyst_recommendation || "");
@@ -221,34 +222,62 @@ function InvestigationReviewState({
   }
   if (loading)
     return (
-      <div
+      <Container
         className="main-content"
         id={embedded ? undefined : "workspace-main"}
       >
         <LoadingState label="Loading investigation…" />
-      </div>
+      </Container>
     );
   if (!current)
     return (
-      <div
+      <Container
         className="main-content"
         id={embedded ? undefined : "workspace-main"}
       >
         <PageHeader
           eyebrow="Compliance workspace"
           title="Investigation Review"
-          description="Review submitted records and collect public-web screening evidence."
+          description="Review alerts, inspect evidence, and submit a recommendation for independent review."
         />
-        <InvestigationIntake onCreated={imported} />
+        <section aria-label="Active investigations">
+          <h2>Active investigations</h2>
+          <ul className="attention-list">
+            {items.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={`/investigations?investigation=${encodeURIComponent(item.id)}`}
+                >
+                  <strong>
+                    {item.alert_reference} · {item.context.customer_name}
+                  </strong>
+                  <span>
+                    {item.context.triage_level} priority ·{" "}
+                    {businessStatus(item.reliability.status)} ·{" "}
+                    {item.submitted_at
+                      ? "Waiting for checker"
+                      : "Analyst review"}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <details>
+          <summary>Load another investigation</summary>
+          <InvestigationIntake onCreated={imported} />
+        </details>
         {error ? (
           <ErrorState message={error} retry={() => window.location.reload()} />
         ) : (
-          <EmptyState
-            title="No investigation available"
-            description="Only assigned Compliance staff can inspect these records."
-          />
+          items.length === 0 && (
+            <EmptyState
+              title="No investigation available"
+              description="Only assigned Compliance staff can inspect these records."
+            />
+          )
         )}
-      </div>
+      </Container>
     );
   const evidence = Object.fromEntries(
     current.evidence.map((item) => [item.key, item]),
@@ -300,7 +329,7 @@ function InvestigationReviewState({
   ];
 
   return (
-    <div
+    <Container
       className={`main-content ${styles.workspace}`}
       id={embedded ? undefined : "workspace-main"}
       tabIndex={-1}
@@ -313,7 +342,7 @@ function InvestigationReviewState({
             : "Submitted investigation alert"
         }
         title={`Investigation Review — Alert ${current.alert_reference}`}
-        description="Review collected evidence and record an analyst recommendation before independent checker review."
+        description="Inspect the alert, complete evidence, and submit a recommendation."
         action={
           <Badge tone={current.submitted_at ? "info" : "review"}>
             {current.completed_at
@@ -343,38 +372,51 @@ function InvestigationReviewState({
       >
         <Fact label="Alert" value={current.alert_reference} />
         <Fact label="Customer" value={current.context.customer_name} />
-        <Fact label="Subject reference" value={current.subject_reference} />
+        <Fact label="Priority" value={current.context.triage_level} />
         <Fact
-          label="Declared source of funds"
-          value={String(
-            current.tool_runs.find(
-              (run) => run.tool_name === "get_customer_profile",
-            )?.result.declared_source_of_funds || "Not collected",
-          )}
-        />
-        <Fact
-          label="Alerted value"
-          value={`IDR ${Number(transactionRun?.result.alerted_value_idr || 0).toLocaleString()}`}
-        />
-        <Fact
-          label="Transactions"
-          value={`${transactionRun?.result.count ?? "—"} in ${transactionRun?.result.window_hours ?? "—"} hours`}
-        />
-        <Fact
-          label="New beneficiaries"
-          value={String(
-            transactionRun?.result.new_beneficiaries ?? "Not collected",
-          )}
-        />
-        <Fact
-          label="Profile baseline"
-          value={String(
-            current.tool_runs.find(
-              (run) => run.tool_name === "get_customer_profile",
-            )?.result.profile_baseline || "Not collected",
-          )}
+          label="Evidence"
+          value={`${requiredComplete} of ${requiredTotal} required sources available`}
         />
       </section>
+      <details>
+        <summary>Alert details</summary>
+        <section
+          className={styles.summary}
+          aria-label="Additional alert details"
+        >
+          <Fact label="Subject reference" value={current.subject_reference} />
+          <Fact
+            label="Declared source of funds"
+            value={String(
+              current.tool_runs.find(
+                (run) => run.tool_name === "get_customer_profile",
+              )?.result.declared_source_of_funds || "Not collected",
+            )}
+          />
+          <Fact
+            label="Alerted value"
+            value={`IDR ${Number(transactionRun?.result.alerted_value_idr || 0).toLocaleString()}`}
+          />
+          <Fact
+            label="Transactions"
+            value={`${transactionRun?.result.count ?? "—"} in ${transactionRun?.result.window_hours ?? "—"} hours`}
+          />
+          <Fact
+            label="New beneficiaries"
+            value={String(
+              transactionRun?.result.new_beneficiaries ?? "Not collected",
+            )}
+          />
+          <Fact
+            label="Profile baseline"
+            value={String(
+              current.tool_runs.find(
+                (run) => run.tool_name === "get_customer_profile",
+              )?.result.profile_baseline || "Not collected",
+            )}
+          />
+        </section>
+      </details>
       <details>
         <summary>Import another investigation</summary>
         <InvestigationIntake onCreated={imported} />
@@ -614,102 +656,108 @@ function InvestigationReviewState({
             )}
           </section>
 
-          <section className={styles.panel} aria-label="Activity">
-            <PanelHeading
-              title="Activity"
-              detail="Persisted events from evidence collection and human review."
-            />
-            <ol className={styles.timeline}>
-              {[
-                ...(showAllActivity
-                  ? activityEvents
-                  : activityEvents.slice(-8)),
-              ]
-                .reverse()
-                .map((event) => (
-                  <li key={event.id}>
-                    <span aria-hidden="true" />
-                    <div>
-                      <strong>
-                        {activityLabel(event)}
-                        {typeof event.payload.tool_name === "string"
-                          ? `: ${event.payload.tool_name.replaceAll("_", " ")}`
-                          : typeof event.payload.key === "string"
-                            ? `: ${event.payload.key.replaceAll("_", " ")}`
-                            : ""}
-                      </strong>
-                      <p>
-                        {new Date(event.created_at).toLocaleString("en-GB")} ·{" "}
-                        {event.actor_id === "compliance"
-                          ? "Raka Wijaya"
-                          : event.actor_id === "compliance_checker"
-                            ? "Sinta Mahardika"
-                            : "SuperFlow"}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-            </ol>
-            {activityEvents.length > 8 && (
-              <button
-                className="button secondary"
-                type="button"
-                onClick={() => setShowAllActivity((value) => !value)}
-              >
-                {showAllActivity
-                  ? "Show recent activity"
-                  : `View full history (${activityEvents.length})`}
-              </button>
-            )}
-          </section>
+          <details className={styles.panel}>
+            <summary>View activity</summary>
+            <section aria-label="Activity">
+              <PanelHeading
+                title="Activity"
+                detail="Persisted events from evidence collection and human review."
+              />
+              <ol className={styles.timeline}>
+                {[
+                  ...(showAllActivity
+                    ? activityEvents
+                    : activityEvents.slice(-8)),
+                ]
+                  .reverse()
+                  .map((event) => (
+                    <li key={event.id}>
+                      <span aria-hidden="true" />
+                      <div>
+                        <strong>
+                          {activityLabel(event)}
+                          {typeof event.payload.tool_name === "string"
+                            ? `: ${event.payload.tool_name.replaceAll("_", " ")}`
+                            : typeof event.payload.key === "string"
+                              ? `: ${event.payload.key.replaceAll("_", " ")}`
+                              : ""}
+                        </strong>
+                        <p>
+                          {new Date(event.created_at).toLocaleString("en-GB")} ·{" "}
+                          {event.actor_id === "compliance"
+                            ? "Raka Wijaya"
+                            : event.actor_id === "compliance_checker"
+                              ? "Sinta Mahardika"
+                              : "SuperFlow"}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+              </ol>
+              {activityEvents.length > 8 && (
+                <button
+                  className="button secondary"
+                  type="button"
+                  onClick={() => setShowAllActivity((value) => !value)}
+                >
+                  {showAllActivity
+                    ? "Show recent activity"
+                    : `View full history (${activityEvents.length})`}
+                </button>
+              )}
+            </section>
+          </details>
         </div>
 
         <aside className={styles.sideColumn}>
-          <section className={styles.panel} aria-label="Investigation risk">
-            <PanelHeading
-              title="Triage priority"
-              detail="Derived from recorded indicators; unassessed when none are provided. This is not an AML finding."
-              badge={
+          <details className={styles.panel}>
+            <summary>Why this needs review</summary>
+            <section aria-label="Investigation risk">
+              <PanelHeading
+                title="Triage priority"
+                detail="Derived from recorded indicators; unassessed when none are provided. This is not an AML finding."
+                badge={
+                  <Badge
+                    tone={
+                      current.reliability.status === "VERIFIED"
+                        ? "good"
+                        : "review"
+                    }
+                  >
+                    {businessStatus(current.reliability.status)}
+                  </Badge>
+                }
+              />
+              <div className={styles.risk}>
                 <Badge
                   tone={
-                    current.reliability.status === "VERIFIED"
-                      ? "good"
-                      : "review"
+                    current.context.triage_level === "HIGH" ? "high" : "review"
                   }
                 >
-                  {businessStatus(current.reliability.status)}
+                  {current.context.triage_level} PRIORITY
                 </Badge>
-              }
-            />
-            <div className={styles.risk}>
-              <Badge
-                tone={
-                  current.context.triage_level === "HIGH" ? "high" : "review"
-                }
-              >
-                {current.context.triage_level} PRIORITY
-              </Badge>
-              <div>
-                <strong>Human investigation required</strong>
-                <p>
-                  {current.context.indicators.length
-                    ? current.context.indicators.join("; ")
-                    : "No triage indicators have been supplied. Review the source records."}
-                </p>
+                <div>
+                  <strong>Human investigation required</strong>
+                  <p>
+                    {current.context.indicators.length
+                      ? current.context.indicators.join("; ")
+                      : "No triage indicators have been supplied. Review the source records."}
+                  </p>
+                </div>
               </div>
-            </div>
-            <p className={styles.note}>{current.reliability.summary}</p>
-            {current.reliability.reasons.map((reason) => (
-              <p className={styles.note} key={reason}>
-                {reason}
-              </p>
-            ))}
-          </section>
+              <p className={styles.note}>{current.reliability.summary}</p>
+              {current.reliability.reasons.map((reason) => (
+                <p className={styles.note} key={reason}>
+                  {reason}
+                </p>
+              ))}
+            </section>
+          </details>
 
           <section className={styles.panel} aria-label="Evidence collection">
             <PanelHeading
               title="Evidence status"
-              detail={`${requiredComplete} of ${requiredTotal} configured checks completed. Supporting documents are optional.`}
+              detail={`${requiredComplete} of ${requiredTotal} required sources available.`}
               badge={
                 <Badge tone={collectionComplete ? "good" : "review"}>
                   {requiredComplete} / {requiredTotal}
@@ -857,7 +905,7 @@ function InvestigationReviewState({
           </section>
         </aside>
       </div>
-    </div>
+    </Container>
   );
 }
 

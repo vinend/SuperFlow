@@ -36,6 +36,7 @@ export function GapFinding({
 }) {
   const reassign = finding.allowed_actions.includes("reassign");
   const [decision, setDecision] = useState<Decision>("confirm");
+  const [assigning, setAssigning] = useState(reassign);
   const [summary, setSummary] = useState(
     finding.reviewer_summary || finding.proposed_summary,
   );
@@ -87,9 +88,10 @@ export function GapFinding({
           <li key={issue.detail}>
             {issue.kind === "requirement_mismatch" ? (
               <>
-                <strong>Requirement not met</strong>
+                <strong>Potential gap</strong>
                 <span>
-                  Procedure: {issue.current} · Regulation: {issue.required}
+                  New requirement: {issue.required} · Current procedure:{" "}
+                  {issue.current}
                 </span>
               </>
             ) : (
@@ -101,24 +103,27 @@ export function GapFinding({
           </li>
         ))}
       </ul>
-      <section className="gap-evidence" aria-label="Evidence">
-        {[finding.requirement, finding.impacted].map((source) => (
-          <button
-            key={source.chunk_id}
-            className="source-reference"
-            onClick={() => onSource(source)}
-          >
-            <span className="citation-number">{source.citation_id}</span>
-            <span className="reference-title">
-              {source.title}
-              <small>
-                v{source.version} · {source.section_path} ·{" "}
-                {source.status === "active" ? "Current" : "Historical"}
-              </small>
-            </span>
-          </button>
-        ))}
-      </section>
+      <details>
+        <summary>View sources</summary>
+        <section className="gap-evidence" aria-label="Evidence">
+          {[finding.requirement, finding.impacted].map((source) => (
+            <button
+              key={source.chunk_id}
+              className="source-reference"
+              onClick={() => onSource(source)}
+            >
+              <span className="citation-number">{source.citation_id}</span>
+              <span className="reference-title">
+                {source.title}
+                <small>
+                  v{source.version} · {source.section_path} ·{" "}
+                  {source.status === "active" ? "Current" : "Historical"}
+                </small>
+              </span>
+            </button>
+          ))}
+        </section>
+      </details>
       <p className="workflow-note">
         <strong>
           {finding.status === "PROPOSED"
@@ -172,7 +177,31 @@ export function GapFinding({
           </Link>
         </div>
       )}
-      {finding.allowed_actions.length > 0 && (
+      {finding.allowed_actions.length > 0 && !assigning && (
+        <div className="tag-row">
+          <button
+            className="button primary"
+            type="button"
+            onClick={() => {
+              setDecision("confirm");
+              setAssigning(true);
+            }}
+          >
+            Confirm gap
+          </button>
+          <button
+            className="button secondary"
+            type="button"
+            onClick={() => {
+              setDecision("reject");
+              setAssigning(true);
+            }}
+          >
+            Not a gap
+          </button>
+        </div>
+      )}
+      {finding.allowed_actions.length > 0 && assigning && (
         <form
           className="workflow-form gap-decision"
           aria-label={`Decision for ${finding.impacted.title}`}
@@ -181,36 +210,18 @@ export function GapFinding({
             void submit();
           }}
         >
-          {!reassign && (
-            <fieldset className="decision-choice">
-              <legend>Decision</legend>
-              {(["confirm", "reject"] as const).map((item) => (
-                <label key={item}>
-                  <input
-                    type="radio"
-                    name={`decision-${finding.id}`}
-                    value={item}
-                    checked={decision === item}
-                    disabled={busy}
-                    onChange={() => {
-                      setDecision(item);
-                      setError("");
-                    }}
-                  />
-                  {item === "confirm"
-                    ? "Confirm gap and assign remediation"
-                    : "Not a gap"}
-                </label>
-              ))}
-            </fieldset>
-          )}
+          <h4>
+            {decision === "confirm"
+              ? "Assign remediation"
+              : "Record why this is not a gap"}
+          </h4>
           {decision === "confirm" && (
             <>
               {!reassign && (
                 <label>
-                  Gap statement
+                  Gap summary
                   <textarea
-                    aria-label="Gap statement"
+                    aria-label="Gap summary"
                     rows={3}
                     maxLength={2000}
                     value={summary}
@@ -272,7 +283,7 @@ export function GapFinding({
               : reassign
                 ? "Reassign remediation"
                 : decision === "confirm"
-                  ? "Confirm gap"
+                  ? "Create remediation"
                   : "Record not a gap"}
           </button>
           <p className="muted small">

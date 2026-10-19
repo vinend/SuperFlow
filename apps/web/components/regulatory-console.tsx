@@ -65,13 +65,13 @@ function RegulatoryWorkspace() {
       ) : reviewId && !current ? (
         <EmptyState
           title="Regulatory review unavailable"
-          description="It may be closed to your role, or it is tracked as a request in My Work."
+          description="It may be closed to your role, or it is tracked as a request in Work."
         >
           <Link
             className="button secondary"
             href={`/cases?case=${encodeURIComponent(reviewId)}`}
           >
-            Open in My Work
+            Open in Work
           </Link>
         </EmptyState>
       ) : current ? (
@@ -94,10 +94,10 @@ function RegulatoryWorkspace() {
           ) : (
             <EmptyState
               title="Regulatory Review is run by Compliance."
-              description="Remediation assigned to you appears in My Work."
+              description="Remediation assigned to you appears in Work."
             >
               <Link className="button secondary" href="/cases">
-                Open My Work
+                Open Work
               </Link>
             </EmptyState>
           )}

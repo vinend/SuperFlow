@@ -152,6 +152,22 @@ def test_chat_domain_routing_preserves_permissions(client, employee, db, chat_wo
     assert [e["stage"] for e in turn["events"]] == ["queued", "routing", "complete"]
 
 
+def test_saved_denial_is_not_rewritten_as_an_available_workspace(client, employee, db, chat_worker):
+    chat_id = create(client, employee)
+    submit(
+        client,
+        employee,
+        chat_id,
+        "How many annual leave days do employees receive?",
+        workspace={"intent": "investigation_review"},
+    )
+    finish(db, chat_worker)
+    turn = client.get(f"/api/chats/{chat_id}", headers=employee).json()["turns"][0]
+    assert turn["status"] == "complete"
+    assert turn["resolution"]["status"] == "denied"
+    assert turn["answer"] is None
+
+
 def test_chat_websearch_and_restart_failure(client, employee, db, chat_worker, monkeypatch):
     monkeypatch.setattr(main, "collect_web_context", lambda *_: [])
     chat_id = create(client, employee)

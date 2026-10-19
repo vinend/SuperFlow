@@ -6,7 +6,6 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
   BookOpen,
-  ChartNoAxesCombined,
   Calculator,
   Check,
   ChevronRight,
@@ -21,7 +20,7 @@ import {
 import type { ReactNode } from "react";
 import { useSession } from "./session";
 import { Dialog } from "./ui/dialog";
-import { navigationFor, roleLabel, reviewsLabel } from "@/lib/product-view";
+import { navigationFor, roleLabel } from "@/lib/product-view";
 
 export type KnowledgeView = "home" | "ask" | "knowledge";
 export type View =
@@ -37,10 +36,10 @@ export type View =
 export const TITLES = {
   home: "Home",
   ask: "Ask SuperFlow",
-  knowledge: "Knowledge",
-  cases: "My Work",
-  workflows: "My Work",
-  decisions: "Reviews / Approvals",
+  knowledge: "Knowledge Library",
+  cases: "Work",
+  workflows: "Work",
+  decisions: "Work",
   regulatory: "Regulatory Review",
   investigation: "Investigation Review",
   investment: "Investment Analysis",
@@ -56,7 +55,7 @@ const ICONS = {
   regulatory: Scale,
   investigation: ShieldCheck,
   investment: Calculator,
-  impact: ChartNoAxesCombined,
+  impact: FolderKanban,
 };
 
 // Sidebar + header + inset composition informed by 21st.dev Appshell.
@@ -67,12 +66,11 @@ export function ApplicationShell({
   view: View;
   children: ReactNode;
 }) {
-  const { user, users, selectUser, authenticated, environment, logout } =
-    useSession();
+  const { user, users, selectUser, authenticated, logout } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const reduced = useReducedMotion();
   const nav = navigationFor(user.role_id);
-  const activeView = view === "workflows" ? "cases" : view;
+  const activeView = ["workflows", "decisions"].includes(view) ? "cases" : view;
   const navigation = (
     <>
       <Link href="/" className="brand" onClick={() => setMenuOpen(false)}>
@@ -97,20 +95,28 @@ export function ApplicationShell({
       </div>
       <p className="nav-label">Workspace</p>
       <nav aria-label="Main navigation">
-        {nav.map((item) => {
+        {nav.map((item, index) => {
           const Icon = ICONS[item.view as keyof typeof ICONS];
           return (
-            <Link
-              key={item.title}
-              href={item.href}
-              onClick={() => setMenuOpen(false)}
-              className={`nav-item ${activeView === item.view ? "selected" : ""}`}
-              aria-current={activeView === item.view ? "page" : undefined}
-            >
-              <Icon size={17} />
-              <span>{item.title}</span>
-              {activeView === item.view && <ChevronRight size={14} />}
-            </Link>
+            <div key={item.title}>
+              {"group" in item &&
+                item.group &&
+                (index === 0 ||
+                  !("group" in nav[index - 1]) ||
+                  nav[index - 1].group !== item.group) && (
+                  <p className="nav-label">{item.group}</p>
+                )}
+              <Link
+                href={item.href}
+                onClick={() => setMenuOpen(false)}
+                className={`nav-item ${activeView === item.view ? "selected" : ""}`}
+                aria-current={activeView === item.view ? "page" : undefined}
+              >
+                <Icon size={17} />
+                <span>{item.title}</span>
+                {activeView === item.view && <ChevronRight size={14} />}
+              </Link>
+            </div>
           );
         })}
       </nav>
@@ -155,14 +161,13 @@ export function ApplicationShell({
             </button>
             <span>Superbank</span>
             <ChevronRight size={13} />
-            <strong>
-              {view === "decisions" ? reviewsLabel(user.role_id) : TITLES[view]}
-            </strong>
+            <strong>{TITLES[view]}</strong>
           </div>
           <div className="session-controls">
             <span className="demo-label">
-              {environment === "staging" ? "STG" : "Local"} ·{" "}
-              {authenticated ? roleLabel(user.role_id) : "Test identity"}
+              {authenticated
+                ? roleLabel(user.role_id)
+                : "Demo role · Prototype only"}
             </span>
             <span className="avatar">
               {user.name
@@ -186,14 +191,25 @@ export function ApplicationShell({
                   value={user.id}
                   onChange={(event) => selectUser(event.target.value)}
                 >
-                  {users.map((person) => (
-                    <option key={person.id} value={person.id}>
-                      {person.id === "compliance_checker"
-                        ? "Compliance Checker"
-                        : roleLabel(person.role_id)}{" "}
-                      — {person.name}
-                    </option>
-                  ))}
+                  {users
+                    .filter(
+                      (person) =>
+                        [
+                          "employee",
+                          "manager",
+                          "compliance",
+                          "finance",
+                          "governance",
+                        ].includes(person.id) || person.id === user.id,
+                    )
+                    .map((person) => (
+                      <option key={person.id} value={person.id}>
+                        {person.id === "compliance_checker"
+                          ? "Compliance Checker"
+                          : roleLabel(person.role_id)}{" "}
+                        — {person.name}
+                      </option>
+                    ))}
                 </select>
               </label>
             )}
@@ -210,9 +226,6 @@ export function ApplicationShell({
         </motion.div>
         <footer className="workspace-footer">
           <span>SuperFlow / Enterprise Knowledge-to-Action Platform</span>
-          <Link href="/demo">
-            {environment === "staging" ? "UAT walkthrough" : "Demo walkthrough"}
-          </Link>
           <span>Knowledge → Evidence → Decision → Action</span>
         </footer>
       </div>

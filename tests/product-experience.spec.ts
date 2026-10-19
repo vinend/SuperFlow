@@ -1,37 +1,43 @@
 import { expect, test } from "@playwright/test";
 
 const navigation: Record<string, string[]> = {
-  employee: ["Home", "Ask SuperFlow", "Knowledge", "My Work"],
-  manager: [
-    "Home",
-    "Ask SuperFlow",
-    "Knowledge",
-    "My Work",
-    "Reviews / Approvals",
-    "Impact",
-  ],
-  sme: ["Home", "Ask SuperFlow", "Knowledge", "My Work", "Reviews", "Impact"],
+  employee: ["Home", "Ask SuperFlow", "Work", "Knowledge Library"],
+  manager: ["Home", "Ask SuperFlow", "Work", "Knowledge Library"],
   compliance: [
     "Home",
     "Ask SuperFlow",
-    "Knowledge",
     "Regulatory Review",
     "Investigation Review",
-    "My Work",
-    "Reviews / Approvals",
-    "Impact",
+    "Work",
+    "Knowledge Library",
   ],
   finance: [
     "Home",
     "Ask SuperFlow",
-    "Knowledge",
     "Investment Analysis",
-    "My Work",
-    "Reviews / Approvals",
-    "Impact",
+    "Work",
+    "Knowledge Library",
   ],
-  governance: ["Home", "Knowledge", "My Work", "Reviews / Approvals", "Impact"],
+  governance: ["Home", "Knowledge Library", "Work"],
 };
+test("prototype selector shows five personas while internal reviewers remain reachable for direct tests", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const selector = page.getByRole("combobox", { name: "Demo role" });
+  await expect(selector.locator("option")).toHaveCount(5);
+  await expect(selector).not.toContainText(/Nadia Rahman|Sinta Mahardika/);
+  await expect(page.getByText("Prototype only")).toBeVisible();
+  await page.evaluate(() =>
+    localStorage.setItem("superflow.demo-user", "compliance_checker"),
+  );
+  await page.reload();
+  await expect(selector).toHaveValue("compliance_checker");
+  await page.goto("/investigations");
+  await expect(
+    page.getByRole("heading", { name: "Investigation Review", exact: true }),
+  ).toBeVisible();
+});
 for (const [role, labels] of Object.entries(navigation)) {
   test(`${role} sees role-aware navigation without unavailable or internal modules`, async ({
     page,
@@ -45,9 +51,9 @@ for (const [role, labels] of Object.entries(navigation)) {
     await expect(page.locator(".sidebar")).not.toContainText(
       /Phase|Later|Decision Center|Workflows|Cases|Analytics/,
     );
-    await page.getByRole("link", { name: "My Work", exact: true }).click();
+    await nav.getByRole("link", { name: "Work", exact: true }).click();
     await expect(
-      page.getByRole("heading", { name: "My Work", exact: true }),
+      page.getByRole("heading", { name: "Work", exact: true }),
     ).toBeVisible();
     await expect(page.getByRole("status")).toHaveCount(0);
     await page.reload();
@@ -55,7 +61,7 @@ for (const [role, labels] of Object.entries(navigation)) {
       role,
     );
     await expect(
-      page.getByRole("heading", { name: "My Work", exact: true }),
+      page.getByRole("heading", { name: "Work", exact: true }),
     ).toBeVisible();
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole("button", { name: "Open navigation" }).click();
@@ -123,14 +129,17 @@ test("review queue hides requester-only approvals and employee direct route has 
     page.getByRole("region", { name: "Review request" }),
   ).toContainText("Maya Putri");
   await page
-    .getByRole("link", { name: "Reviews / Approvals", exact: true })
+    .getByRole("navigation", { name: "Main navigation" })
+    .getByRole("link", { name: "Work", exact: true })
     .click();
+  await page.getByRole("tab", { name: "Needs My Decision" }).click();
   await expect(
     page.getByRole("region", { name: "Review queue" }),
   ).toContainText("Annual Leave Review");
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("compliance");
+  await page.getByRole("tab", { name: "Needs My Decision" }).click();
   await expect(
     page.getByRole("heading", { name: "No reviews need your attention." }),
   ).toBeVisible();
@@ -193,14 +202,11 @@ test("blocked Ask offers an explicit information request without authorizing an 
   );
   await expect(page.locator(".reliability-status")).toHaveText("BLOCKED");
   await page.unroute(aggregateLists);
-  await page
-    .getByRole("link", { name: "My Work", exact: true })
-    .first()
-    .click();
-  await expect(page.getByRole("region", { name: "My Work" })).toContainText(
+  await page.getByRole("link", { name: "Work", exact: true }).first().click();
+  await expect(page.getByRole("region", { name: "My Tasks" })).toContainText(
     "Expense Reimbursement Exception",
   );
-  await expect(page.getByRole("region", { name: "My Work" })).toContainText(
+  await expect(page.getByRole("region", { name: "My Tasks" })).toContainText(
     "Provide information",
   );
 });

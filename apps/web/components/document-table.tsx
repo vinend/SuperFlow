@@ -2,8 +2,8 @@
 
 import { ChevronRight, FileText } from "lucide-react";
 import { KnowledgeDocument, dateLabel } from "@/lib/api";
-import { displayVersion, fileType } from "@/lib/knowledge-view";
-import { EmptyState, LoadingState, StatusBadge } from "./ui/primitives";
+import { displayVersion } from "@/lib/knowledge-view";
+import { EmptyState, LoadingState } from "./ui/primitives";
 import { DataTable } from "./ui/data-table";
 
 // Document cells retain their API-backed metadata and source-opening callbacks.
@@ -28,22 +28,16 @@ export function DocumentTable({
     );
   return (
     <DataTable
-      label="Document repository table"
-      caption="Sources available to your selected role"
+      label="Knowledge Library documents"
+      caption="Documents available to you"
       compact={compact}
     >
       <thead>
         <tr>
           <th scope="col">Document</th>
-          {!compact && <th scope="col">Domain</th>}
-          <th scope="col">Version / state</th>
-          {!compact && (
-            <>
-              <th scope="col">Owner / authority</th>
-              <th scope="col">Effective date</th>
-              <th scope="col">Access</th>
-            </>
-          )}
+          {!compact && <th scope="col">Category</th>}
+          <th scope="col">Current version</th>
+          {!compact && <th scope="col">Last updated</th>}
           <th scope="col">
             <span className="sr-only">Open</span>
           </th>
@@ -64,11 +58,7 @@ export function DocumentTable({
                   </span>
                   <span>
                     {document.title}
-                    <small>
-                      {compact
-                        ? document.domain
-                        : `${fileType(version?.filename)} · ${document.versions.length} ${document.versions.length === 1 ? "version" : "versions"} · ${version?.chunk_count || 0} sections`}
-                    </small>
+                    {compact && <small>{document.domain}</small>}
                   </span>
                 </button>
               </td>
@@ -80,23 +70,10 @@ export function DocumentTable({
               <td>
                 <div className="version-cell">
                   <span>{version ? `v${version.version}` : "—"}</span>
-                  <StatusBadge status={version?.status || "No version"} />
                 </div>
               </td>
               {!compact && (
-                <>
-                  <td className="owner-cell">
-                    {document.owner_name}
-                    <small>Authority {document.authority_level} / 5</small>
-                  </td>
-                  <td>{version ? dateLabel(version.effective_date) : "—"}</td>
-                  <td className="access-cell">
-                    <details>
-                      <summary>{document.access_roles.length} roles</summary>
-                      <small>{document.access_roles.join(", ")}</small>
-                    </details>
-                  </td>
-                </>
+                <td>{version ? dateLabel(version.created_at) : "—"}</td>
               )}
               <td>
                 <button

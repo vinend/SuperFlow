@@ -268,6 +268,9 @@ function WorkGenerated({
   if (w.error) return <ErrorState message={w.error} />;
   if (w.loading) return <LoadingState label="Loading your current work…" />;
   return (
-    <ActionLists view={view === "reviews" ? "decisions" : "cases"} w={w} />
+    <>
+      <h2>Work</h2>
+      <ActionLists view={view === "reviews" ? "decisions" : "cases"} w={w} />
+    </>
   );
 }

@@ -57,23 +57,25 @@ test("authenticated analyst imports records through the investigation UI", async
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   const panel = page.getByRole("region", {
-    name: "Import investigation records",
+    name: "Load investigation",
   });
   if (!(await panel.isVisible()))
-    await page
-      .getByText("Import another investigation", { exact: true })
-      .click();
+    await page.getByText("Load another investigation", { exact: true }).click();
+  await panel
+    .getByText("Import investigation", { exact: true })
+    .first()
+    .click();
   const intake = JSON.parse(
     readFileSync("apps/web/public/samples/investigation-intake.json", "utf8"),
   );
   intake.alert_reference = `AUTH-E2E-${Date.now()}`;
-  await panel.getByLabel("Investigation JSON").setInputFiles({
+  await panel.getByLabel("Investigation file").setInputFiles({
     name: "intake.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(intake)),
   });
   await panel
-    .getByRole("button", { name: "Import records", exact: true })
+    .getByRole("button", { name: "Import investigation", exact: true })
     .click();
   await expect(
     page.getByText(intake.alert_reference, { exact: true }).first(),

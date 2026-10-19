@@ -5,16 +5,17 @@ async function askCase(page: Page, question: string, source?: string) {
   await expect(
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
-  if (source)
+  if (source) {
     if (
       !(await page
         .getByRole("combobox", { name: "Question source" })
         .isVisible())
     )
       await page.locator(".chat-scope > summary").click();
-  await page
-    .getByRole("combobox", { name: "Question source" })
-    .selectOption(source);
+    await page
+      .getByRole("combobox", { name: "Question source" })
+      .selectOption(source);
+  }
   await page.getByRole("textbox", { name: "Your question" }).fill(question);
   await page.getByRole("button", { name: "Ask question", exact: true }).click();
   await page
@@ -54,6 +55,8 @@ test("verified answer becomes a persistent case, task, approval and completion",
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await askCase(page, "How many annual leave days do I get?", "leave-policy");
+  await page.getByText("View progress").click();
+  await page.getByText("View activity").click();
   await expect(page.getByRole("region", { name: "Progress" })).toContainText(
     "Manager review",
   );
@@ -79,9 +82,11 @@ test("verified answer becomes a persistent case, task, approval and completion",
   await page
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("employee");
+  await page.getByText("View activity").click();
   await expect(page.getByRole("region", { name: "Activity" })).toContainText(
     "Request approved",
   );
+  await page.getByText("View evidence and reliability").click();
   await page.locator(".case-evidence .source-reference").first().click();
   await expect(
     page.getByRole("dialog", { name: "Source Panel" }),
@@ -158,7 +163,8 @@ test("conflicting knowledge routes to SME and preserves reliability after decisi
   await expect(
     page.getByRole("region", { name: "Review request" }),
   ).toContainText("Nadia Rahman");
-  await role(page, "sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await page
     .getByRole("textbox", { name: "Decision reason" })
     .fill(
@@ -273,6 +279,7 @@ test("escalation reaches Governance and override requires a reason", async ({
     .fill("Current approved evidence reviewed; exception decision recorded.");
   await page.getByRole("button", { name: "Override", exact: true }).click();
   await expect(page.locator(".case-context-bar")).toContainText("Completed");
+  await page.getByText("View activity").click();
   await expect(page.getByRole("region", { name: "Activity" })).toContainText(
     "Exception decision recorded",
   );

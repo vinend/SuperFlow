@@ -13,59 +13,94 @@ export function InvestigationIntake({
   const { user } = useSession();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  async function submitIntake(intake: unknown) {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await api<InvestigationView>("/api/investigations", user, {
+        method: "POST",
+        body: JSON.stringify({ intake }),
+      });
+      onCreated(result);
+      return true;
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Could not load the investigation.",
+      );
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
-    <section className="panel" aria-label="Import investigation records">
-      <h2>Import investigation records</h2>
+    <section className="panel" aria-label="Load investigation">
+      <h2>Start an investigation</h2>
       <p className="muted small">
-        Upload a JSON record with the customer profile, transaction summary and
-        record source. Browser screening collects public sources separately.
+        Open a sample alert or import a prepared investigation record.
       </p>
-      <a href="/samples/investigation-intake.json" download>
-        Download sample JSON format
-      </a>
-      <form
-        onSubmit={async (event) => {
-          event.preventDefault();
-          const form = event.currentTarget;
-          const file = new FormData(form).get("records");
-          if (!(file instanceof File) || file.size > 100_000) {
-            setError("Select a JSON file smaller than 100 KB.");
-            return;
-          }
-          setBusy(true);
-          setError("");
+      <button
+        className="button primary"
+        type="button"
+        disabled={busy}
+        onClick={async () => {
           try {
-            const intake: unknown = JSON.parse(await file.text());
-            const result = await api<InvestigationView>(
-              "/api/investigations",
-              user,
-              { method: "POST", body: JSON.stringify({ intake }) },
-            );
-            form.reset();
-            onCreated(result);
+            const response = await fetch("/samples/investigation-intake.json");
+            if (!response.ok)
+              throw new Error("Sample investigation is unavailable.");
+            await submitIntake(await response.json());
           } catch (reason) {
             setError(
-              reason instanceof Error ? reason.message : "Import failed.",
+              reason instanceof Error
+                ? reason.message
+                : "Could not load the sample.",
             );
-          } finally {
-            setBusy(false);
           }
         }}
       >
-        <label htmlFor="investigation-records">Investigation JSON</label>
-        <input
-          id="investigation-records"
-          name="records"
-          type="file"
-          accept=".json,application/json"
-          required
-          disabled={busy}
-        />
-        <button className="button primary" type="submit" disabled={busy}>
-          {busy ? "Importing…" : "Import records"}
-        </button>
-        {error && <p role="alert">{error}</p>}
-      </form>
+        {busy ? "Loading…" : "Load sample investigation"}
+      </button>
+      <details>
+        <summary>Import investigation</summary>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const file = new FormData(form).get("records");
+            if (!(file instanceof File) || file.size > 100_000) {
+              setError(
+                "Select a supported investigation file smaller than 100 KB.",
+              );
+              return;
+            }
+            try {
+              const intake: unknown = JSON.parse(await file.text());
+              if (await submitIntake(intake)) form.reset();
+            } catch (reason) {
+              setError(
+                reason instanceof Error
+                  ? reason.message
+                  : "Could not read the investigation file.",
+              );
+            }
+          }}
+        >
+          <label htmlFor="investigation-records">Investigation file</label>
+          <input
+            id="investigation-records"
+            name="records"
+            type="file"
+            accept=".json,application/json"
+            required
+            disabled={busy}
+          />
+          <button className="button primary" type="submit" disabled={busy}>
+            {busy ? "Importing…" : "Import investigation"}
+          </button>
+        </form>
+      </details>
+      {error && <p role="alert">{error}</p>}
     </section>
   );
 }

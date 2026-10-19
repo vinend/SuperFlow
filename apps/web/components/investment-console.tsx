@@ -65,13 +65,13 @@ function InvestmentWorkspace() {
       ) : analysisId && !current ? (
         <EmptyState
           title="Investment analysis unavailable"
-          description="It may be closed to your role, or it is tracked as a request in My Work."
+          description="It may be closed to your role, or it is tracked as a request in Work."
         >
           <Link
             className="button secondary"
             href={`/cases?case=${encodeURIComponent(analysisId)}`}
           >
-            Open in My Work
+            Open in Work
           </Link>
         </EmptyState>
       ) : current ? (
@@ -94,10 +94,10 @@ function InvestmentWorkspace() {
           ) : (
             <EmptyState
               title="Investment Analysis is prepared by Finance."
-              description="Approvals assigned to you appear in Reviews / Approvals."
+              description="Approvals assigned to you appear in Work."
             >
               <Link className="button secondary" href="/cases">
-                Open My Work
+                Open Work
               </Link>
             </EmptyState>
           )}

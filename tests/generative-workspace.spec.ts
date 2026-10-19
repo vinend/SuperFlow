@@ -27,12 +27,21 @@ async function capture(page: Page, name: string, fullPage = false) {
   });
 }
 
-async function ask(page: Page, role: string, prompt: string) {
+async function ask(
+  page: Page,
+  role: string,
+  prompt: string,
+  waitForAgent = true,
+) {
   await page.goto("/ask");
   if (role !== "employee")
     await page.getByRole("combobox", { name: "Demo role" }).selectOption(role);
   await expect(
-    page.locator(".ask-chat-layout[data-agent-ready='true']"),
+    page.locator(
+      waitForAgent
+        ? ".ask-chat-layout[data-agent-ready='true']"
+        : ".ask-chat-layout",
+    ),
   ).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "New chat", exact: true }).click();
   await page.getByRole("textbox", { name: "Your question" }).fill(prompt);
@@ -58,6 +67,7 @@ test("employee conversation uses grounded AnswerCard and retained evidence", asy
   await expect(
     workspace.getByText("VERIFIED", { exact: false }).first(),
   ).toBeVisible();
+  await workspace.getByText(/View sources/).click();
   await expect(
     workspace.getByRole("button", { name: /Annual Leave Policy v2.0/ }).first(),
   ).toBeVisible();
@@ -77,6 +87,7 @@ test("compliance prompt opens the existing regulatory comparison", async ({
       .getByRole("heading", { name: "Regulatory Review", exact: true })
       .first(),
   ).toBeVisible();
+  await workspace.getByText("View full comparison").click();
   await expect(
     workspace.getByRole("region", { name: "Regulation comparison" }),
   ).toContainText("every 6 months");
@@ -94,7 +105,7 @@ test("finance prompt opens source backed investment analysis", async ({
       .first(),
   ).toBeVisible();
   await expect(
-    workspace.getByRole("heading", { name: "Source-backed assumptions" }),
+    workspace.getByRole("heading", { name: "Resolve conflicting values" }),
   ).toBeVisible();
   await capture(page, "finance-investment.png", true);
 });
@@ -137,16 +148,14 @@ test("My Work and Reviews prompts use existing action data", async ({
   await ask(page, "manager", "What do I need to do?");
   const workspace = page.getByRole("region", { name: "Generated workspace" });
   await expect(
-    workspace.getByRole("heading", { name: "My Work", exact: true }).first(),
+    workspace.getByRole("heading", { name: "Work", exact: true }).first(),
   ).toBeVisible();
   await ask(page, "manager", "What needs my approval?");
   await expect(
-    workspace
-      .getByRole("heading", { name: "Reviews / Approvals", exact: true })
-      .first(),
+    workspace.getByRole("heading", { name: "Work", exact: true }).first(),
   ).toBeVisible();
   await expect(
-    workspace.getByRole("heading", { name: "Needs your decision" }),
+    workspace.getByRole("heading", { name: "Needs My Decision" }),
   ).toBeVisible();
   await capture(page, "manager-reviews.png");
 });
@@ -196,7 +205,7 @@ test("role change clears generated Impact data and reauthorizes", async ({
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("employee");
   await expect(
-    page.getByRole("heading", { name: "What can we work through?" }),
+    page.getByRole("heading", { name: "Ask a question" }),
   ).toBeVisible();
   await expect(
     page
@@ -215,10 +224,8 @@ test("role change clears generated Impact data and reauthorizes", async ({
 test("AG-UI outage falls back to approved deterministic routing", async ({
   page,
 }) => {
-  await page.route("**/api/copilotkit/agent/workspace/run", (route) =>
-    route.abort(),
-  );
-  await ask(page, "employee", "How many annual leave days do I get?");
+  await page.route("**/api/copilotkit", (route) => route.abort());
+  await ask(page, "employee", "How many annual leave days do I get?", false);
   await expect(
     page
       .getByRole("region", { name: "Answer Card" })
@@ -240,7 +247,8 @@ test("material approval prompt only opens review UI", async ({ page }) => {
   await expect(
     page
       .getByRole("region", { name: "Generated workspace" })
-      .getByRole("heading", { name: "Reviews / Approvals" }),
+      .getByRole("heading", { name: "Work" })
+      .last(),
   ).toBeVisible();
   expect(mutations).toHaveLength(0);
 });

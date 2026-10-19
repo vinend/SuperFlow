@@ -43,18 +43,22 @@ export function navigationFor(role: string) {
     ...(role !== "governance"
       ? [{ title: "Ask SuperFlow", href: "/ask", view: "ask" }]
       : []),
-    { title: "Knowledge", href: "/knowledge", view: "knowledge" },
+    ...(role === "governance"
+      ? [{ title: "Knowledge Library", href: "/knowledge", view: "knowledge" }]
+      : []),
     ...(role === "compliance"
       ? [
           {
             title: "Regulatory Review",
             href: "/regulatory",
             view: "regulatory",
+            group: "Compliance",
           },
           {
             title: "Investigation Review",
             href: "/investigations",
             view: "investigation",
+            group: "Compliance",
           },
         ]
       : []),
@@ -64,15 +68,13 @@ export function navigationFor(role: string) {
             title: "Investment Analysis",
             href: "/investment",
             view: "investment",
+            group: "Finance",
           },
         ]
       : []),
-    { title: "My Work", href: "/cases", view: "cases" },
-    ...(canReview(role)
-      ? [{ title: reviewsLabel(role), href: "/decisions", view: "decisions" }]
-      : []),
-    ...(canViewImpact(role)
-      ? [{ title: "Impact", href: "/impact", view: "impact" }]
+    { title: "Work", href: "/cases", view: "cases" },
+    ...(role !== "governance"
+      ? [{ title: "Knowledge Library", href: "/knowledge", view: "knowledge" }]
       : []),
   ];
 }

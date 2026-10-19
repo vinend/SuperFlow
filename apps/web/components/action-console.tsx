@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { useSession } from "./session";
 import { ApplicationShell } from "./application-shell";
 import { useActionWorkspace } from "./use-action-workspace";
 import { CaseCreateForm } from "./case-forms";
 import { CaseWorkspace } from "./case-workspace";
 import { ActionLists } from "./action-lists";
-import { canReview, reviewsLabel, workTitle } from "@/lib/product-view";
+import { canReview, workTitle } from "@/lib/product-view";
 import {
   EmptyState,
   ErrorState,
@@ -35,6 +36,9 @@ function ActionWorkspace({ view }: { view: ActionView }) {
   const w = useActionWorkspace(user, caseId);
   const current = w.current;
   const reviewAccess = view !== "decisions" || canReview(user.role_id);
+  const [tab, setTab] = useState<"tasks" | "decisions">(
+    view === "decisions" ? "decisions" : "tasks",
+  );
   return (
     <main
       className="main-content action-workspace"
@@ -43,20 +47,12 @@ function ActionWorkspace({ view }: { view: ActionView }) {
       aria-labelledby="page-title"
     >
       <PageHeader
-        eyebrow={current ? "My Work / Request" : "Your workspace"}
-        title={
-          current
-            ? workTitle(current.title)
-            : view === "decisions"
-              ? reviewsLabel(user.role_id)
-              : "My Work"
-        }
+        eyebrow={current ? "Work / Request" : "Your workspace"}
+        title={current ? workTitle(current.title) : "Work"}
         description={
           current
             ? "Track progress, provide information, and inspect the supporting sources."
-            : view === "decisions"
-              ? "Requests that need your judgment or approval."
-              : "Your requests, next actions, and review progress."
+            : "Your tasks, requests, and decisions in one place."
         }
         action={
           view === "cases" &&
@@ -82,10 +78,10 @@ function ActionWorkspace({ view }: { view: ActionView }) {
       {!reviewAccess ? (
         <EmptyState
           title="Reviews are available to assigned reviewers."
-          description="Track your requests and their review progress in My Work."
+          description="Track your requests and their review progress in Work."
         >
           <Link href="/cases" className="button secondary">
-            Open My Work
+            Open Work
           </Link>
         </EmptyState>
       ) : w.loading ? (
@@ -106,7 +102,32 @@ function ActionWorkspace({ view }: { view: ActionView }) {
           created={(id) => router.push(`/cases?case=${id}`)}
         />
       ) : (
-        <ActionLists view={view} w={w} />
+        <>
+          {canReview(user.role_id) && (
+            <div className="work-tabs" role="tablist" aria-label="Work views">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "tasks"}
+                onClick={() => setTab("tasks")}
+              >
+                My Tasks
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab === "decisions"}
+                onClick={() => setTab("decisions")}
+              >
+                Needs My Decision
+              </button>
+            </div>
+          )}
+          <ActionLists
+            view={tab === "decisions" ? "decisions" : "cases"}
+            w={w}
+          />
+        </>
       )}
     </main>
   );

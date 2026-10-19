@@ -55,7 +55,7 @@ export function CaseWorkspace({
         <span>Owner: {personName(current.owner_id, users)}</span>
         <span>{WORK_TYPES[current.type]}</span>
         <span>Updated {dateLabel(current.updated_at)}</span>
-        <Link href="/cases">My Work</Link>
+        <Link href="/cases">Work</Link>
       </div>
       <div className="case-layout">
         <div className="case-execution">
@@ -256,29 +256,35 @@ export function CaseWorkspace({
                   </details>
                 )}
               </div>
-              <WorkflowTimeline workflow={current.workflow} />
+              <details>
+                <summary>View progress</summary>
+                <WorkflowTimeline workflow={current.workflow} />
+              </details>
             </>
           )}
-          <section className="case-audit" aria-label="Activity">
-            <SectionHeader
-              title="Activity"
-              detail="Request updates and recorded decisions."
-            />
-            <ol>
-              {current.activity.map((event) => (
-                <li key={event.id}>
-                  <strong>{activityLabel(event)}</strong>
-                  <span>
-                    {personName(event.actor_id, users)} ·{" "}
-                    {new Date(event.created_at).toLocaleString()}
-                  </span>
-                  {typeof event.payload.reason === "string" && (
-                    <p>{event.payload.reason}</p>
-                  )}
-                </li>
-              ))}
-            </ol>
-          </section>
+          <details>
+            <summary>View activity</summary>
+            <section className="case-audit" aria-label="Activity">
+              <SectionHeader
+                title="Activity"
+                detail="Request updates and recorded decisions."
+              />
+              <ol>
+                {current.activity.map((event) => (
+                  <li key={event.id}>
+                    <strong>{activityLabel(event)}</strong>
+                    <span>
+                      {personName(event.actor_id, users)} ·{" "}
+                      {new Date(event.created_at).toLocaleString()}
+                    </span>
+                    {typeof event.payload.reason === "string" && (
+                      <p>{event.payload.reason}</p>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          </details>
           {current.allowed_actions.includes("cancel") && (
             <details className="case-cancel">
               <summary>Close this request</summary>
@@ -318,30 +324,35 @@ export function CaseWorkspace({
             ))
           ) : (
             <>
-              <SectionHeader title="Evidence and reliability" />
-              <EvidenceChecklist
-                result={current.reliability}
-                sources={current.sources}
-                onSource={setSource}
-                onDocument={document}
-              />
-              <div className="source-references">
-                {current.sources.map((item) => (
-                  <button
-                    key={item.chunk_id}
-                    className="source-reference"
-                    onClick={() => setSource(item)}
-                  >
-                    <span className="citation-number">{item.citation_id}</span>
-                    <span className="reference-title">
-                      {item.title}
-                      <small>
-                        v{item.version} · {item.section_path}
-                      </small>
-                    </span>
-                  </button>
-                ))}
-              </div>
+              <details>
+                <summary>View evidence and reliability</summary>
+                <SectionHeader title="Evidence and reliability" />
+                <EvidenceChecklist
+                  result={current.reliability}
+                  sources={current.sources}
+                  onSource={setSource}
+                  onDocument={document}
+                />
+                <div className="source-references">
+                  {current.sources.map((item) => (
+                    <button
+                      key={item.chunk_id}
+                      className="source-reference"
+                      onClick={() => setSource(item)}
+                    >
+                      <span className="citation-number">
+                        {item.citation_id}
+                      </span>
+                      <span className="reference-title">
+                        {item.title}
+                        <small>
+                          v{item.version} · {item.section_path}
+                        </small>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </details>
             </>
           )}
           {current.allowed_actions.includes("attach_evidence") && (

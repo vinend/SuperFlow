@@ -6,8 +6,8 @@ async function analyst(page: Page, alert = "AML-2026-001") {
     .getByRole("combobox", { name: "Demo role" })
     .selectOption("compliance");
   await page
-    .getByRole("navigation", { name: "Investigations", exact: true })
-    .getByRole("link", { name: alert })
+    .getByRole("region", { name: "Active investigations" })
+    .getByRole("link", { name: new RegExp(alert) })
     .click();
   await expect(
     page.getByRole("heading", {
@@ -16,14 +16,36 @@ async function analyst(page: Page, alert = "AML-2026-001") {
   ).toBeVisible();
 }
 
+test("Compliance opens an alert list and loads a sample without a raw file workflow", async ({
+  page,
+}) => {
+  await page.goto("/investigations");
+  await page
+    .getByRole("combobox", { name: "Demo role" })
+    .selectOption("compliance");
+  await expect(
+    page.getByRole("region", { name: "Active investigations" }),
+  ).toContainText("AML-2026-001");
+  await expect(page.getByRole("main")).not.toContainText(
+    /JSON|Choose JSON File|Download sample JSON/,
+  );
+  await page.getByText("Load another investigation").click();
+  await page.getByRole("button", { name: "Load sample investigation" }).click();
+  await expect(
+    page.getByRole("heading", { name: /UAT-IMPORT-001/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("main")).toContainText("Sample Customer");
+});
+
 test("complete synthetic investigation persists through independent checker", async ({
   page,
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await analyst(page);
+  const investigationUrl = page.url();
   await expect(
-    page.getByText("3 of 5 configured checks completed."),
+    page.getByText("3 of 5 required sources available."),
   ).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Submit to independent checker" }),
@@ -32,7 +54,7 @@ test("complete synthetic investigation persists through independent checker", as
     .getByRole("button", { name: "Collect permitted evidence" })
     .click();
   await expect(
-    page.getByText("5 of 5 configured checks completed."),
+    page.getByText("5 of 5 required sources available."),
   ).toBeVisible();
   await page
     .getByRole("textbox", { name: "Analyst notes" })
@@ -56,9 +78,10 @@ test("complete synthetic investigation persists through independent checker", as
   await expect(
     page.getByText("Waiting for checker", { exact: true }),
   ).toBeVisible();
-  await page
-    .getByRole("combobox", { name: "Demo role" })
-    .selectOption("compliance_checker");
+  await page.evaluate(() =>
+    localStorage.setItem("superflow.demo-user", "compliance_checker"),
+  );
+  await page.reload();
   await page.getByRole("link", { name: "Open checker review" }).click();
   await expect(
     page.getByText("Please review the recorded indicators"),
@@ -71,7 +94,7 @@ test("complete synthetic investigation persists through independent checker", as
     page.getByText("Completed", { exact: true }).first(),
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/investigations");
+  await page.goto(investigationUrl);
   await expect(
     page.getByRole("heading", { name: /Investigation Review — Alert/ }),
   ).toBeVisible();
@@ -90,6 +113,7 @@ test("failed synthetic tool remains blocked with retry history", async ({
   await page
     .getByRole("button", { name: "Collect permitted evidence" })
     .click();
+  await page.getByText("Why this needs review").click();
   await expect(
     page.getByText("More information required").first(),
   ).toBeVisible();
@@ -100,6 +124,7 @@ test("failed synthetic tool remains blocked with retry history", async ({
     page.getByRole("button", { name: "Submit to independent checker" }),
   ).toBeDisabled();
   await page.reload();
+  await page.getByText("Why this needs review").click();
   await expect(
     page.getByText("Synthetic watchlist adapter is unavailable").first(),
   ).toBeVisible();
@@ -112,6 +137,7 @@ test("conflicting synthetic evidence requires human judgment", async ({
   await page
     .getByRole("button", { name: "Collect permitted evidence" })
     .click();
+  await page.getByText("Why this needs review").click();
   await expect(page.getByText("Needs review").first()).toBeVisible();
   await expect(page.getByText("salary-only funds").first()).toBeVisible();
 });

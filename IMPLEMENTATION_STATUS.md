@@ -1,12 +1,12 @@
 # Status Implementasi SuperFlow
 
-**Diperbarui:** 18 Oktober 2026
+**Diperbarui:** 19 Oktober 2026
 
 **Sumber produk aktif:** [SuperFlow_PRD_v2.md](SuperFlow_PRD_v2.md). PRD v1 sudah digantikan dan tidak digunakan untuk keputusan produk/UX saat ini.
 
 **Ruang lingkup:** Fase 0–8, rekonsiliasi Product Experience, ingestion RAG/OCR lokal, dan import website dengan Puppeteer/vision. Fase 7 adalah proof point AML/FIU di atas fondasi bersama; Fase 8 menambahkan demo terintegrasi.
 
-**Status:** Demo terintegrasi tersedia di `/demo`, dengan reset dataset presentasi lintas modul yang atomik, panduan presentasi, dan kontrol domain existing. Backend/unit/E2E/build serta smoke produksi lulus. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
+**Status:** Pengalaman produk memakai lima persona demo dan navigasi berbasis tugas. Route `/demo` telah dihapus; panduan presenter ada di `docs/DEMO_PLAYBOOK.md`. Reset dataset presentasi dan kontrol domain tetap tersedia. Tidak ada koneksi Transaction Monitoring, watchlist, berita, Getcontact, atau nasabah nyata.
 
 ## Staging candidate: authentication, browser screening and UAT — 18 Oktober 2026
 
@@ -352,3 +352,15 @@ Migrasi `0007` serta seed/reset lokal dijalankan pada PostgreSQL port 5432; API 
 3. Tinjau bahasa memo/approval bersama Finance dan bahasa gap/remediation bersama Compliance.
 4. Lanjutkan audit screen reader dan normalisasi baseline Prettier di pass terpisah.
 5. Gunakan panduan Fase 8 untuk presentasi sintetis; jangan hubungkan FIU ke data nyata tanpa desain keamanan dan otorisasi produksi.
+# Penyederhanaan UX final — 19 Oktober 2026
+
+- Bekerja dari `main` commit awal `35ad330`, tanpa merge/cherry-pick `ux-finish-wip`. UI mempertahankan warna, logo, autentikasi, API domain, permission, persistence, dan route lama yang relevan.
+- Lima persona normal: Maya (Employee), Arif (Manager), Raka (Compliance), Dina (Finance), Alex (Governance Admin). SME dan Compliance Checker tetap ada pada backend/fixture dan dapat diuji secara internal, tetapi tidak tampil dalam selector normal. Selector lokal berlabel **Demo role · Prototype only**; staging menggunakan login akun.
+- Navigasi menjadi Home, Ask, Work, Knowledge Library, ditambah Regulatory Review dan Investigation Review hanya untuk Compliance, Investment Analysis hanya untuk Finance. Governance hanya Home, Knowledge Library, Work. Impact tidak muncul di navigasi tetapi `/impact` dan API/analitik tetap tersedia. Ini menyimpang dari navigasi yang dijelaskan di PRD v2 sesuai instruksi pengguna terbaru.
+- Home adalah launchpad singkat. Work menyatukan My Tasks dan Needs My Decision. Ask menyembunyikan search options sampai dibuka; Knowledge Library menampilkan metadata dokumen yang dibutuhkan pengguna dan menempatkan status indeks di detail maintainer. Regulatory Review dan Investment Analysis mengikuti tahapan, sedangkan Investigation Review memulai dari daftar alert dan menyembunyikan detail teknis. Import investigasi memakai kontrol bisnis dan sampel; adapter file terstruktur tetap di frontend/backend tanpa istilah JSON pada UI.
+- Route `/demo` dan tautan presenter di shell dihapus. Instruksi presenter hanya ada di `docs/DEMO_PLAYBOOK.md`. Audit per persona sebelum kode: `docs/UX_AUDIT.md`.
+- Bug yang ditemukan saat verifikasi: rute CopilotKit menerima envelope single-route pada handler multi-route sehingga dapat membalas 404; handler diselaraskan dengan mode single-route. Sitasi dari chat tersimpan sekarang membawa status reliability jawaban ke panel sumber. Pengujian fallback AG-UI diperbaiki agar tidak menunggu runtime yang sengaja dibuat gagal.
+- Verifikasi setelah perubahan: frontend unit **42 passed**, backend **225 passed, 2 skipped** (satu peringatan deprecation Starlette/httpx), ESLint lulus, Ruff lint lulus, Ruff format **92 file** lulus, TypeScript lulus, dan build produksi lulus. Build masih mengeluarkan peringatan dependensi dinamis CopilotKit/AI SDK. Prettier untuk semua file yang diubah lulus; `format:check` repo tetap gagal pada **69 file lain** yang sudah tidak sesuai format sebelum pass ini. File tersebut tidak diubah untuk menghindari perubahan di luar scope.
+- Playwright E2E penuh setelah koreksi test fallback: **64 passed, 3 skipped, 0 failed** dari 67 test (6,2 menit). Tiga test opt-in yang dilewati adalah impor OJK publik nyata, OCR PDF scan langsung, dan capture website publik dengan vision lokal; keberhasilan live layanan tersebut tidak diklaim pada pass UX ini. WebSearch yang mendapat blokir Google tetap diuji dan tidak membuat bukti palsu. Browser menampilkan peringatan development Lit, reduced motion, dan dependensi CopilotKit/AI SDK; tidak ada kegagalan pada run final.
+- Perubahan siap ditinjau dan di-commit pada `main`; belum memenuhi gate `format:check` repo karena 69 file baseline di luar scope. Jangan push sebelum memutuskan penanganan gate itu. Tidak ada commit atau push dari pass ini.
+- Smoke live setelah pass: Ollama lokal menjalankan `qwen3.5:9b` pada GPU RTX 4060; API health melaporkan `ollama-grounded-v1` dan PostgreSQL. Ask langsung dan Ask melalui browser sama-sama menjawab pertanyaan cuti tahunan dengan sumber/citation. Qwen sebelumnya salah mengarahkan pertanyaan kebijakan umum ke Investigation Review; intent model kini tidak dapat mengganti intent knowledge deterministik, dan denial tersimpan tidak lagi ditampilkan ulang sebagai workspace siap. Regression backend terkait: **26 passed**; Ruff check lulus. Layanan lokal tetap berjalan untuk pengujian manual.

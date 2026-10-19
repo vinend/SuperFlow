@@ -11,8 +11,11 @@ async function decided(page: Page, title: string, status: string) {
 }
 
 async function reject(page: Page, title: string, reason: string) {
+  await page
+    .getByRole("article", { name: new RegExp(`^${title}`) })
+    .getByRole("button", { name: "Not a gap" })
+    .click();
   const form = page.getByRole("form", { name: `Decision for ${title}` });
-  await form.getByRole("radio", { name: "Not a gap" }).check();
   await form.getByRole("textbox", { name: "Rejection reason" }).fill(reason);
   await form.getByRole("button", { name: "Record not a gap" }).click();
   await decided(page, title, "Not a gap");
@@ -27,7 +30,7 @@ test("Compliance turns a regulation change into approved remediation", async ({
   await role(page, "compliance");
   await expect(
     page.getByRole("region", { name: "Work needing attention" }),
-  ).toContainText("not yet reviewed against v1.0");
+  ).toContainText("Regulatory Review");
   await page
     .getByRole("navigation", { name: "Main navigation" })
     .getByRole("link", { name: "Regulatory Review" })
@@ -48,6 +51,7 @@ test("Compliance turns a regulation change into approved remediation", async ({
   const comparison = page.getByRole("region", {
     name: "Regulation comparison",
   });
+  await page.getByText("View full comparison", { exact: true }).click();
   await expect(comparison).toContainText(
     "Frequency: every 12 months → every 6 months",
   );
@@ -61,6 +65,7 @@ test("Compliance turns a regulation change into approved remediation", async ({
     .click();
   await expect(page.getByRole("dialog")).toContainText("Article 4");
   await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Review gaps" }).click();
   await expect(page.getByRole("article")).toHaveCount(4);
   await expect(page.locator("body")).not.toContainText(
     /WorkflowRun|GuardResult|Case ID|Phase 4|definition/,
@@ -77,31 +82,41 @@ test("Compliance turns a regulation change into approved remediation", async ({
   const access = page.getByRole("form", {
     name: "Decision for Access Review SOP",
   });
+  await page
+    .getByRole("article", { name: /^Access Review SOP/ })
+    .getByRole("button", { name: "Confirm gap" })
+    .click();
+  await page
+    .getByRole("article", { name: /^Access Review SOP/ })
+    .getByText("View sources")
+    .click();
   await expect(
     page
       .getByRole("article", { name: /^Access Review SOP/ })
       .getByRole("region", { name: "Evidence" }),
   ).toContainText("Synthetic Digital Operations Regulation");
   await access
-    .getByRole("textbox", { name: "Gap statement" })
+    .getByRole("textbox", { name: "Gap summary" })
     .fill(
       "Access Review SOP must adopt a six-month cycle and record the reviewer and revoked permissions.",
     );
   await access
     .getByRole("combobox", { name: "Remediation owner" })
     .selectOption("employee");
-  await access.getByRole("button", { name: "Confirm gap" }).click();
+  await access.getByRole("button", { name: "Create remediation" }).click();
   await expect(access.getByRole("alert")).toContainText("cannot access");
   await access
     .getByRole("combobox", { name: "Remediation owner" })
     .selectOption("governance");
-  await access.getByRole("button", { name: "Confirm gap" }).click();
+  await access.getByRole("button", { name: "Create remediation" }).click();
   await decided(page, "Access Review SOP", "Confirmed gap");
   await expect(page.locator(".case-context-bar")).toContainText(
     "Remediation in progress",
   );
   await page.reload();
+  await page.getByRole("button", { name: "2. Potential gaps" }).click();
   await decided(page, "Access Review SOP", "Alex Pratama");
+  await page.getByText("View evidence and activity").click();
   await expect(page.getByRole("region", { name: "Activity" })).toContainText(
     "Gap confirmed and remediation assigned",
   );
@@ -138,15 +153,19 @@ test("Compliance turns a regulation change into approved remediation", async ({
 
   await role(page, "compliance");
   await page.goto(reviewUrl);
+  await page.getByRole("button", { name: "2. Potential gaps" }).click();
   await expect(page.locator(".case-context-bar")).toContainText(
     "Ready to close",
   );
   await decided(page, "Access Review SOP", "Remediation approved");
+  await page.getByRole("button", { name: "3. Remediation" }).click();
   await page
     .getByRole("button", { name: "Close regulatory review", exact: true })
     .click();
   await expect(page.locator(".case-context-bar")).toContainText("Completed");
   await page.reload();
+  await page.getByRole("button", { name: "3. Remediation" }).click();
+  await page.getByText("View evidence and activity").click();
   await expect(page.getByRole("region", { name: "Activity" })).toContainText(
     "Regulatory review closed",
   );

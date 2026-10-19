@@ -35,32 +35,38 @@ export function ApprovalPanel({
   return (
     <section className="approval-panel" aria-label="Review request">
       <div className="section-header">
-        <h2>Review request</h2>
+        <h2>{approval.case_title}</h2>
         <StatusBadge status={businessStatus(approval.status)} />
       </div>
       <p>{reviewReason(approval, context.reliability.status)}</p>
       <Metadata
         items={[
           {
-            label: "Reviewer",
+            label: "Assigned to",
             value: personName(approval.requested_from, users),
           },
           {
             label: "Requester",
             value: personName(approval.requested_by, users),
           },
-          { label: "Authority", value: roleLabel(approval.requested_role) },
+          {
+            label: "Decision needed from",
+            value: roleLabel(approval.requested_role),
+          },
         ]}
       />
-      <EvidenceChecklist
-        result={context.reliability}
-        sources={context.sources}
-        onSource={onSource}
-        onDocument={onDocument}
-      />
+      <details>
+        <summary>Why this needs review</summary>
+        <EvidenceChecklist
+          result={context.reliability}
+          sources={context.sources}
+          onSource={onSource}
+          onDocument={onDocument}
+        />
+      </details>
       {context.sources.length > 0 && (
         <div className="approval-sources">
-          <h3>Inspect supporting sources</h3>
+          <h3>Supporting sources</h3>
           {context.sources.map((source) => (
             <button
               key={source.chunk_id}

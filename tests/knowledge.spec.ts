@@ -4,7 +4,8 @@ test("roomy Ask and repository filters preserve source inspection", async ({
   page,
 }) => {
   await page.goto("/ask");
-  await page.getByRole("combobox", { name: "Demo role" }).selectOption("sme");
+  await page.evaluate(() => localStorage.setItem("superflow.demo-user", "sme"));
+  await page.reload();
   await expect(
     page.getByRole("textbox", { name: "Your question" }),
   ).toBeEnabled();
@@ -15,7 +16,9 @@ test("roomy Ask and repository filters preserve source inspection", async ({
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Knowledge Library", exact: true })
+    .click();
   await page
     .getByRole("combobox", { name: "Knowledge domain" })
     .selectOption("People");
@@ -66,12 +69,14 @@ test("role-aware knowledge inventory and application navigation", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: "Your workspace" }),
+    page.getByRole("heading", { name: /Good day, Maya/ }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: "My Work", exact: true }),
+    page.getByRole("link", { name: "Work", exact: true }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
+  await page
+    .getByRole("link", { name: "Knowledge Library", exact: true })
+    .click();
   await expect(
     page.getByRole("button", { name: /^Annual Leave Policy/ }).first(),
   ).toBeVisible();
@@ -153,6 +158,7 @@ test("Ask returns current citations, Source Panel, historical labels, and saved 
   await expect(
     page.getByRole("combobox", { name: "Question source" }),
   ).toHaveValue("leave-policy");
+  await answer.getByText(/View sources/).click();
   await answer
     .getByRole("button", { name: /Annual Leave Policy.*v1.0/ })
     .first()
@@ -303,8 +309,12 @@ test("mobile navigation and actionable API connection failure", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
   await page.getByRole("button", { name: "Open navigation" }).click();
-  await page.getByRole("link", { name: "Knowledge", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Knowledge" })).toBeVisible();
+  await page
+    .getByRole("link", { name: "Knowledge Library", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", { name: "Knowledge Library" }),
+  ).toBeVisible();
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= window.innerWidth,

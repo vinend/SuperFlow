@@ -65,6 +65,25 @@ def test_model_failure_uses_deterministic_fallback(db):
     assert result.intent == WorkspaceKind.KNOWLEDGE_QA
 
 
+def test_model_cannot_redirect_general_knowledge_question_to_an_unrelated_workspace(db):
+    employee = db.get(User, "employee")
+
+    def misrouted(_request):
+        return httpx.Response(
+            200,
+            json={"message": {"content": '{"intent":"investigation_review"}'}},
+        )
+
+    result = resolve_workspace(
+        db,
+        employee,
+        "How many annual leave days do employees receive?",
+        OllamaIntentProvider(httpx.MockTransport(misrouted)),
+    )
+    assert result.status == "ready"
+    assert result.intent == WorkspaceKind.KNOWLEDGE_QA
+
+
 def test_ollama_structured_choice_and_malformed_output():
     def good(request):
         body = json.loads(request.content)
